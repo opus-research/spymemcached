@@ -79,7 +79,8 @@ public abstract class TapOperationImpl extends OperationImpl implements
                   response.getOpcode(), response.getOpaque());
             }
           }
-          if (response.getOpcode() != TapOpcode.NOOP) {
+          if (response.getOpcode() != TapOpcode.OPAQUE && response.getOpcode()
+            != TapOpcode.NOOP) {
             ((Callback) getCallback()).gotData(response);
           }
           message = null;

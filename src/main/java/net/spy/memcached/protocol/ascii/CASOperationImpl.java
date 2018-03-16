@@ -118,18 +118,7 @@ class CASOperationImpl extends OperationImpl implements CASOperation {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Cmd: cas");
-    sb.append(" Key: ");
-    sb.append(key);
-    sb.append(" Cas Value: ");
-    sb.append(casValue);
-    sb.append(" Flags: ");
-    sb.append(flags);
-    sb.append(" Exp: ");
-    sb.append(exp);
-    sb.append(" Data: ");
-    sb.append(data);
-    return sb.toString();
+    return "Cmd: cas Key: " + key + " Cas Value: " + casValue + " Flags: "
+      + flags + " Exp: " + exp + " Data Length: " + data.length;
   }
 }

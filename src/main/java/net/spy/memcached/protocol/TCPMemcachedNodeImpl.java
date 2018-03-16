@@ -23,6 +23,16 @@
 
 package net.spy.memcached.protocol;
 
+import net.spy.memcached.ConnectionFactory;
+import net.spy.memcached.FailureMode;
+import net.spy.memcached.MemcachedConnection;
+import net.spy.memcached.MemcachedNode;
+import net.spy.memcached.compat.SpyObject;
+import net.spy.memcached.ops.Operation;
+import net.spy.memcached.ops.OperationState;
+import net.spy.memcached.ops.SASLOperation;
+import net.spy.memcached.protocol.binary.TapAckOperationImpl;
+
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -34,15 +44,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import net.spy.memcached.ConnectionFactory;
-import net.spy.memcached.FailureMode;
-import net.spy.memcached.MemcachedConnection;
-import net.spy.memcached.MemcachedNode;
-import net.spy.memcached.compat.SpyObject;
-import net.spy.memcached.ops.Operation;
-import net.spy.memcached.ops.OperationState;
-import net.spy.memcached.protocol.binary.TapAckOperationImpl;
 
 /**
  * Represents a node with the memcached cluster, along with buffering and
@@ -241,7 +242,8 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           getLogger().debug("Not writing cancelled op.");
           Operation cancelledOp = removeCurrentWriteOp();
           assert o == cancelledOp;
-        } else if (o.isTimedOut(defaultOpTimeout)) {
+        } else if (!(o instanceof SASLOperation)
+          && o.isTimedOut(defaultOpTimeout)) {
           getLogger().debug("Not writing timed out op.");
           Operation timedOutOp = removeCurrentWriteOp();
           assert o == timedOutOp;

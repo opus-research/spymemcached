@@ -25,6 +25,6 @@ package net.spy.memcached.ops;
 /**
  * Operation for listing supported SASL mechanisms.
  */
-public interface SASLMechsOperation extends Operation {
+public interface SASLMechsOperation extends SASLOperation {
   // Nothing.
 }

@@ -204,6 +204,9 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           if (!o.getBuffer().hasRemaining()) {
             o.writeComplete();
             transitionWriteItem();
+            if (!(o instanceof TapAckOperationImpl)) {
+              readQ.add(o);
+            }
 
             preparePending();
             if (shouldOptimize) {
@@ -240,9 +243,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           assert o == timedOutOp;
         } else {
           o.writing();
-          if (!(o instanceof TapAckOperationImpl)) {
-            readQ.add(o);
-          }
           return o;
         }
         o = getCurrentWriteOp();

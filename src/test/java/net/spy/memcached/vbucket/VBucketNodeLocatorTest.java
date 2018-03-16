@@ -44,12 +44,6 @@ public class VBucketNodeLocatorTest extends TestCase {
 
   private static final String CONFIG_IN_ENVELOPE =
       "{ \"otherKeyThatIsIgnored\": 12345,\n"
-      + "\"nodes\": [\n"
-      + "{\n"
-      + "\"clusterCompatibility\": 1,\n"
-      + "\"clusterMembership\": \"active\"\n"
-      + "}\n"
-      + "],\n"
       + "\"vBucketServerMap\": \n"
       + "{\n"
       + "  \"hashAlgorithm\": \"CRC\",\n"

@@ -100,7 +100,6 @@ public class CouchbaseClientTest {
     List<URI> uris = new LinkedList<URI>();
     uris.add(URI.create(SERVER_URI));
     TestingClient c = new TestingClient(uris, "default", "");
-    c.flush().get();
     String docUri = "/default/_design/" + TestingClient.MODE_PREFIX
         + DESIGN_DOC_W_REDUCE;
     String view = "{\"language\":\"javascript\",\"views\":{\""

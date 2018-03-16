@@ -22,7 +22,6 @@
 
 package net.spy.memcached.vbucket.config;
 
-import java.net.URL;
 import java.util.List;
 
 import net.spy.memcached.HashAlgorithm;
@@ -57,8 +56,6 @@ public interface Config {
   ConfigDifference compareTo(Config config);
 
   List<String> getServers();
-
-  List<URL> getCouchServers();
 
   List<VBucket> getVbuckets();
 

@@ -191,9 +191,6 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF,
       private CASValue<T> val = null;
 
       public void receivedStatus(OperationStatus status) {
-        if (!status.isSuccess()) {
-          val = new CASValue<T>(-1, null);
-        }
         rv.set(val, status);
       }
 

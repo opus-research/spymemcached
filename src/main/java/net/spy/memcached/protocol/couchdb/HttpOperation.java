@@ -1,61 +1,25 @@
 package net.spy.memcached.protocol.couchdb;
 
+import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationException;
 
-import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 
-public class HttpOperation {
+public interface HttpOperation {
 
-	private final HttpRequest request;
-	private final HttpCallback callback;
-	private OperationException exception;
-	private boolean cancelled;
-	private boolean errored;
-	private boolean timedOut;
+	OperationCallback getCallback();
 
-	public HttpOperation(HttpRequest r, HttpCallback cb) {
-		request = r;
-		callback = cb;
-		exception = null;
-		cancelled = false;
-		errored = false;
-		timedOut = false;
-	}
+	boolean isCancelled();
 
-	public HttpRequest getRequest() {
-		return request;
-	}
+	boolean hasErrored();
 
-	public HttpCallback getCallback() {
-		return callback;
-	}
+	boolean isTimedOut();
 
-	public boolean isCancelled() {
-		return cancelled;
-	}
+	void cancel();
 
-	public boolean hasErrored() {
-		return errored;
-	}
+	void timeOut();
 
-	public boolean isTimedOut() {
-		return timedOut;
-	}
+	OperationException getException();
 
-	public void cancel() {
-		cancelled = true;
-	}
-
-	public void timeOut() {
-		timedOut = true;
-	}
-
-	public OperationException getException() {
-		return exception;
-	}
-
-	public void setException(OperationException e) {
-		exception = e;
-		errored = true;
-	}
+	void handleResponse(HttpResponse response);
 }

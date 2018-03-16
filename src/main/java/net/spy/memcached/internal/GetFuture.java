@@ -38,10 +38,6 @@ public class GetFuture<T> implements Future<T> {
 		Future<T> v = rv.get(duration, units);
 		return v == null ? null : v.get();
 	}
-	
-	public OperationStatus getStatus() {
-		return rv.getStatus();
-	}
 
 	public void set(Future<T> d, OperationStatus s) {
 		rv.set(d, s);

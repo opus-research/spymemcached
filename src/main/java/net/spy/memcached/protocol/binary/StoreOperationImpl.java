@@ -104,13 +104,6 @@ class StoreOperationImpl extends SingleKeyOperationImpl implements
   }
 
   @Override
-  protected void decodePayload(byte[] pl) {
-    StoreOperation.Callback gcb = (StoreOperation.Callback) getCallback();
-    gcb.gotData(key, cas);
-    getCallback().receivedStatus(STATUS_OK);
-  }
-
-  @Override
   public String toString() {
     return super.toString() + " Cas: " + cas + " Exp: " + exp + " Flags: "
       + flags + " Data Length: " + data.length;

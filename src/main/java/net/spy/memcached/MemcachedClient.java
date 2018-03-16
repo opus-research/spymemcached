@@ -199,8 +199,8 @@ public class MemcachedClient extends SpyThread
             }
         }
 
-        this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
-        Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
+        configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
+        Bucket bucket = configurationProvider.getBucketConfiguration(bucketName);
         ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
         if (isVBucketAware) {
             cfb.setFailureMode(FailureMode.Retry)
@@ -215,13 +215,14 @@ public class MemcachedClient extends SpyThread
                     .setLocatorType(ConnectionFactoryBuilder.Locator.CONSISTENT);
 
         }
-        if (!this.configurationProvider.getAnonymousAuthBucket().equals(bucketName) && usr != null) {
+        if (!configurationProvider.getAnonymousAuthBucket().equals(bucketName) && usr != null) {
             AuthDescriptor ad = new AuthDescriptor(new String[]{"PLAIN"},
                     new PlainCallbackHandler(usr, pwd));
             cfb.setAuthDescriptor(ad);
         }
         ConnectionFactory cf = cfb.build();
         List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getVbuckets().getServers());
+
         if(cf == null) {
             throw new NullPointerException("Connection factory required");
         }
@@ -249,15 +250,19 @@ public class MemcachedClient extends SpyThread
         }
         setName("Memcached IO over " + conn);
         setDaemon(cf.isDaemon());
-        this.configurationProvider.subscribe(bucketName, this);
+        configurationProvider.subscribe(bucketName, this);
         start();
     }
 
-    public void reconfigure(Bucket bucket) {
-        this.reconfiguring = true;
-        this.conn.reconfigure(bucket);
-        this.reconfiguring = false;
-
+	public void reconfigure(Bucket bucket) {
+		reconfiguring = true;
+		try {
+			conn.reconfigure(bucket);
+		} catch (IllegalArgumentException ex) {
+			getLogger().warn("Failed to reconfigure client, staying with previous configuration.", ex);
+		} finally {
+			reconfiguring = false;
+		}
     }
 
 	/**
@@ -1892,11 +1897,11 @@ public class MemcachedClient extends SpyThread
 				conn.shutdown();
 				setName(baseName + " - SHUTTING DOWN (informed client)");
 				tcService.shutdown();
-                if (this.configurationProvider != null) {
-                    this.configurationProvider.shutdown();
+                if (configurationProvider != null) {
+                    configurationProvider.shutdown();
                 }
 			} catch (IOException e) {
-				getLogger().warn("exception while shutting down", e);
+				getLogger().warn("exception while shutting down configuration provider", e);
 			}
 		}
 		return rv;

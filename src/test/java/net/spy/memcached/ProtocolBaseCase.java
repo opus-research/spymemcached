@@ -583,8 +583,8 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 		do {
 			set = client.set(key, 0, value).get();
 			j++;
-		} while (set != true && j < 10);
-		assert set = true;
+		} while (!set && j < 10);
+		assert set == true;
 
 		int i = 0;
 		try {

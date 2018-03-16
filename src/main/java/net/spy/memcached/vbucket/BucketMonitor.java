@@ -2,6 +2,7 @@ package net.spy.memcached.vbucket;
 
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFactory;
 import org.jboss.netty.channel.ChannelFuture;
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
@@ -19,7 +20,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.text.ParseException;
 
-import org.jboss.netty.channel.ChannelFactory;
 import net.spy.memcached.vbucket.config.Bucket;
 import net.spy.memcached.vbucket.config.ConfigurationParser;
 
@@ -49,7 +49,7 @@ public class BucketMonitor extends Observable {
     /**
      *
      * @param cometStreamURI the URI which will stream node changes
-     * @param bucketname the bucket name we are monitoring
+     * @param bucketname the bucketToMonitor name we are monitoring
      * @param username the username required for HTTP Basic Auth to the restful service
      * @param password the password required for HTTP Basic Auth to the restful service
      */
@@ -88,8 +88,8 @@ public class BucketMonitor extends Observable {
         try {
             String response = this.handler.getLastResponse();
             logFiner("Getting server list returns this last chunked response:\n" + response);
-            Bucket bucket = this.configParser.parseBucket(response);
-            setBucket(bucket);
+            Bucket bucketToMonitor = this.configParser.parseBucket(response);
+            setBucket(bucketToMonitor);
         } catch (ParseException ex) {
             Logger.getLogger(BucketMonitor.class.getName()).log(Level.WARNING,
                     "Invalid client configuration received from server.  Staying with existing configuration.", ex);
@@ -123,13 +123,12 @@ public class BucketMonitor extends Observable {
                 HttpVersion.HTTP_1_1, HttpMethod.GET, uri.toASCIIString());
         request.setHeader(HttpHeaders.Names.HOST, host);
         if (getHttpUser() != null) {
-            request.setHeader(HttpHeaders.Names.AUTHORIZATION, ConfigurationProviderHTTP.buildAuthHeader(getHttpUser(), getHttpPass()));
+            request.setHeader(HttpHeaders.Names.AUTHORIZATION, getAuthHeader());
         }
         request.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE);  // No keep-alives for this
         request.setHeader(HttpHeaders.Names.CACHE_CONTROL, HttpHeaders.Values.NO_CACHE);
         request.setHeader(HttpHeaders.Names.ACCEPT, "application/json");
         request.setHeader(HttpHeaders.Names.USER_AGENT, "spymemcached vbucket client");
-        /** @todo get the git describe in here */
         request.setHeader("X-memcachekv-Store-Client-Specification-Version", CLIENT_SPEC_VER);
         return request;
     }
@@ -138,7 +137,7 @@ public class BucketMonitor extends Observable {
      * Update the config if it has changed and notify our
      * observers.
      *
-     * @param bucket the bucket to set
+     * @param bucketToMonitor the bucketToMonitor to set
      */
     private void setBucket(Bucket bucket) {
         if (this.bucket == null || !this.bucket.equals(bucket)) {
@@ -146,6 +145,29 @@ public class BucketMonitor extends Observable {
             setChanged();
             notifyObservers(this.bucket);
         }
+    }
+
+    /**
+     * Since netty seems to have base64 and have a header for basic auth, but
+     * oddly no way to generate a base64 enoded auth heder, this utility function
+     * will.
+     *
+     * @return a value for an HTTP Basic Auth Header
+     */
+    private String getAuthHeader() {
+        // apparently netty isn't familiar with HTTP Basic Auth
+        StringBuffer clearText = new StringBuffer(getHttpUser());
+        clearText.append(':');
+        if (getHttpPass() != null) {
+            clearText.append(getHttpPass());
+        }
+        // and apache base64 codec has extra \n\l we have to strip off
+        String encodedText = org.apache.commons.codec.binary.Base64.encodeBase64String(clearText.toString().getBytes());
+        char[] encodedWoNewline = new char[encodedText.length() - 2];
+        encodedText.getChars(0, encodedText.length() - 2, encodedWoNewline, 0);
+        String authVal = "Basic " + new String(encodedWoNewline);
+
+        return authVal;
     }
 
     /**
@@ -190,8 +212,8 @@ public class BucketMonitor extends Observable {
     protected void invalidate() {
         try {
             String response = handler.getLastResponse();
-            Bucket bucket = this.configParser.parseBucket(response);
-            setBucket(bucket);
+            Bucket updatedBucket = this.configParser.parseBucket(response);
+            setBucket(updatedBucket);
         } catch (ParseException e) {
             Logger.getLogger(BucketMonitor.class.getName()).log(Level.SEVERE,
                     "Invalid client configuration received from server.  Staying with existing configuration.", e);

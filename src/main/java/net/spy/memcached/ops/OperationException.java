@@ -27,7 +27,7 @@ import java.io.IOException;
 /**
  * Exceptions thrown when protocol errors occur.
  */
-public final class OperationException extends IOException {
+public class OperationException extends IOException {
 
   private static final long serialVersionUID = 1524499960923239786L;
 

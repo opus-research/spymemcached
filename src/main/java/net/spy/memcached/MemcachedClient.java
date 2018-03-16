@@ -45,7 +45,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -70,7 +69,6 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatsOperation;
-import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.ops.TimedOutOperationStatus;
@@ -1315,8 +1313,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       ks.add(key);
     }
 
-    final AtomicInteger pendingChunks = new AtomicInteger(chunks.size());
-    final CountDownLatch latch = new CountDownLatch(1);
+    final CountDownLatch latch = new CountDownLatch(chunks.size());
     final Collection<Operation> ops = new ArrayList<Operation>(chunks.size());
     final BulkGetFuture<T> rv = new BulkGetFuture<T>(m, ops, latch, executorService);
 
@@ -1324,9 +1321,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       @Override
       @SuppressWarnings("synthetic-access")
       public void receivedStatus(OperationStatus status) {
-        if (status.getStatusCode() == StatusCode.ERR_NOT_MY_VBUCKET) {
-          pendingChunks.addAndGet(Integer.parseInt(status.getMessage()));
-        }
         rv.setStatus(status);
       }
 
@@ -1339,8 +1333,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
       @Override
       public void complete() {
-        if (pendingChunks.decrementAndGet() <= 0) {
-          latch.countDown();
+        latch.countDown();
+        if (latch.getCount() == 0) {
           rv.signalComplete();
         }
       }
@@ -2262,7 +2256,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       @Override
       public Boolean get(long duration, TimeUnit units)
         throws InterruptedException, TimeoutException, ExecutionException {
-        status = new OperationStatus(true, "OK", StatusCode.SUCCESS);
+        status = new OperationStatus(true, "OK");
         return super.get(duration, units);
       }
 

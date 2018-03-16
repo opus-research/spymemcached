@@ -122,10 +122,10 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 		return new KetamaNodeLocator(smn, an, hashAlg, config);
 	}
 
-    @Override
-    public void updateLocator(List<MemcachedNode> nodes, Config conf) {
-        setKetamaNodes(nodes);
-    }
+	@Override
+	public void updateLocator(List<MemcachedNode> nodes, Config conf) {
+		setKetamaNodes(nodes);
+	}
 
     /**
      * @return the ketamaNodes

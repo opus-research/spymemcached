@@ -38,11 +38,11 @@ public interface NodeLocator {
 	 */
 	NodeLocator getReadonlyCopy();
 
-    /**
-     * Update locator status.
-     *
-     * @param nodes New locator nodes.
-     * @param conf Locator configuration.
-     */
-    public void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+	/**
+	 * Update locator status.
+	 *
+	 * @param nodes New locator nodes.
+	 * @param conf Locator configuration.
+	 */
+	public void updateLocator(final List<MemcachedNode> nodes, final Config conf);
 }

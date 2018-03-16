@@ -56,12 +56,12 @@ public final class ArrayModNodeLocator implements NodeLocator {
 		return new ArrayModNodeLocator(n, hashAlg);
 	}
 
-    @Override
-    public void updateLocator(List<MemcachedNode> nodes, Config conf) {
-        this.nodes=nodes.toArray(new MemcachedNode[nodes.size()]);
-    }
+	@Override
+	public void updateLocator(List<MemcachedNode> nodes, Config conf) {
+		this.nodes=nodes.toArray(new MemcachedNode[nodes.size()]);
+	}
 
-    private int getServerForKey(String key) {
+	private int getServerForKey(String key) {
 		int rv=(int)(hashAlg.hash(key) % nodes.length);
 		assert rv >= 0 : "Returned negative key for key " + key;
 		assert rv < nodes.length

@@ -79,7 +79,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
     callback = to;
   }
 
-  public final synchronized boolean isCancelled() {
+  public final boolean isCancelled() {
     return cancelled;
   }
 
@@ -91,7 +91,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
     return exception;
   }
 
-  public final synchronized void cancel() {
+  public final void cancel() {
     cancelled = true;
     wasCancelled();
     callback.complete();
@@ -104,18 +104,18 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
     getLogger().debug("was cancelled.");
   }
 
-  public final synchronized OperationState getState() {
+  public final OperationState getState() {
     return state;
   }
 
-  public final synchronized ByteBuffer getBuffer() {
+  public final ByteBuffer getBuffer() {
     return cmd;
   }
 
   /**
    * Set the write buffer for this operation.
    */
-  protected final synchronized void setBuffer(ByteBuffer to) {
+  protected final void setBuffer(ByteBuffer to) {
     assert to != null : "Trying to set buffer to null";
     cmd = to;
     cmd.mark();
@@ -124,7 +124,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
   /**
    * Transition the state of this operation to the given state.
    */
-  protected final synchronized void transitionState(OperationState newState) {
+  protected final void transitionState(OperationState newState) {
     getLogger().debug("Transitioned state from %s to %s", state, newState);
     state = newState;
     // Discard our buffer when we no longer need it.
@@ -133,6 +133,10 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
       cmd = null;
     }
     if (state == OperationState.COMPLETE) {
+      callback.complete();
+    }
+    if (state == OperationState.TIMEDOUT) {
+      cmd = null;
       callback.complete();
     }
   }
@@ -182,30 +186,28 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
   }
 
   @Override
-  public synchronized void timeOut() {
-    // TODO: WTF is this trying to assert?
+  public void timeOut() {
     assert (state != OperationState.READING || state
         != OperationState.COMPLETE);
+    this.transitionState(OperationState.TIMEDOUT);
     timedout = true;
-    callback.complete();
   }
 
   @Override
-  public synchronized boolean isTimedOut() {
+  public boolean isTimedOut() {
     return timedout;
   }
 
   @Override
-  public synchronized boolean isTimedOut(long ttlMillis) {
+  public boolean isTimedOut(long ttlMillis) {
     long elapsed = System.nanoTime();
     long ttlNanos = ttlMillis * 1000 * 1000;
     if (elapsed - creationTime > ttlNanos) {
-      // TODO: WTF is this trying to assert?
       assert (state != OperationState.READING || state
           != OperationState.COMPLETE);
+      this.transitionState(OperationState.TIMEDOUT);
       timedOutUnsent = true;
       timedout = true;
-      callback.complete();
     } else {
       // timedout would be false, but we cannot allow you to untimeout an
       // operation

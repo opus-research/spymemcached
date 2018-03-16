@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,51 +20,29 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
-import net.spy.memcached.vbucket.config.Config;
+package net.spy.memcached.vbucket;
 
 /**
- * Interface for locating a node by hash value.
+ * An unchecked exception that signals that a configuration error
+ * has occured while communicating with Membase.
  */
-public interface NodeLocator {
+public class ConfigurationException extends RuntimeException {
 
-  /**
-   * Get the primary location for the given key.
-   *
-   * @param k the object key
-   * @return the QueueAttachment containing the primary storage for a key
-   */
-  MemcachedNode getPrimary(String k);
+  private static final long serialVersionUID = -9180877058910807939L;
 
-  /**
-   * Get an iterator over the sequence of nodes that make up the backup
-   * locations for a given key.
-   *
-   * @param k the object key
-   * @return the sequence of backup nodes.
-   */
-  Iterator<MemcachedNode> getSequence(String k);
+  public ConfigurationException() {
+    super();
+  }
 
-  /**
-   * Get all memcached nodes. This is useful for broadcasting messages.
-   */
-  Collection<MemcachedNode> getAll();
+  public ConfigurationException(String message) {
+    super(message);
+  }
 
-  /**
-   * Create a read-only copy of this NodeLocator.
-   */
-  NodeLocator getReadonlyCopy();
+  public ConfigurationException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-  /**
-   * Update locator status.
-   *
-   * @param nodes New locator nodes.
-   * @param conf Locator configuration.
-   */
-  void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+  public ConfigurationException(Throwable cause) {
+    super(cause);
+  }
 }

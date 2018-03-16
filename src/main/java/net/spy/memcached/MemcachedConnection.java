@@ -32,11 +32,15 @@ import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationState;
+import net.spy.memcached.ops.VBucketAware;
+import net.spy.memcached.vbucket.VBucketNodeLocator;
+import net.spy.memcached.vbucket.Reconfigurable;
+import net.spy.memcached.vbucket.config.Bucket;
 
 /**
  * Connection to a cluster of memcached servers.
  */
-public final class MemcachedConnection extends SpyObject {
+public final class MemcachedConnection extends SpyObject implements Reconfigurable {
 
 	// The number of empty selects we'll allow before assuming we may have
 	// missed one and should check the current selectors.  This generally
@@ -56,6 +60,8 @@ public final class MemcachedConnection extends SpyObject {
 	// maximum amount of time to wait between reconnect attempts
 	private final long maxDelay;
 	private int emptySelects=0;
+    private final int bufSize;
+    private final ConnectionFactory connectionFactory;
 	// AddedQueue is used to track the QueueAttachments for which operations
 	// have recently been queued.
 	private final ConcurrentLinkedQueue<MemcachedNode> addedQueue;
@@ -67,6 +73,8 @@ public final class MemcachedConnection extends SpyObject {
 		new ConcurrentLinkedQueue<ConnectionObserver>();
 	private final OperationFactory opFact;
 	private final int timeoutExceptionThreshold;
+        private final Collection<Operation> retryOps;
+    private final ConcurrentLinkedQueue<MemcachedNode> nodesToShutdown;
 
 	/**
 	 * Construct a memcached connection.
@@ -90,13 +98,22 @@ public final class MemcachedConnection extends SpyObject {
 		opFact = opfactory;
 		timeoutExceptionThreshold = f.getTimeoutExceptionThreshold();
 		selector=Selector.open();
+                retryOps = new ArrayList<Operation>();
+        nodesToShutdown = new ConcurrentLinkedQueue<MemcachedNode>();
+        this.bufSize = bufSize;
+        this.connectionFactory = f;
+        List<MemcachedNode> connections = createConnections(a);
+        locator=f.createLocator(connections);
+	}
+    private List<MemcachedNode> createConnections(final Collection<InetSocketAddress> a)
+        throws IOException {
 		List<MemcachedNode> connections=new ArrayList<MemcachedNode>(a.size());
 		for(SocketAddress sa : a) {
 			SocketChannel ch=SocketChannel.open();
 			ch.configureBlocking(false);
-			MemcachedNode qa=f.createMemcachedNode(sa, ch, bufSize);
+            MemcachedNode qa=this.connectionFactory.createMemcachedNode(sa, ch, bufSize);
 			int ops=0;
-			ch.socket().setTcpNoDelay(!f.useNagleAlgorithm());
+            ch.socket().setTcpNoDelay(!this.connectionFactory.useNagleAlgorithm());
 			// Initially I had attempted to skirt this by queueing every
 			// connect, but it considerably slowed down start time.
 			try {
@@ -117,7 +134,69 @@ public final class MemcachedConnection extends SpyObject {
 			}
 			connections.add(qa);
 		}
-		locator=f.createLocator(connections);
+        return connections;
+    }
+
+    public void reconfigure(Bucket bucket) {
+        try {
+            if (!(this.locator instanceof VBucketNodeLocator)) {
+                return;
+            }
+
+            // get a new collection of addresses from the received config
+            List<String> servers = bucket.getVbuckets().getServers();
+            Collection<SocketAddress> newServerAddresses = new HashSet<SocketAddress>();
+            List<InetSocketAddress> newServers = new ArrayList<InetSocketAddress>();
+            for (String server : servers) {
+                int finalColon = server.lastIndexOf(':');
+                if (finalColon < 1) {
+                    throw new IllegalArgumentException("Invalid server ``"
+                            + server + "'' in vbucket's server list");
+
+                }
+                String hostPart = server.substring(0, finalColon);
+                String portNum = server.substring(finalColon + 1);
+
+                InetSocketAddress address = new InetSocketAddress(hostPart,
+                        Integer.parseInt(portNum));
+                // add parsed address to our collections
+                newServerAddresses.add(address);
+                newServers.add(address);
+
+            }
+
+            // split current nodes to "odd nodes" and "stay nodes"
+            Collection<MemcachedNode> oddNodes = new ArrayList<MemcachedNode>();
+            Collection<MemcachedNode> stayNodes = new ArrayList<MemcachedNode>();
+            Collection<InetSocketAddress> stayServers = new ArrayList<InetSocketAddress>();
+            for (MemcachedNode current : this.locator.getAll()) {
+                if (newServerAddresses.contains(current.getSocketAddress())) {
+                    stayNodes.add(current);
+                    stayServers.add((InetSocketAddress) current.getSocketAddress());
+                } else {
+                    oddNodes.add(current);
+                }
+            }
+
+            // prepare a collection of addresses for new nodes
+            newServers.removeAll(stayServers);
+
+            // create a collection of new nodes
+            List<MemcachedNode> newNodes = createConnections(newServers);
+
+            // merge stay nodes with new nodes
+            List<MemcachedNode> mergedNodes = new ArrayList<MemcachedNode>();
+            mergedNodes.addAll(stayNodes);
+            mergedNodes.addAll(newNodes);
+
+            // call update locator with new nodes list and vbucket config
+            ((VBucketNodeLocator) this.locator).updateLocator(mergedNodes, bucket.getVbuckets());
+
+            // schedule shutdown for the oddNodes
+            nodesToShutdown.addAll(oddNodes);
+        } catch (IOException e) {
+            getLogger().error("Connection reconfiguration failed", e);
+        }
 	}
 
 	private boolean selectorsMakeSense() {
@@ -216,6 +295,28 @@ public final class MemcachedConnection extends SpyObject {
 		if(!shutDown && !reconnectQueue.isEmpty()) {
 			attemptReconnects();
 		}
+        // rehash operations that in retry state
+        redistributeOperations(retryOps);
+        retryOps.clear();
+
+        // try to shutdown odd nodes
+        for (MemcachedNode qa : nodesToShutdown) {
+            if (!addedQueue.contains(qa)) {
+                nodesToShutdown.remove(qa);
+                Collection<Operation> notCompletedOperations = qa.destroyInputQueue();
+                if (qa.getChannel() != null) {
+                    qa.getChannel().close();
+                    qa.setSk(null);
+                    if (qa.getBytesRemainingToWrite() > 0) {
+                        getLogger().warn(
+                                "Shut down with %d bytes remaining to write",
+                                qa.getBytesRemainingToWrite());
+                    }
+                    getLogger().debug("Shut down channel %s", qa.getChannel());
+                }
+                redistributeOperations(notCompletedOperations);
+            }
+        }
 	}
 
 	// Handle any requests that have been made against the client.
@@ -398,6 +499,17 @@ public final class MemcachedConnection extends SpyObject {
 					assert op == currentOp
 					: "Expected to pop " + currentOp + " got " + op;
 					currentOp=qa.getCurrentReadOp();
+				} else if (currentOp.getState() == OperationState.RETRY) {
+                    getLogger().debug(
+                            "Reschedule read op due to NOT_MY_VBUCKET error: %s ",
+                            currentOp);
+                    ((VBucketAware) currentOp).addNotMyVbucketNode(currentOp.getHandlingNode());
+                    Operation op=qa.removeCurrentReadOp();
+                    assert op == currentOp
+                    : "Expected to pop " + currentOp + " got " + op;
+                    retryOps.add(currentOp);
+                    currentOp=qa.getCurrentReadOp();
+
 				}
 			}
 			rbuf.clear();
@@ -586,6 +698,22 @@ public final class MemcachedConnection extends SpyObject {
 		assert o.isCancelled() || placeIn != null
 			: "No node found for key " + key;
 		if(placeIn != null) {
+            // add the vbucketIndex to the operation
+            if (locator instanceof VBucketNodeLocator) {
+                VBucketNodeLocator vbucketLocator = (VBucketNodeLocator) locator;
+                int vbucketIndex = vbucketLocator.getVBucketIndex(key);
+                if (o instanceof VBucketAware) {
+                    VBucketAware vbucketAwareOp = (VBucketAware) o;
+                    vbucketAwareOp.setVBucket(vbucketIndex);
+                    if (!vbucketAwareOp.getNotMyVbucketNodes().isEmpty()) {
+                        MemcachedNode alternative = vbucketLocator.
+                                getAlternative(key, vbucketAwareOp.getNotMyVbucketNodes());
+                        if (alternative != null) {
+                            placeIn = alternative;
+                        }
+                    }
+                }
+            }
 			addOperation(placeIn, o);
 		} else {
 			assert o.isCancelled() : "No not found for "

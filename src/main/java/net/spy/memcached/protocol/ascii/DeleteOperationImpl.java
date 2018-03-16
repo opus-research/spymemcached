@@ -52,8 +52,4 @@ final class DeleteOperationImpl extends OperationImpl
 		return Collections.singleton(key);
 	}
 
-	@Override
-	public String toString() {
-		return "Cmd: delete Key: " + key;
-	}
 }

@@ -24,11 +24,11 @@ import net.spy.memcached.util.KetamaNodeLocatorConfiguration;
 public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 
 
-	private volatile TreeMap<Long, MemcachedNode> ketamaNodes;
+	final SortedMap<Long, MemcachedNode> ketamaNodes;
 	final Collection<MemcachedNode> allNodes;
 
 	final HashAlgorithm hashAlg;
-	final KetamaNodeLocatorConfiguration config;
+    final KetamaNodeLocatorConfiguration config;
 
 
 	public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg) {
@@ -39,13 +39,35 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 		super();
 		allNodes = nodes;
 		hashAlg = alg;
-		config = conf;
+		ketamaNodes=new TreeMap<Long, MemcachedNode>();
+        config= conf;
 
-		setKetamaNodes(nodes);
+        int numReps= config.getNodeRepetitions();
+		for(MemcachedNode node : nodes) {
+			// Ketama does some special work with md5 where it reuses chunks.
+			if(alg == HashAlgorithm.KETAMA_HASH) {
+				for(int i=0; i<numReps / 4; i++) {
+					byte[] digest=HashAlgorithm.computeMd5(config.getKeyForNode(node, i));
+					for(int h=0;h<4;h++) {
+						Long k = ((long)(digest[3+h*4]&0xFF) << 24)
+							| ((long)(digest[2+h*4]&0xFF) << 16)
+							| ((long)(digest[1+h*4]&0xFF) << 8)
+							| (digest[h*4]&0xFF);
+						ketamaNodes.put(k, node);
+					}
 
+				}
+			} else {
+				for(int i=0; i<numReps; i++) {
+
+					ketamaNodes.put(hashAlg.hash(config.getKeyForNode(node, i)), node);
+				}
+			}
+		}
+		assert ketamaNodes.size() == numReps * nodes.size();
     }
 
-	private KetamaNodeLocator(TreeMap<Long, MemcachedNode> smn,
+	private KetamaNodeLocator(SortedMap<Long, MemcachedNode> smn,
 			Collection<MemcachedNode> an, HashAlgorithm alg, KetamaNodeLocatorConfiguration conf) {
 		super();
 		ketamaNodes=smn;
@@ -65,7 +87,7 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 	}
 
 	long getMaxKey() {
-		return getKetamaNodes().lastKey();
+		return ketamaNodes.lastKey();
 	}
 
 	MemcachedNode getNodeForKey(long hash) {
@@ -73,24 +95,24 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 		if(!ketamaNodes.containsKey(hash)) {
 			// Java 1.6 adds a ceilingKey method, but I'm still stuck in 1.5
 			// in a lot of places, so I'm doing this myself.
-			SortedMap<Long, MemcachedNode> tailMap=getKetamaNodes().tailMap(hash);
+			SortedMap<Long, MemcachedNode> tailMap=ketamaNodes.tailMap(hash);
 			if(tailMap.isEmpty()) {
-				hash=getKetamaNodes().firstKey();
+				hash=ketamaNodes.firstKey();
 			} else {
 				hash=tailMap.firstKey();
 			}
 		}
-		rv=getKetamaNodes().get(hash);
+		rv=ketamaNodes.get(hash);
 		return rv;
 	}
 
 	public Iterator<MemcachedNode> getSequence(String k) {
-		return new KetamaIterator(k, allNodes.size(), getKetamaNodes(), hashAlg);
+		return new KetamaIterator(k, allNodes.size());
 	}
 
 	public NodeLocator getReadonlyCopy() {
-		TreeMap<Long, MemcachedNode> smn=new TreeMap<Long, MemcachedNode>(
-			getKetamaNodes());
+		SortedMap<Long, MemcachedNode> smn=new TreeMap<Long, MemcachedNode>(
+			ketamaNodes);
 		Collection<MemcachedNode> an=
 			new ArrayList<MemcachedNode>(allNodes.size());
 
@@ -106,40 +128,44 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 		return new KetamaNodeLocator(smn, an, hashAlg, config);
 	}
 
-    /**
-     * @return the ketamaNodes
-     */
-    protected TreeMap<Long, MemcachedNode> getKetamaNodes() {
-	return ketamaNodes;
-    }
+	class KetamaIterator implements Iterator<MemcachedNode> {
 
-    protected void setKetamaNodes(List<MemcachedNode> nodes) {
-	TreeMap<Long, MemcachedNode> newNodeMap = new TreeMap<Long, MemcachedNode>();
-	int numReps= config.getNodeRepetitions();
-	for(MemcachedNode node : nodes) {
-		// Ketama does some special work with md5 where it reuses chunks.
-		if(hashAlg == HashAlgorithm.KETAMA_HASH) {
-			for(int i=0; i<numReps / 4; i++) {
-				byte[] digest=HashAlgorithm.computeMd5(config.getKeyForNode(node, i));
-				for(int h=0;h<4;h++) {
-					Long k = ((long)(digest[3+h*4]&0xFF) << 24)
-						| ((long)(digest[2+h*4]&0xFF) << 16)
-						| ((long)(digest[1+h*4]&0xFF) << 8)
-						| (digest[h*4]&0xFF);
-					newNodeMap.put(k, node);
-					getLogger().debug("Adding node %s in position %d", node, k);
-				}
+		final String key;
+		long hashVal;
+		int remainingTries;
+		int numTries=0;
 
-			}
-		} else {
-			for(int i=0; i<numReps; i++) {
-				newNodeMap.put(hashAlg.hash(config.getKeyForNode(node, i)), node);
+		public KetamaIterator(final String k, final int t) {
+			super();
+			hashVal=hashAlg.hash(k);
+			remainingTries=t;
+			key=k;
+		}
+
+		private void nextHash() {
+			// this.calculateHash(Integer.toString(tries)+key).hashCode();
+			long tmpKey=hashAlg.hash((numTries++) + key);
+			// This echos the implementation of Long.hashCode()
+			hashVal += (int)(tmpKey ^ (tmpKey >>> 32));
+			hashVal &= 0xffffffffL; /* truncate to 32-bits */
+			remainingTries--;
+		}
+
+		public boolean hasNext() {
+			return remainingTries > 0;
+		}
+
+		public MemcachedNode next() {
+			try {
+				return getNodeForKey(hashVal);
+			} finally {
+				nextHash();
 			}
 		}
+
+		public void remove() {
+			throw new UnsupportedOperationException("remove not supported");
+		}
+
 	}
-	assert newNodeMap.size() == numReps * nodes.size();
-	ketamaNodes = newNodeMap;
-
-    }
-
 }

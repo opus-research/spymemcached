@@ -55,7 +55,6 @@ import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.ops.TapOperation;
-import net.spy.memcached.ops.UnlockOperation;
 import net.spy.memcached.ops.VersionOperation;
 import net.spy.memcached.tapmessage.RequestMessage;
 import net.spy.memcached.tapmessage.TapOpcode;
@@ -70,10 +69,6 @@ public class BinaryOperationFactory extends BaseOperationFactory {
     return new DeleteOperationImpl(key, operationCallback);
   }
 
-  public UnlockOperation unlock(String key, long casId,
-          OperationCallback cb) {
-    return new UnlockOperationImpl(key, casId, cb);
-  }
   public FlushOperation flush(int delay, OperationCallback cb) {
     return new FlushOperationImpl(cb);
   }

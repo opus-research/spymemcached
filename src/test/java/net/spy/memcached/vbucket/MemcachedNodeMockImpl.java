@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.vbucket;
 
 import net.spy.memcached.MemcachedNode;
@@ -17,129 +11,128 @@ import java.net.SocketAddress;
 import java.io.IOException;
 
 /**
- * A MemcachedNodeMockImpl.
+ * @author alexander.sokolovsky.a@gmail.com
  */
 public class MemcachedNodeMockImpl implements MemcachedNode {
-  private SocketAddress socketAddress;
+    private SocketAddress socketAddress;
+    public void addOp(Operation op) {
+    }
 
-  public void addOp(Operation op) {
-  }
+    public void authComplete() {
+    }
 
-  public void authComplete() {
-  }
+    public void connected() {
+    }
 
-  public void connected() {
-  }
+    public void copyInputQueue() {
+    }
 
-  public void copyInputQueue() {
-  }
+    public Collection<Operation> destroyInputQueue() {
+        return null;
+    }
 
-  public Collection<Operation> destroyInputQueue() {
-    return null;
-  }
+    public void fillWriteBuffer(boolean optimizeGets) {
+    }
 
-  public void fillWriteBuffer(boolean optimizeGets) {
-  }
+    public void fixupOps() {
+    }
 
-  public void fixupOps() {
-  }
+    public int getBytesRemainingToWrite() {
+        return 0;
+    }
 
-  public int getBytesRemainingToWrite() {
-    return 0;
-  }
+    public SocketChannel getChannel() {
+        return null;
+    }
 
-  public SocketChannel getChannel() {
-    return null;
-  }
+    public int getContinuousTimeout() {
+        return 0;
+    }
 
-  public int getContinuousTimeout() {
-    return 0;
-  }
+    public Operation getCurrentReadOp() {
+        return null;
+    }
 
-  public Operation getCurrentReadOp() {
-    return null;
-  }
+    public Operation getCurrentWriteOp() {
+        return null;
+    }
 
-  public Operation getCurrentWriteOp() {
-    return null;
-  }
+    public ByteBuffer getRbuf() {
+        return null;
+    }
 
-  public ByteBuffer getRbuf() {
-    return null;
-  }
+    public int getReconnectCount() {
+        return 0;
+    }
 
-  public int getReconnectCount() {
-    return 0;
-  }
+    public int getSelectionOps() {
+        return 0;
+    }
 
-  public int getSelectionOps() {
-    return 0;
-  }
+    public SelectionKey getSk() {
+        return null;
+    }
 
-  public SelectionKey getSk() {
-    return null;
-  }
+    public SocketAddress getSocketAddress() {
+        return socketAddress;
+    }
 
-  public SocketAddress getSocketAddress() {
-    return socketAddress;
-  }
+    public ByteBuffer getWbuf() {
+        return null;
+    }
 
-  public ByteBuffer getWbuf() {
-    return null;
-  }
+    public boolean hasReadOp() {
+        return true;
+    }
 
-  public boolean hasReadOp() {
-    return true;
-  }
+    public boolean hasWriteOp() {
+        return true;
+    }
 
-  public boolean hasWriteOp() {
-    return true;
-  }
+    public void insertOp(Operation o) {
+    }
 
-  public void insertOp(Operation o) {
-  }
+    public boolean isActive() {
+        return true;
+    }
 
-  public boolean isActive() {
-    return true;
-  }
+    public void reconnecting() {
+    }
 
-  public void reconnecting() {
-  }
+    public void registerChannel(SocketChannel ch, SelectionKey selectionKey) {
+    }
 
-  public void registerChannel(SocketChannel ch, SelectionKey selectionKey) {
-  }
+    public Operation removeCurrentReadOp() {
+        return null;
+    }
 
-  public Operation removeCurrentReadOp() {
-    return null;
-  }
+    public Operation removeCurrentWriteOp() {
+        return null;
+    }
 
-  public Operation removeCurrentWriteOp() {
-    return null;
-  }
+    public void setChannel(SocketChannel to) {
+    }
 
-  public void setChannel(SocketChannel to) {
-  }
+    public void setContinuousTimeout(boolean timedOut) {
+    }
 
-  public void setContinuousTimeout(boolean timedOut) {
-  }
+    public void setSk(SelectionKey to) {
+    }
 
-  public void setSk(SelectionKey to) {
-  }
+    public void setupForAuth() {
+    }
 
-  public void setupForAuth() {
-  }
+    public void setupResend() {
+    }
 
-  public void setupResend() {
-  }
+    public void transitionWriteItem() {
+    }
 
-  public void transitionWriteItem() {
-  }
+    public int writeSome() throws IOException {
+        return 0;
+    }
 
-  public int writeSome() throws IOException {
-    return 0;
-  }
-
-  public void setSocketAddress(SocketAddress newSocketAddress) {
-    this.socketAddress = newSocketAddress;
-  }
+    public void setSocketAddress(SocketAddress socketAddress) {
+        this.socketAddress = socketAddress;
+    }
 }

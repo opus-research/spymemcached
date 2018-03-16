@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.internal;
 
 import java.util.Collection;
@@ -18,49 +12,49 @@ import net.spy.memcached.ops.Operation;
  */
 public class CheckedOperationTimeoutException extends TimeoutException {
 
-  private static final long serialVersionUID = 139074906690883031L;
+	private static final long serialVersionUID = 139074906690883031L;
 
-  private final Collection<Operation> operations;
+	private final Collection<Operation> operations;
 
-  /**
-   * Construct a CheckedOperationTimeoutException with the given message and
-   * operation.
-   *
-   * @param message the message
-   * @param op the operation that timed out
-   */
-  public CheckedOperationTimeoutException(String message, Operation op) {
-    this(message, Collections.singleton(op));
-  }
+	/**
+	 * Construct a CheckedOperationTimeoutException with the given message
+	 * and operation.
+	 *
+	 * @param message the message
+	 * @param op the operation that timed out
+	 */
+	public CheckedOperationTimeoutException(String message, Operation op) {
+		this(message, Collections.singleton(op));
+	}
 
-  public CheckedOperationTimeoutException(String message,
-      Collection<Operation> ops) {
-    super(createMessage(message, ops));
-    operations = ops;
-  }
+	public CheckedOperationTimeoutException(String message,
+			Collection<Operation> ops) {
+		super(createMessage(message, ops));
+		operations = ops;
+	}
 
-  private static String
-  createMessage(String message, Collection<Operation> ops) {
-    StringBuilder rv = new StringBuilder(message);
-    rv.append(" - failing node");
-    rv.append(ops.size() == 1 ? ": " : "s: ");
-    boolean first = true;
-    for (Operation op : ops) {
-      if (first) {
-        first = false;
-      } else {
-        rv.append(", ");
-      }
-      MemcachedNode node = op == null ? null : op.getHandlingNode();
-      rv.append(node == null ? "<unknown>" : node.getSocketAddress());
-    }
-    return rv.toString();
-  }
+	private static String createMessage(String message,
+			Collection<Operation> ops) {
+		StringBuilder rv = new StringBuilder(message);
+		rv.append(" - failing node");
+		rv.append(ops.size() == 1 ? ": " : "s: ");
+		boolean first = true;
+		for(Operation op : ops) {
+			if(first) {
+				first = false;
+			} else {
+				rv.append(", ");
+			}
+			MemcachedNode node = op == null ? null : op.getHandlingNode();
+			rv.append(node == null ? "<unknown>" : node.getSocketAddress());
+		}
+		return rv.toString();
+	}
 
-  /**
-   * Get the operation that timed out.
-   */
-  public Collection<Operation> getOperations() {
-    return operations;
-  }
+	/**
+	 * Get the operation that timed out.
+	 */
+	public Collection<Operation> getOperations() {
+		return operations;
+	}
 }

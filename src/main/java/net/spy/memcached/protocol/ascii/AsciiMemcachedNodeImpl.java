@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.protocol.ascii;
 
 import java.net.SocketAddress;
@@ -21,38 +15,38 @@ import net.spy.memcached.protocol.TCPMemcachedNodeImpl;
  */
 public final class AsciiMemcachedNodeImpl extends TCPMemcachedNodeImpl {
 
-  public AsciiMemcachedNodeImpl(SocketAddress sa, SocketChannel c, int bufSize,
-      BlockingQueue<Operation> rq, BlockingQueue<Operation> wq,
-      BlockingQueue<Operation> iq, Long opQueueMaxBlockTimeNs, long dt) {
-    // ASCII never does auth
-    super(sa, c, bufSize, rq, wq, iq, opQueueMaxBlockTimeNs, false, dt);
-  }
+	public AsciiMemcachedNodeImpl(SocketAddress sa, SocketChannel c,
+			int bufSize, BlockingQueue<Operation> rq,
+			BlockingQueue<Operation> wq, BlockingQueue<Operation> iq, Long opQueueMaxBlockTimeNs, long dt) {
+		super(sa, c, bufSize, rq, wq, iq, opQueueMaxBlockTimeNs, false, dt); /* ascii never does auth */
+	}
 
-  @Override
-  protected void optimize() {
-    // make sure there are at least two get operations in a row before
-    // attempting to optimize them.
-    if (writeQ.peek() instanceof GetOperation) {
-      optimizedOp = writeQ.remove();
-      if (writeQ.peek() instanceof GetOperation) {
-        OptimizedGetImpl og = new OptimizedGetImpl((GetOperation) optimizedOp);
-        optimizedOp = og;
+	@Override
+	protected void optimize() {
+		// make sure there are at least two get operations in a row before
+		// attempting to optimize them.
+		if(writeQ.peek() instanceof GetOperation) {
+			optimizedOp=writeQ.remove();
+			if(writeQ.peek() instanceof GetOperation) {
+				OptimizedGetImpl og=new OptimizedGetImpl(
+						(GetOperation)optimizedOp);
+				optimizedOp=og;
 
-        while (writeQ.peek() instanceof GetOperation) {
-          GetOperationImpl o = (GetOperationImpl) writeQ.remove();
-          if (!o.isCancelled()) {
-            og.addOperation(o);
-          }
-        }
+				while(writeQ.peek() instanceof GetOperation) {
+					GetOperationImpl o=(GetOperationImpl) writeQ.remove();
+					if(!o.isCancelled()) {
+						og.addOperation(o);
+					}
+				}
 
-        // Initialize the new mega get
-        optimizedOp.initialize();
-        assert optimizedOp.getState() == OperationState.WRITING;
-        ProxyCallback pcb = (ProxyCallback) og.getCallback();
-        getLogger().debug("Set up %s with %s keys and %s callbacks", this,
-            pcb.numKeys(), pcb.numCallbacks());
-      }
-    }
-  }
+				// Initialize the new mega get
+				optimizedOp.initialize();
+				assert optimizedOp.getState() == OperationState.WRITING;
+				ProxyCallback pcb=(ProxyCallback) og.getCallback();
+				getLogger().debug("Set up %s with %s keys and %s callbacks",
+					this, pcb.numKeys(), pcb.numCallbacks());
+			}
+		}
+	}
 
 }

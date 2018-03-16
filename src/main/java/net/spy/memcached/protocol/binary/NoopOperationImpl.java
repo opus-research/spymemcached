@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.protocol.binary;
 
 import net.spy.memcached.ops.NoopOperation;
@@ -14,14 +8,15 @@ import net.spy.memcached.ops.OperationCallback;
  */
 class NoopOperationImpl extends OperationImpl implements NoopOperation {
 
-  static final int CMD = 0x0a;
+	static final int CMD=0x0a;
 
-  public NoopOperationImpl(OperationCallback cb) {
-    super(CMD, generateOpaque(), cb);
-  }
+	public NoopOperationImpl(OperationCallback cb) {
+		super(CMD, generateOpaque(), cb);
+	}
 
-  @Override
-  public void initialize() {
-    prepareBuffer("", 0, EMPTY_BYTES);
-  }
+	@Override
+	public void initialize() {
+		prepareBuffer("", 0, EMPTY_BYTES);
+	}
+
 }

@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.test;
 
 import java.util.Random;
@@ -21,46 +15,42 @@ import net.spy.memcached.ops.OperationException;
  *
  * memcached -U 11200 -p 11200 -m 32 -M
  */
-public final class MemoryFullTest {
+public class MemoryFullTest {
 
-  private MemoryFullTest() {
-    // Empty
-  }
+	public static void main(String args[]) throws Exception {
+		// Verify assertions
+		try {
+			assert false;
+			throw new RuntimeException("Assertions not enabled.");
+		} catch(AssertionError e) {
+			// OK
+		}
 
-  public static void main(String[] args) throws Exception {
-    // Verify assertions
-    try {
-      assert false;
-      throw new RuntimeException("Assertions not enabled.");
-    } catch (AssertionError e) {
-      // OK
-    }
-
-    MemcachedClient c =
-        new MemcachedClient(AddrUtil.getAddresses("localhost:11200"));
-    boolean success = false;
-    Random r = new Random();
-    byte[] somebytes = new byte[71849];
-    r.nextBytes(somebytes);
-    try {
-      for (int i = 0; i < 100000; i++) {
-        c.set("k" + i, 3600, somebytes).get();
-      }
-    } catch (ExecutionException e) {
-      assert e.getCause() instanceof OperationException;
-      OperationException oe = (OperationException) e.getCause();
-      assert oe.getType() == OperationErrorType.SERVER;
-      assert oe.getMessage()
-          .equals("SERVER_ERROR out of memory storing object");
-      success = true;
-    } finally {
-      c.shutdown();
-    }
-    if (success) {
-      System.out.println(":) Failed as expected.");
-    } else {
-      System.out.println(":( Unexpected failure.");
-    }
-  }
+		MemcachedClient c=new MemcachedClient(
+			AddrUtil.getAddresses("localhost:11200"));
+		boolean success=false;
+		Random r = new Random();
+		byte[] somebytes = new byte[71849];
+		r.nextBytes(somebytes);
+		try {
+			for(int i=0; i<100000; i++) {
+				c.set("k" + i, 3600, somebytes).get();
+			}
+		} catch(ExecutionException e) {
+			assert e.getCause() instanceof OperationException;
+			OperationException oe = (OperationException)e.getCause();
+			assert oe.getType() == OperationErrorType.SERVER;
+			assert oe.getMessage().equals(
+				"SERVER_ERROR out of memory storing object");
+			success=true;
+		} finally {
+			c.shutdown();
+		}
+		if(success) {
+			System.out.println(":) Failed as expected.");
+		} else {
+			System.out.println(":( Unexpected failure.");
+		}
+	}
 
 }

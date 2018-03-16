@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached;
 
 /**
@@ -11,14 +5,14 @@ package net.spy.memcached;
  */
 public class BinaryCancellationTest extends CancellationBaseCase {
 
-  @Override
-  protected void initClient() throws Exception {
-    initClient(new BinaryConnectionFactory() {
-      @Override
-      public FailureMode getFailureMode() {
-        return FailureMode.Retry;
-      }
-    });
-  }
+	@Override
+	protected void initClient() throws Exception {
+		initClient(new BinaryConnectionFactory() {
+			@Override
+			public FailureMode getFailureMode() {
+				return FailureMode.Retry;
+			}
+		});
+	}
 
 }

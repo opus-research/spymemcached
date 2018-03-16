@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.spring;
 
 import junit.framework.Assert;
@@ -32,25 +26,20 @@ public class MemcachedClientFactoryBeanTest extends TestCase {
     factory.setFailureMode(FailureMode.Cancel);
     factory.setHashAlg(HashAlgorithm.CRC32_HASH);
     factory.setProtocol(Protocol.BINARY);
-    factory.setServers(TestConfig.IPV4_ADDR + ":22211 " + TestConfig.IPV4_ADDR
-        + ":22212");
+    factory.setServers(TestConfig.IPV4_ADDR + ":22211 " + TestConfig.IPV4_ADDR + ":22212");
     factory.setShouldOptimize(true);
     final Transcoder<Object> transcoder = new SerializingTranscoder();
     factory.setTranscoder(transcoder);
 
-    final MemcachedClient memcachedClient =
-        (MemcachedClient) factory.getObject();
+    final MemcachedClient memcachedClient = (MemcachedClient)factory.getObject();
 
-    Assert.assertEquals("servers", 2, memcachedClient.getUnavailableServers()
-        .size());
-    Assert
-        .assertSame("transcoder", transcoder, memcachedClient.getTranscoder());
+    Assert.assertEquals("servers", 2, memcachedClient.getUnavailableServers().size());
+    Assert.assertSame("transcoder", transcoder, memcachedClient.getTranscoder());
   }
 
   @Test
   public void testGetObjectType() {
-    Assert.assertEquals("object type", MemcachedClient.class,
-        new MemcachedClientFactoryBean().getObjectType());
+    Assert.assertEquals("object type", MemcachedClient.class, new MemcachedClientFactoryBean().getObjectType());
   }
 
 }

@@ -80,7 +80,7 @@ public class ResponseMessage extends BaseMessage {
     }
 
     if (opcode.equals(TapOpcode.MUTATION)) {
-      itemflags = decodeInt(b, ITEM_FLAGS_OFFSET);
+      itemflags = decodeIntHostOrder(b, ITEM_FLAGS_OFFSET);
       itemexpiry = decodeInt(b, ITEM_EXPIRY_OFFSET);
       vbucketstate = 0;
       revid = new byte[engineprivate];

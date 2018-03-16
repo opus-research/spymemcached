@@ -109,16 +109,7 @@ class StoreOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString());
-    sb.append(" Cas: ");
-    sb.append(cas);
-    sb.append(" Exp: ");
-    sb.append(exp);
-    sb.append(" Flags: ");
-    sb.append(flags);
-    sb.append(" Data: ");
-    sb.append(new String(data));
-    return sb.toString();
+    return super.toString() + " Cas: " + cas + " Exp: " + exp + " Flags: "
+      + flags + " Data Length: " + data.length;
   }
 }

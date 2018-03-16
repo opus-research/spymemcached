@@ -30,7 +30,7 @@ public class TimeoutNowriteTest extends ClientBaseCase {
 			public FailureMode getFailureMode() {
 				return FailureMode.Retry;
 			}},
-			AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":11211"));
+			AddrUtil.getAddresses("127.0.0.1:11211"));
 	}
 
 	public void testTimeoutDontwrite() {
@@ -65,7 +65,7 @@ public class TimeoutNowriteTest extends ClientBaseCase {
 	System.err.println(op);
 	System.err.println("Trying to get:");
 	try {
-		byte[] retVal = (byte[])client.get("x");
+		client.get("x");
 		String retValString = new String();
 		System.err.println(retValString);
 	}

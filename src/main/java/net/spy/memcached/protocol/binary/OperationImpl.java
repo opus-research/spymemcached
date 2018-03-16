@@ -62,6 +62,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 	protected long responseCas;
 
 	private int payloadOffset=0;
+        private boolean timedout;
 
 	/**
 	 * Construct with opaque.
@@ -293,4 +294,14 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 		}
 		return rv;
 	}
+
+        @Override
+        public void timedOut() {
+            timedout = true;
+        }
+
+        @Override
+        public boolean isTimedOut() {
+            return timedout;
+        }
 }

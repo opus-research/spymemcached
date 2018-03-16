@@ -89,8 +89,7 @@ public class ConnectionFactoryBuilderTest extends BaseMockCase {
     SocketChannel sc = SocketChannel.open();
     try {
       assertTrue(f.createMemcachedNode(
-          InetSocketAddress.createUnresolved("localhost",
-              TestConfig.PORT_NUMBER), sc, 1)
+          InetSocketAddress.createUnresolved("localhost", 11211), sc, 1)
           instanceof AsciiMemcachedNodeImpl);
     } finally {
       sc.close();
@@ -154,16 +153,14 @@ public class ConnectionFactoryBuilderTest extends BaseMockCase {
     assertSame(anAuthDescriptor, f.getAuthDescriptor());
 
     MemcachedNode n = new MockMemcachedNode(
-        InetSocketAddress.createUnresolved("localhost",
-            TestConfig.PORT_NUMBER));
+        InetSocketAddress.createUnresolved("localhost", 11211));
     assertTrue(f.createLocator(Collections.singletonList(n))
         instanceof KetamaNodeLocator);
 
     SocketChannel sc = SocketChannel.open();
     try {
       assertTrue(f.createMemcachedNode(
-          InetSocketAddress.createUnresolved("localhost",
-              TestConfig.PORT_NUMBER), sc, 1)
+          InetSocketAddress.createUnresolved("localhost", 11211), sc, 1)
           instanceof BinaryMemcachedNodeImpl);
     } finally {
       sc.close();

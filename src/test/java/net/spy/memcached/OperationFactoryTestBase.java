@@ -22,11 +22,9 @@
 
 package net.spy.memcached;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.ConcatenationOperation;
@@ -43,6 +41,7 @@ import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
 
+import net.spy.memcached.protocol.GetCallbackWrapper;
 import org.jmock.Mock;
 import org.jmock.MockObjectTestCase;
 
@@ -273,6 +272,34 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
       cb.receivedStatus(st);
       cb.complete();
     }
+  }
+
+  public void testNotGrowingCallstack() throws Exception {
+    final CountDownLatch latch = new CountDownLatch(1);
+    GetOperation.Callback cb = new GetOperation.Callback() {
+      @Override
+      public void receivedStatus(OperationStatus status) {
+      }
+
+      @Override
+      public void complete() {
+        latch.countDown();
+      }
+
+      @Override
+      public void gotData(String key, int flags, byte[] data) {
+      }
+    };
+
+    GetOperation operation = ofact.get("key", cb);
+    int nestingDepth = 10000000;
+    for (int i = 0; i < nestingDepth; i++) {
+      List<Operation> clonedOps = (List<Operation>) ofact.clone(operation);
+      operation = (GetOperation) clonedOps.get(0);
+    }
+
+    operation.getCallback().complete();
+    assertTrue(latch.await(1, TimeUnit.SECONDS));
   }
 
   protected void assertKey(KeyedOperation op) {

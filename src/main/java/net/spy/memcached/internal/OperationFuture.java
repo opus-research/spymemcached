@@ -59,9 +59,8 @@ public class OperationFuture<T> implements Future<T> {
 		if(!latch.await(duration, units)) {
 			// whenever timeout occurs, continuous timeout counter will increase by 1.
 			MemcachedConnection.opTimedOut(op);
-			if (op != null) { // op can be null on a flush
-				op.timeOut();
-			}
+			if (op != null) // op can be null on a flush
+				op.timedOut();
 			throw new CheckedOperationTimeoutException(
 					"Timed out waiting for operation", op);
 		} else {
@@ -75,7 +74,7 @@ public class OperationFuture<T> implements Future<T> {
 			throw new ExecutionException(new RuntimeException("Cancelled"));
 		}
                 if(op.isTimedOut()) {
-                        throw new ExecutionException(new CheckedOperationTimeoutException("Operation timed out.", op));
+                        throw new ExecutionException(new RuntimeException("Operation timed out."));
                 }
 
 		return objRef.get();

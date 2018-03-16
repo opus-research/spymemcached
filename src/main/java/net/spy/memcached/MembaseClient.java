@@ -19,7 +19,7 @@ import net.spy.memcached.vbucket.config.Bucket;
 
 public class MembaseClient extends MemcachedClient implements MembaseClientIF, Reconfigurable {
 
-	protected volatile boolean reconfiguring = false;
+	private volatile boolean reconfiguring = false;
 
 	/**
 	 * Get a MemcachedClient based on the REST response from a Membase server.

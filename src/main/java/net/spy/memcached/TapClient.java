@@ -50,7 +50,7 @@ import net.spy.memcached.tapmessage.TapStream;
  */
 public class TapClient {
   protected BlockingQueue<Object> rqueue;
-  protected final HashMap<TapStream, TapConnectionProvider> omap;
+  protected HashMap<TapStream, TapConnectionProvider> omap;
   protected long messagesRead;
   private List<InetSocketAddress> addrs;
 

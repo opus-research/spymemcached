@@ -50,9 +50,4 @@ public class SASLAuthOperationImpl extends SASLBaseOperationImpl implements
     return sc.hasInitialResponse() ? sc.evaluateChallenge(challenge)
         : EMPTY_BYTES;
   }
-
-  @Override
-  public String toString() {
-    return "SASL auth operation";
-  }
 }

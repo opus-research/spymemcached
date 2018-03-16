@@ -22,6 +22,7 @@
 
 package net.spy.memcached;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import junit.framework.TestCase;
@@ -36,5 +37,29 @@ public class MemcachedConnectionTest extends TestCase {
     ByteBuffer bb = ByteBuffer.wrap(input.getBytes());
     String s = MemcachedConnection.dbgBuffer(bb, input.length());
     assertEquals("this is a test \\x5f", s);
+  }
+  
+  /**
+   * Verifies that every exception is handled in the IO thread
+   * in a safe way and operation can continue no matter what.
+   */
+  public void testSafeExceptionHandling() throws IOException {
+    MockDefaultConnectionFactory cf = new MockDefaultConnectionFactory();
+	MemcachedClient client = new MemcachedClient(cf, AddrUtil.getAddresses(TestConfig.IPV4_ADDR
+	           + ":" + TestConfig.PORT_NUMBER));
+	 
+	  
+    client.set("key1", 0, 1);
+    assertEquals(1, client.get("key1"));
+
+    client.set("key2", 0, 2);
+    assertEquals(2, client.get("key2"));
+
+    // throws
+    client.set("key3", 0, 3);
+    assertEquals(3, client.get("key3"));
+  
+    client.set("key4", 0, 4);
+    assertEquals(4, client.get("key4"));
   }
 }

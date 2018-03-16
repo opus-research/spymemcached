@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.protocol.binary;
 
 import net.spy.memcached.ops.OperationCallback;
@@ -13,17 +7,17 @@ import net.spy.memcached.ops.OperationCallback;
  */
 public class TouchOperationImpl extends SingleKeyOperationImpl {
 
-  static final int CMD = 0x1c;
+	static final int CMD=0x1c;
 
-  private final int exp;
+	private final int exp;
 
-  protected TouchOperationImpl(String k, int e, OperationCallback cb) {
-    super(CMD, generateOpaque(), k, cb);
-    exp = e;
-  }
+	protected TouchOperationImpl(String k, int e, OperationCallback cb) {
+		super(CMD, generateOpaque(), k, cb);
+		exp=e;
+	}
 
-  @Override
-  public void initialize() {
-    prepareBuffer(key, 0, EMPTY_BYTES, exp);
-  }
+	@Override
+	public void initialize() {
+		prepareBuffer(key, 0, EMPTY_BYTES, exp);
+	}
 }

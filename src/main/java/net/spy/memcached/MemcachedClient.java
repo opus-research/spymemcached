@@ -23,36 +23,6 @@
 
 package net.spy.memcached;
 
-import net.spy.memcached.auth.AuthDescriptor;
-import net.spy.memcached.auth.AuthThreadMonitor;
-import net.spy.memcached.compat.SpyObject;
-import net.spy.memcached.internal.BulkFuture;
-import net.spy.memcached.internal.BulkGetFuture;
-import net.spy.memcached.internal.GetFuture;
-import net.spy.memcached.internal.OperationFuture;
-import net.spy.memcached.internal.SingleElementInfiniteIterator;
-import net.spy.memcached.ops.CASOperationStatus;
-import net.spy.memcached.ops.CancelledOperationStatus;
-import net.spy.memcached.ops.ConcatenationType;
-import net.spy.memcached.ops.DeleteOperation;
-import net.spy.memcached.ops.GetAndTouchOperation;
-import net.spy.memcached.ops.GetOperation;
-import net.spy.memcached.ops.GetsOperation;
-import net.spy.memcached.ops.Mutator;
-import net.spy.memcached.ops.Operation;
-import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.OperationState;
-import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.ops.StatsOperation;
-import net.spy.memcached.ops.StatusCode;
-import net.spy.memcached.ops.StoreOperation;
-import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.TimedOutOperationStatus;
-import net.spy.memcached.protocol.binary.BinaryOperationFactory;
-import net.spy.memcached.transcoders.TranscodeService;
-import net.spy.memcached.transcoders.Transcoder;
-import net.spy.memcached.util.StringUtils;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -78,6 +48,37 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import net.spy.memcached.auth.AuthDescriptor;
+import net.spy.memcached.auth.AuthThreadMonitor;
+import net.spy.memcached.compat.SpyObject;
+import net.spy.memcached.internal.BulkFuture;
+import net.spy.memcached.internal.BulkGetFuture;
+import net.spy.memcached.internal.GetFuture;
+import net.spy.memcached.internal.OperationFuture;
+import net.spy.memcached.internal.SingleElementInfiniteIterator;
+import net.spy.memcached.ops.CASOperationStatus;
+import net.spy.memcached.ops.CancelledOperationStatus;
+import net.spy.memcached.ops.ConcatenationType;
+import net.spy.memcached.ops.DeleteOperation;
+import net.spy.memcached.ops.GetAndTouchOperation;
+import net.spy.memcached.ops.GetOperation;
+import net.spy.memcached.ops.GetsOperation;
+import net.spy.memcached.ops.Mutator;
+import net.spy.memcached.ops.Operation;
+import net.spy.memcached.ops.OperationCallback;
+import net.spy.memcached.ops.OperationState;
+import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.StatsOperation;
+import net.spy.memcached.ops.StatusCode;
+import net.spy.memcached.ops.StoreOperation;
+import net.spy.memcached.ops.StoreType;
+import net.spy.memcached.ops.TimedOutOperationStatus;
+import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
+import net.spy.memcached.protocol.binary.BinaryOperationFactory;
+import net.spy.memcached.transcoders.TranscodeService;
+import net.spy.memcached.transcoders.Transcoder;
+import net.spy.memcached.util.StringUtils;
 
 /**
  * Client to a memcached server.
@@ -2627,25 +2628,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     // Don't care.
   }
 
-  public long getOperationTimeout() {
-    return operationTimeout;
-  }
-
-  public MemcachedConnection getConnection() {
-    return mconn;
-  }
-
-  public TranscodeService getTranscoderService() {
-    return tcService;
-  }
-
-  public ExecutorService getExecutorService() {
-    return executorService;
-  }
-
   @Override
   public String toString() {
     return connFactory.toString();
   }
 }
-

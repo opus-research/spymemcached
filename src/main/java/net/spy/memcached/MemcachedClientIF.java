@@ -23,10 +23,6 @@
 
 package net.spy.memcached;
 
-import net.spy.memcached.internal.BulkFuture;
-import net.spy.memcached.internal.OperationFuture;
-import net.spy.memcached.transcoders.Transcoder;
-
 import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Iterator;
@@ -35,6 +31,10 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import net.spy.memcached.internal.BulkFuture;
+import net.spy.memcached.internal.OperationFuture;
+import net.spy.memcached.transcoders.Transcoder;
 
 /**
  * This interface is provided as a helper for testing clients of the
@@ -240,5 +240,4 @@ public interface MemcachedClientIF {
    * @return the union of all SASL mechanisms supported by the servers.
    */
   Set<String> listSaslMechanisms();
-
 }

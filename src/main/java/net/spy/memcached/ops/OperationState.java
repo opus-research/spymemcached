@@ -44,8 +44,8 @@ public enum OperationState {
    */
   COMPLETE,
   /**
-   * State indicating this operation needs to be resent. Typically this means
-   * vbucket hashing and there is a topology change.
+   * State indicating this operation needs to be resent.  Typically
+   * this means vbucket hashing and there is a topology change.
    */
   RETRY
 }

@@ -544,7 +544,7 @@ public final class MemcachedConnection extends SpyThread implements
             retryOps.add(currentOp);
           }
         }
-        currentOp = qa.getCurrentReadOp();
+        currentOp=qa.getCurrentReadOp();
       }
       rbuf.clear();
       read = channel.read(rbuf);

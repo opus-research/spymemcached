@@ -128,7 +128,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
     getLogger().debug("Transitioned state from %s to %s", state, newState);
     state = newState;
     // Discard our buffer when we no longer need it.
-    if (state != OperationState.WRITE_QUEUED
+    if(state != OperationState.WRITE_QUEUED
         && state != OperationState.WRITING) {
       cmd = null;
     }

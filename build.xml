@@ -371,7 +371,6 @@
         <path refid="${name}.common.classpath" />
       </classpath>
     </javadoc>
-    <zip basedir="${build.javadoc}" destfile="${build.dir}/${name}-${version}-javadoc.jar" />
   </target>
 
   <!-- =======================================
@@ -449,8 +448,9 @@
     </jar>
   </target>
 
-  <target name="package" depends="jar,srcjars,docs"
-      description="Packages files for distribution">
+  <target name="package" depends="jar" description="Packages files for distribution">
+    <mkdir dir="${dist.dir}" />
+    <zip destfile="${name}-${version}.zip" basedir="${build.javadoc}" />
   </target>
 
   <!-- ======================================
@@ -515,7 +515,7 @@
     </replaceregexp>
   </target>
 
-  <target name="mvn-install" depends="init,mvn-prep,jar,srcjars,docs"
+  <target name="mvn-install" depends="init,mvn-prep,jar,srcjars"
       description="Install Spymemcached in local m2 repository">
     <exec executable="git" outputproperty="version">
       <arg value="describe" />
@@ -525,9 +525,7 @@
     <artifact:install file="${build.dir}/${name}-${version}.jar">
       <pom refid="spymemcached" />
       <attach file="${build.dir}/${name}-${version}-sources.jar"
-          type="jar" classifier="sources" />
-      <attach file="${build.dir}/${name}-${version}-javadoc.jar"
-          type="jar" classifier="javadoc"/>
+          classifier="sources" />
     </artifact:install>
   </target>
 

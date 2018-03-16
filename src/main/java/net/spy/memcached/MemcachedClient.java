@@ -343,50 +343,6 @@ public class MemcachedClient extends SpyThread
 	}
 
 	/**
-	 * Touch the given key to reset its expiration time with the default
-	 * transcoder.
-	 *
-	 * @param key the key to fetch
-	 * @param exp the new expiration to set for the given key
-	 * @return a future that will hold the return value of whether or not
-	 * the fetch succeeded
-	 * @throws IllegalStateException in the rare circumstance where queue
-	 *         is too full to accept any more requests
-	 */
-	public <T> Future<Boolean> asyncTouch(final String key, final int exp) {
-		return asyncTouch(key, exp, transcoder);
-	}
-
-	/**
-	 * Touch the given key to reset its expiration time.
-	 *
-	 * @param key the key to fetch
-	 * @param exp the new expiration to set for the given key
-	 * @param tc the transcoder to serialize and unserialize value
-	 * @return a future that will hold the return value of whether or not
-	 * the fetch succeeded 
-	 * @throws IllegalStateException in the rare circumstance where queue
-	 *         is too full to accept any more requests
-	 */
-	public <T> Future<Boolean> asyncTouch(final String key, final int exp,
-			final Transcoder<T> tc) {
-		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
-				operationTimeout);
-
-		Operation op=opFact.touch(key, exp, new OperationCallback() {
-			public void receivedStatus(OperationStatus status) {
-				rv.set(status.isSuccess());
-		}
-			public void complete() {
-				latch.countDown();
-			}});
-		rv.setOperation(op);
-		addOp(key, op);
-		return rv;
-	}
-
-	/**
 	 * Append to an existing value in the cache.
 	 *
 	 * <p>Note that the return will be false any time a mutation has not
@@ -735,44 +691,6 @@ public class MemcachedClient extends SpyThread
 	 */
 	public Future<Boolean> set(String key, int exp, Object o) {
 		return asyncStore(StoreType.set, key, exp, o, transcoder);
-	}
-		
-	/**
-	 * Resets the timeout for a given key.
-	 *
-	 * @param key the key
-	 * @param exp the new expiration time for the key
-	 * @return a Boolean
-	 * @throws OperationTimeoutException if the global operation timeout is
-	 *		   exceeded
-	 * @throws IllegalStateException in the rare circumstance where queue
-	 *         is too full to accept any more requests
-	 */
-	public <T> Boolean touch(String key, int exp, Transcoder<T> tc) {
-		try {
-			return asyncTouch(key, exp, tc).get(operationTimeout, TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			throw new RuntimeException("Interrupted waiting for value", e);
-		} catch (ExecutionException e) {
-			throw new RuntimeException("Exception waiting for value", e);
-		} catch (TimeoutException e) {
-			throw new OperationTimeoutException("Timeout waiting for value", e);
-		}
-	}
-		
-	/**
-	 * Resets the timeout for a given key with the default transcoder.
-	 *
-	 * @param key the key
-	 * @param exp the new expiration time for the key
-	 * @return a Boolean
-	 * @throws OperationTimeoutException if the global operation timeout is
-	 *		   exceeded
-	 * @throws IllegalStateException in the rare circumstance where queue
-	 *         is too full to accept any more requests
-	 */
-	public Boolean touch(String key, int exp) {
-		return touch(key, exp, transcoder);
 	}
 
 	/**

@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,51 +20,51 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached;
+package net.spy.memcached.vbucket;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
-import net.spy.memcached.vbucket.config.Config;
+import net.spy.memcached.vbucket.config.Bucket;
 
 /**
- * Interface for locating a node by hash value.
+ * A ConfigurationProvider.
  */
-public interface NodeLocator {
+public interface ConfigurationProvider {
 
   /**
-   * Get the primary location for the given key.
+   * Connects to the REST service and retrieves the bucket configuration from
+   * the first pool available.
    *
-   * @param k the object key
-   * @return the QueueAttachment containing the primary storage for a key
+   * @param bucketname bucketname
+   * @return vbucket configuration
+   * @throws ConfigurationException
    */
-  MemcachedNode getPrimary(String k);
+  Bucket getBucketConfiguration(String bucketname);
 
   /**
-   * Get an iterator over the sequence of nodes that make up the backup
-   * locations for a given key.
+   * Subscribes for configuration updates.
    *
-   * @param k the object key
-   * @return the sequence of backup nodes.
+   * @param bucketName bucket name to receive configuration for
+   * @param rec reconfigurable that will receive updates
+   * @throws ConfigurationException
    */
-  Iterator<MemcachedNode> getSequence(String k);
+  void subscribe(String bucketName, Reconfigurable rec);
 
   /**
-   * Get all memcached nodes. This is useful for broadcasting messages.
-   */
-  Collection<MemcachedNode> getAll();
-
-  /**
-   * Create a read-only copy of this NodeLocator.
-   */
-  NodeLocator getReadonlyCopy();
-
-  /**
-   * Update locator status.
+   * Unsubscribe from updates on a given bucket and given reconfigurable.
    *
-   * @param nodes New locator nodes.
-   * @param conf Locator configuration.
+   * @param vbucketName bucket name
+   * @param rec reconfigurable
    */
-  void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+  void unsubscribe(String vbucketName, Reconfigurable rec);
+
+  /**
+   * Shutdowns a monitor connections to the REST service.
+   */
+  void shutdown();
+
+  /**
+   * Retrieves a default bucket name i.e. 'default'.
+   *
+   * @return the anonymous bucket's name i.e. 'default'
+   */
+  String getAnonymousAuthBucket();
 }

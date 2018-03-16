@@ -43,4 +43,12 @@ public class TouchOperationImpl extends SingleKeyOperationImpl {
   public void initialize() {
     prepareBuffer(key, 0, EMPTY_BYTES, exp);
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(" Exp: ");
+    sb.append(exp);
+    return sb.toString();
+  }
 }

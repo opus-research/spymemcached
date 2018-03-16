@@ -389,7 +389,6 @@ public class MemcachedConnection extends SpyThread {
    */
   public void handleIO() throws IOException {
     if (shutDown) {
-      getLogger().debug("No IO while shut down.");
       return;
     }
 
@@ -638,7 +637,7 @@ public class MemcachedConnection extends SpyThread {
         sk.isReadable(), sk.isWritable(), sk.isConnectable(),
         sk.attachment());
       if (sk.isConnectable() && belongsToCluster(node)) {
-        getLogger().debug("Connection state changed for %s", sk);
+        getLogger().info("Connection state changed for %s", sk);
         final SocketChannel channel = node.getChannel();
         if (channel.finishConnect()) {
           finishConnect(sk, node);

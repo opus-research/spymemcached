@@ -45,9 +45,6 @@ import net.spy.memcached.tapmessage.ResponseMessage;
 import net.spy.memcached.tapmessage.TapAck;
 import net.spy.memcached.tapmessage.TapOpcode;
 import net.spy.memcached.tapmessage.TapStream;
-import net.spy.memcached.auth.AuthDescriptor;
-import net.spy.memcached.ConnectionFactoryBuilder.Protocol;
-import net.spy.memcached.auth.PlainCallbackHandler;
 
 /**
  * A tap client for memcached.
@@ -57,7 +54,6 @@ public class TapClient {
   protected final HashMap<TapStream, TapConnectionProvider> omap;
   protected long messagesRead;
   private List<InetSocketAddress> addrs;
-  private net.spy.memcached.ConnectionFactoryBuilder cfb;
 
   /**
    * Creates a tap client against the specified servers.
@@ -88,21 +84,7 @@ public class TapClient {
     this.messagesRead = 0;
   }
 
-    public TapClient(String bucketname, String password, List<InetSocketAddress> addrs) {
-
-        AuthDescriptor ad = new AuthDescriptor(new String[]{"PLAIN"},
-                new PlainCallbackHandler(bucketname, password));
-
-        cfb = new net.spy.memcached.ConnectionFactoryBuilder();
-        cfb.setProtocol(Protocol.BINARY).setAuthDescriptor(ad);
-
-        this.rqueue = new LinkedBlockingQueue<Object>();
-        this.omap = new HashMap<TapStream, TapConnectionProvider>();
-        this.addrs = addrs;
-        this.messagesRead = 0;
-    }
-
-    /**
+  /**
    * Gets the next tap message from the queue of received tap messages.
    *
    * @return The tap message at the head of the queue or null if the queue is
@@ -227,7 +209,7 @@ public class TapClient {
    */
   public TapStream tapDump(final String id) throws IOException,
       ConfigurationException {
-    final TapConnectionProvider conn = new TapConnectionProvider(cfb.build(), addrs);
+    final TapConnectionProvider conn = new TapConnectionProvider(addrs);
     final TapStream ts = new TapStream();
     conn.broadcastOp(new BroadcastOpFactory() {
       public Operation newOp(final MemcachedNode n,

@@ -38,7 +38,6 @@ import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.transcoders.TranscodeService;
-import net.spy.memcached.compat.SpyObject;
 
 /**
  * A TapConnectionProvider.

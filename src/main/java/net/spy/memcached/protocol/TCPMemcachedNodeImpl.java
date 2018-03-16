@@ -83,13 +83,8 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     assert iq != null : "No input queue";
     socketAddress = sa;
     setChannel(c);
-
-    // Since these buffers are allocated rarely (only on client creation
-    // or reconfigure), and are passed to Channel.read() and Channel.write(),
-    // use direct buffers to avoid
-    //   http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6214569
-    rbuf = ByteBuffer.allocateDirect(bufSize);
-    wbuf = ByteBuffer.allocateDirect(bufSize);
+    rbuf = ByteBuffer.allocate(bufSize);
+    wbuf = ByteBuffer.allocate(bufSize);
     getWbuf().clear();
     readQ = rq;
     writeQ = wq;
@@ -189,31 +184,11 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   public final void fillWriteBuffer(boolean shouldOptimize) {
     if (toWrite == 0 && readQ.remainingCapacity() > 0) {
       getWbuf().clear();
-      Operation o = getCurrentWriteOp();
+      Operation o = getNextWritableOp();
       while (o != null && toWrite < getWbuf().capacity()) {
         synchronized(o) {
-          if (o.isCancelled()) {
-            getLogger().debug("Not writing cancelled op.");
-            Operation cancelledOp = removeCurrentWriteOp();
-            assert o == cancelledOp;
-            break;
-          }
-          if (o.isTimedOut(defaultOpTimeout)) {
-            getLogger().debug("Not writing timed out op.");
-            Operation timedOutOp = removeCurrentWriteOp();
-            assert o == timedOutOp;
-            break;
-          }
           assert o.getState() == OperationState.WRITING;
-          // This isn't the most optimal way to do this, but it hints
-          // at a larger design problem that may need to be taken care
-          // if in the bowels of the client.
-          // In practice, readQ should be small, however.
-          // Also don't add Tap Acks to the readQ since there won't be a response
-          if (!readQ.contains(o) && !(o instanceof TapAckOperationImpl)) {
-            readQ.add(o);
-          }
-  
+
           ByteBuffer obuf = o.getBuffer();
           assert obuf != null : "Didn't get a write buffer from " + o;
           int bytesToCopy = Math.min(getWbuf().remaining(), obuf.remaining());
@@ -224,16 +199,15 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           if (!o.getBuffer().hasRemaining()) {
             o.writeComplete();
             transitionWriteItem();
-  
+
             preparePending();
             if (shouldOptimize) {
               optimize();
             }
-  
-            o = getCurrentWriteOp();
+            o = getNextWritableOp();
           }
-          toWrite += bytesToCopy;
         }
+        toWrite += bytesToCopy;
       }
       getWbuf().flip();
       assert toWrite <= getWbuf().capacity() : "toWrite exceeded capacity: "
@@ -243,6 +217,31 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     } else {
       getLogger().debug("Buffer is full, skipping");
     }
+  }
+
+  private Operation getNextWritableOp() {
+    Operation o = getCurrentWriteOp();
+    while (o != null && o.getState() == OperationState.WRITE_QUEUED) {
+      synchronized(o) {
+        if (o.isCancelled()) {
+          getLogger().debug("Not writing cancelled op.");
+          Operation cancelledOp = removeCurrentWriteOp();
+          assert o == cancelledOp;
+        } else if (o.isTimedOut(defaultOpTimeout)) {
+          getLogger().debug("Not writing timed out op.");
+          Operation timedOutOp = removeCurrentWriteOp();
+          assert o == timedOutOp;
+        } else {
+          o.writing();
+          if (!(o instanceof TapAckOperationImpl)) {
+            readQ.add(o);
+          }
+          return o;
+        }
+        o = getCurrentWriteOp();
+      }
+    }
+    return o;
   }
 
   /*

@@ -12,7 +12,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-import net.spy.memcached.DefaultHashAlgorithm;
+import net.spy.memcached.HashAlgorithm;
 
 public class DefaultConfigFactory implements ConfigFactory {
 
@@ -59,19 +59,19 @@ public class DefaultConfigFactory implements ConfigFactory {
     }
 
     private HashAlgorithm lookupHashAlgorithm(String algorithm) {
-        HashAlgorithm ha = DefaultHashAlgorithm.NATIVE_HASH;
+        HashAlgorithm ha = HashAlgorithm.NATIVE_HASH;
         if ("crc".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.CRC32_HASH;
+            ha = HashAlgorithm.CRC32_HASH;
         } else if ("fnv1_32".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.FNV1_32_HASH;
+            ha = HashAlgorithm.FNV1_32_HASH;
         } else if ("fnv1_64".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.FNV1_64_HASH;
+            ha = HashAlgorithm.FNV1_64_HASH;
         } else if ("fnv1a_32".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.FNV1A_32_HASH;
+            ha = HashAlgorithm.FNV1A_32_HASH;
         } else if ("fnv1a_64".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.FNV1A_64_HASH;
+            ha = HashAlgorithm.FNV1A_64_HASH;
         } else if ("md5".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.KETAMA_HASH;
+            ha = HashAlgorithm.KETAMA_HASH;
         } else {
             throw new IllegalArgumentException("Unhandled algorithm type: "
                     + algorithm);

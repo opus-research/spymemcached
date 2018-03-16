@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import net.spy.memcached.TestConfig;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
@@ -45,7 +44,7 @@ import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
 
 public class CouchbaseClientTest {
 	protected TestingClient client = null;
-	private static final String SERVER_URI = "http://" + TestConfig.IPV4_ADDR
+	private static final String SERVER_URI = "http://" + "10.1.6.108" //TestConfig.IPV4_ADDR
 			+ ":8091/pools";
 	private static final Map<String, Object> items;
 	public static final String DESIGN_DOC_W_REDUCE = "doc_with_view";

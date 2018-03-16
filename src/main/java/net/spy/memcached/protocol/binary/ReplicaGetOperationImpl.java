@@ -30,7 +30,7 @@ import net.spy.memcached.ops.ReplicaGetOperation;
 public class ReplicaGetOperationImpl extends SingleKeyOperationImpl
   implements ReplicaGetOperation {
 
-  static final byte REPLICA_GET_CMD = (byte)0x83;
+  static final byte GET_CMD = (byte)0x83;
 
   private final int replicaIndex;
 
@@ -41,7 +41,7 @@ public class ReplicaGetOperationImpl extends SingleKeyOperationImpl
 
   public ReplicaGetOperationImpl(String k, int index,
     ReplicaGetOperation.Callback cb) {
-    super(REPLICA_GET_CMD, generateOpaque(), k, cb);
+    super(GET_CMD, generateOpaque(), k, cb);
     replicaIndex = index;
   }
 

@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,49 +20,49 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.protocol.binary;
+package net.spy.memcached.tapmessage;
 
-import java.util.UUID;
-
+import net.spy.memcached.MemcachedNode;
+import net.spy.memcached.TapConnectionProvider;
 import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.OperationState;
-import net.spy.memcached.ops.TapOperation;
-import net.spy.memcached.tapmessage.RequestMessage;
-import net.spy.memcached.tapmessage.TapRequestFlag;
 
 /**
- * Implementation of a custom tap operation.
+ * An acknowledgment message used to tell the server we have received a
+ * series of messages.
  */
-public class TapCustomOperationImpl extends TapOperationImpl implements
-    TapOperation {
-  private final String id;
-  private final RequestMessage message;
+public class TapAck {
+  private final TapConnectionProvider conn;
+  private final TapOpcode opcode;
+  private final int opaque;
+  private final MemcachedNode node;
+  private final OperationCallback cb;
 
-  TapCustomOperationImpl(String id, RequestMessage message,
-      OperationCallback cb) {
-    super(cb);
-    this.id = id;
-    this.message = message;
+  public TapAck(TapConnectionProvider conn, MemcachedNode node,
+      TapOpcode opcode, int opaque, OperationCallback cb) {
+    this.conn = conn;
+    this.node = node;
+    this.opcode = opcode;
+    this.opaque = opaque;
+    this.cb = cb;
   }
 
-  @Override
-  public void initialize() {
-    message.setFlags(TapRequestFlag.FIX_BYTEORDER);
-    if (id != null) {
-      message.setName(id);
-    } else {
-      message.setName(UUID.randomUUID().toString());
-    }
-    setBuffer(message.getBytes());
+  public TapConnectionProvider getConn() {
+    return conn;
   }
 
-  @Override
-  public void streamClosed(OperationState state) {
-    transitionState(state);
+  public MemcachedNode getNode() {
+    return node;
   }
 
-  @Override
-  public String toString() {
-    return "Cmd: tap custom";
+  public TapOpcode getOpcode() {
+    return opcode;
+  }
+
+  public int getOpaque() {
+    return opaque;
+  }
+
+  public OperationCallback getCallback() {
+    return cb;
   }
 }

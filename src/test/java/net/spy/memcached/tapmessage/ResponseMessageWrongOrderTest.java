@@ -22,58 +22,48 @@
 
 package net.spy.memcached.tapmessage;
 
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
-import java.util.List;
+import org.junit.Before;
 
 /**
- * The Flag enum contains a list all of the different flags that can be passed
- * in a tap message in the flag field.
+ * Test ResponseMessage decoding when the server responds with the flags
+ * incorrectly in host byteorder.
+ *
  */
-public enum TapResponseFlag {
-  /**
-   * This message requires acknowledgment.
-   */
-  TAP_ACK((short) 0x01),
+public class ResponseMessageWrongOrderTest extends ResponseMessageBaseCase {
 
-  /**
-   * This message doesn't contain a value.
-   */
-  TAP_NO_VALUE((short) 0x02),
+  @Before
+  @Override
+  public void setUp() {
 
-  /**
-   * This message is sent correctly in network byte order.
-   */
-  TAP_FLAG_NETWORK_BYTE_ORDER((short) 0x04);
+    expectedFlags = new LinkedList<TapResponseFlag>();
 
-  /**
-   * The flag value.
-   */
-  private short flag;
+    // see:
+    // raw.github.com/
+    // membase/memcached/branch-20/include/memcached/protocol_binary.h
+    // bin request header + tap mutation + a key
+    ByteBuffer binReqTapMutation = ByteBuffer.allocate(24+16+1+8);
 
-  /**
-   * Defines the flag value.
-   *
-   * @param flag - The new flag value
-   */
-  TapResponseFlag(short flag) {
-    this.flag = flag;
+   // bin request, tap mutation
+    binReqTapMutation.put(0, (byte)0x80).put(1, (byte)0x41);
+    binReqTapMutation.put(3, (byte)0x01); // key length
+    binReqTapMutation.put(5, (byte)0x06); // datatype
+    binReqTapMutation.put(11, (byte)0x09); // body length 1 key 8 value
+    // the flags themselves, 0x0200 for four bytes starting at 32
+    binReqTapMutation.put(33, (byte)0x02);
+
+    // key and value
+    binReqTapMutation.put(40, (byte)'a');
+    binReqTapMutation.put(48, (byte)42);
+
+
+    responsebytes = binReqTapMutation.array();
+
+    instance = new ResponseMessage(responsebytes);
   }
 
-  public static List<TapResponseFlag> getFlags(short f) {
-    List<TapResponseFlag> flags = new LinkedList<TapResponseFlag>();
-    if ((f & TapResponseFlag.TAP_ACK.flag) != 0) {
-      flags.add(TapResponseFlag.TAP_ACK);
-    }
-    if ((f & TapResponseFlag.TAP_NO_VALUE.flag) != 0) {
-      flags.add(TapResponseFlag.TAP_NO_VALUE);
-    }
-    if ((f & TapResponseFlag.TAP_FLAG_NETWORK_BYTE_ORDER.flag) != 0) {
-      flags.add(TapResponseFlag.TAP_FLAG_NETWORK_BYTE_ORDER);
-    }
-    return flags;
-  }
 
-  public short getFlags() {
-    return flag;
-  }
+
+
 }

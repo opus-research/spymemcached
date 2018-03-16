@@ -37,7 +37,6 @@ import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
-import net.spy.memcached.internal.ViewWithDocsFuture;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.couch.DocsOperationImpl;
 import net.spy.memcached.protocol.couch.HttpOperation;
@@ -251,36 +250,13 @@ public class CouchbaseClient extends MembaseClient
     }
   }
 
-  /**
-   * Queries a Couchbase view. This type of query will return a future response
-   * that will contain the result of querying the view.
-   *
-   * @param view the view to run the query against.
-   * @param query the type of query to run against the view.
-   * @return a ViewResponseWithDocs containing the results of the query.
-   */
-  public ViewFuture asyncQuery(View view, Query query) {
-    return asyncQuery(view, query, false);
-  }
-
-  /**
-   * Queries a Couchbase view. This type of query will return a future response
-   * that will contain the result of querying the view.
-   *
-   * @param view the view to run the query against.
-   * @param query the type of query to run against the view.
-   * @param excludeOnError whether or not to throw an exception if the view has
-   * errors.
-   * @return a ViewResponseWithDocs containing the results of the query.
-   */
-  public ViewFuture asyncQuery(View view, Query query,
-      boolean exceptionOnError) {
+  public HttpFuture<ViewResponse> asyncQuery(View view, Query query) {
     if (query.willReduce()) {
-      return asyncQueryAndReduce(view, query, exceptionOnError);
+      return asyncQueryAndReduce(view, query);
     } else if (query.willIncludeDocs()) {
-      return asyncQueryAndIncludeDocs(view, query, exceptionOnError);
+      return asyncQueryAndIncludeDocs(view, query);
     } else {
-      return asyncQueryAndExcludeDocs(view, query, exceptionOnError);
+      return asyncQueryAndExcludeDocs(view, query);
     }
   }
 
@@ -293,12 +269,11 @@ public class CouchbaseClient extends MembaseClient
    * @param query the type of query to run against the view.
    * @return a Future containing the results of the query.
    */
-  private ViewFuture asyncQueryAndIncludeDocs(final View view,
-      final Query query, boolean exceptionOnError) {
+  private HttpFuture<ViewResponse> asyncQueryAndIncludeDocs(View view,
+      Query query) {
     String uri = view.getURI() + query.toString();
     final CountDownLatch couchLatch = new CountDownLatch(1);
-    final ViewWithDocsFuture crv = new ViewWithDocsFuture(couchLatch, 60000,
-        exceptionOnError);
+    final ViewFuture crv = new ViewFuture(couchLatch, 60000);
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
@@ -343,11 +318,12 @@ public class CouchbaseClient extends MembaseClient
    * @param query the type of query to run against the view.
    * @return a Future containing the results of the query.
    */
-  private ViewFuture asyncQueryAndExcludeDocs(final View view,
-      final Query query, boolean exceptionOnError) {
+  private HttpFuture<ViewResponse> asyncQueryAndExcludeDocs(View view,
+      Query query) {
     String uri = view.getURI() + query.toString();
     final CountDownLatch couchLatch = new CountDownLatch(1);
-    final ViewFuture crv = new ViewFuture(couchLatch, 60000, exceptionOnError);
+    final HttpFuture<ViewResponse> crv =
+        new HttpFuture<ViewResponse>(couchLatch, 60000);
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
@@ -383,14 +359,15 @@ public class CouchbaseClient extends MembaseClient
    * @param query the type of query to run against the view.
    * @return a Future containing the results of the query.
    */
-  private ViewFuture asyncQueryAndReduce(final View view, final Query query,
-      boolean exceptionOnError) {
+  private HttpFuture<ViewResponse> asyncQueryAndReduce(final View view,
+      final Query query) {
     if (!view.hasReduce()) {
       throw new RuntimeException("This view doesn't contain a reduce function");
     }
     String uri = view.getURI() + query.toString();
     final CountDownLatch couchLatch = new CountDownLatch(1);
-    final ViewFuture crv = new ViewFuture(couchLatch, 60000, exceptionOnError);
+    final HttpFuture<ViewResponse> crv =
+        new HttpFuture<ViewResponse>(couchLatch, 60000);
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
@@ -428,21 +405,6 @@ public class CouchbaseClient extends MembaseClient
    * @return a ViewResponseWithDocs containing the results of the query.
    */
   public ViewResponse query(View view, Query query) {
-    return query(view, query, false);
-  }
-
-  /**
-   * Queries a Couchbase view by calling its map function. This type of query
-   * will return the view result along with all of the documents for each row in
-   * the query.
-   *
-   * @param view the view to run the query against.
-   * @param query the type of query to run against the view.
-   * @param exceptionOnError whether or not to throw an exception if the view has
-   * errors
-   * @return a ViewResponseWithDocs containing the results of the query.
-   */
-  public ViewResponse query(View view, Query query, boolean exceptionOnError) {
     try {
       return asyncQuery(view, query).get();
     } catch (InterruptedException e) {

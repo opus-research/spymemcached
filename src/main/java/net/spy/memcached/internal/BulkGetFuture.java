@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -48,9 +47,7 @@ import net.spy.memcached.ops.OperationStatus;
  *
  * @param <T> types of objects returned from the GET
  */
-public class BulkGetFuture<T> extends AbstractListenableFuture<Map<String, T>, BulkGetCompletionListener>
-  implements BulkFuture<Map<String, T>> {
-
+public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
   private final Map<String, Future<T>> rvMap;
   private final Collection<Operation> ops;
   private final CountDownLatch latch;
@@ -59,8 +56,8 @@ public class BulkGetFuture<T> extends AbstractListenableFuture<Map<String, T>, B
   private boolean timeout = false;
 
   public BulkGetFuture(Map<String, Future<T>> m, Collection<Operation> getOps,
-      CountDownLatch l, ExecutorService service) {
-    super(service);
+      CountDownLatch l) {
+    super();
     rvMap = m;
     ops = getOps;
     latch = l;
@@ -78,7 +75,6 @@ public class BulkGetFuture<T> extends AbstractListenableFuture<Map<String, T>, B
     }
     cancelled = true;
     status = new OperationStatus(false, "Cancelled");
-    notifyListeners();
     return rv;
   }
 
@@ -183,7 +179,6 @@ public class BulkGetFuture<T> extends AbstractListenableFuture<Map<String, T>, B
 
   public void setStatus(OperationStatus s) {
     status = s;
-    notifyListeners();
   }
 
   public boolean isCancelled() {
@@ -202,18 +197,4 @@ public class BulkGetFuture<T> extends AbstractListenableFuture<Map<String, T>, B
   public boolean isTimeout() {
     return timeout;
   }
-
-  @Override
-  public Future<Map<String, T>> addListener(BulkGetCompletionListener listener) {
-    super.addToListeners((GenericCompletionListener) listener);
-    return this;
-  }
-
-  @Override
-  public Future<Map<String, T>> removeListener(BulkGetCompletionListener listener) {
-    super.removeFromListeners((GenericCompletionListener) listener);
-    return this;
-  }
-
-
 }

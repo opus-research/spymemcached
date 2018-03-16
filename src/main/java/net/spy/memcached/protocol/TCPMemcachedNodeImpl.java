@@ -329,12 +329,10 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
 
   /*
    * (non-Javadoc)
-   * This method is non-final because it is overriden in a unit test to simulate
-   * real behaviour and mock exceptions.
    *
    * @see net.spy.memcached.MemcachedNode#addOp(net.spy.memcached.ops.Operation)
    */
-  public void addOp(Operation op) {
+  public final void addOp(Operation op) {
     try {
       if (!authLatch.await(1, TimeUnit.SECONDS)) {
         op.cancel();

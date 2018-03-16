@@ -94,7 +94,7 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
      * @param bucketToFind
      * @throws ConfigurationException
      */
-    private void readPools(final String bucketToFind) throws ConfigurationException {
+    private void readPools(String bucketToFind) throws ConfigurationException {
 	// the intent with this method is to encapsulate all of the walking of URIs
 	// and populating an internal object model of the configuration to one place
         for (URI baseUri : baseList) {
@@ -129,6 +129,7 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
                 for (Pool pool : pools.values()) {
                     if (pool.hasBucket(bucketToFind)) {
                         bucketFound = true;
+			break;
                     }
                 }
                 if (bucketFound) {
@@ -154,7 +155,7 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
         List<String> servers = bucket.getConfig().getServers();
         StringBuilder serversString = new StringBuilder();
         for (String server : servers) {
-            serversString.append(server).append(" ");
+            serversString.append(server).append(' ');
         }
         return AddrUtil.getAddresses(serversString.toString());
     }
@@ -165,8 +166,7 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
      * @param rec reconfigurable that will receive updates
      * @throws ConfigurationException
      */
-    public void subscribe(final String bucketName, final Reconfigurable rec) throws ConfigurationException {
-
+    public void subscribe(String bucketName, Reconfigurable rec) throws ConfigurationException {
         Bucket bucket = getBucketConfiguration(bucketName);
 
         ReconfigurableObserver obs = new ReconfigurableObserver(rec);
@@ -246,50 +246,31 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
      * @throws IOException
      */
     private String readToString(URLConnection connection) throws IOException {
-        InputStream inStream = connection.getInputStream();
-        if (connection instanceof java.net.HttpURLConnection) {
-            HttpURLConnection httpConnection = (HttpURLConnection) connection;
-            if (httpConnection.getResponseCode() == 403) {
-                throw new IOException("Service does not accept the authentication credentials: "
-                        + httpConnection.getResponseCode() + httpConnection.getResponseMessage());
-            } else if (httpConnection.getResponseCode() >= 400) {
-                throw new IOException("Service responded with a failure code: "
-                        + httpConnection.getResponseCode() + httpConnection.getResponseMessage());
-            }
-        } else {
-            throw new IOException("Unexpected URI type encountered");
-        }
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inStream));
-        String str;
-        StringBuilder buffer = new StringBuilder();
-        while ((str = reader.readLine()) != null) {
-            buffer.append(str);
-        }
-        reader.close();
-        return buffer.toString();
-    }
-
-    /**
-     * Oddly, lots of things that do HTTP seem to not know how to do this and
-     * Authenticator caches for the process.  Since we only need Basic at the
-     * moment simply, add the header.
-     *
-     * @return a value for an HTTP Basic Auth Header
-     */
-    protected static String buildAuthHeader(String username, String password) {
-        // apparently netty isn't familiar with HTTP Basic Auth
-        StringBuilder clearText = new StringBuilder(username);
-        clearText.append(':');
-        if (password != null) {
-            clearText.append(password);
-        }
-        // and apache base64 codec has extra \n\l we have to strip off
-        String encodedText = org.apache.commons.codec.binary.Base64.encodeBase64String(clearText.toString().getBytes());
-        char[] encodedWoNewline = new char[encodedText.length() - 2];
-        encodedText.getChars(0, encodedText.length() - 2, encodedWoNewline, 0);
-        String authVal = "Basic " + new String(encodedWoNewline);
-
-        return authVal;
+	BufferedReader reader = null;
+	try {
+		InputStream inStream = connection.getInputStream();
+		if (connection instanceof java.net.HttpURLConnection) {
+			HttpURLConnection httpConnection = (HttpURLConnection) connection;
+			if (httpConnection.getResponseCode() == 403) {
+				throw new IOException("Service does not accept the authentication credentials: "
+					+ httpConnection.getResponseCode() + httpConnection.getResponseMessage());
+			} else if (httpConnection.getResponseCode() >= 400) {
+				throw new IOException("Service responded with a failure code: "
+					+ httpConnection.getResponseCode() + httpConnection.getResponseMessage());
+			}
+		} else {
+			throw new IOException("Unexpected URI type encountered");
+		}
+		reader = new BufferedReader(new InputStreamReader(inStream));
+		String str;
+		StringBuilder buffer = new StringBuilder();
+		while ((str = reader.readLine()) != null) {
+			buffer.append(str);
+		}
+		return buffer.toString();
+	    } finally {
+	    reader.close();
+	}
     }
 
 }

@@ -61,7 +61,7 @@ public class TapStream {
    *
    * @return true if all operations currently in the TapStream are completed
    */
-  protected boolean isCompleted() {
+  public boolean isCompleted() {
     for (TapOperation op : ops) {
       if (!op.getState().equals(OperationState.COMPLETE)) {
         return false;
@@ -76,7 +76,7 @@ public class TapStream {
    *
    * @return true if all operations on this TapStream have been canceled
    */
-  protected boolean isCancelled() {
+  public boolean isCancelled() {
     for (TapOperation op : ops) {
       if (!op.isCancelled()) {
         return false;
@@ -91,7 +91,7 @@ public class TapStream {
    *
    * @return true if all operations on this TapStream are in an error state
    */
-  protected boolean hasErrored() {
+  public boolean hasErrored() {
     for (TapOperation op : ops) {
       if (!op.hasErrored()) {
         return false;

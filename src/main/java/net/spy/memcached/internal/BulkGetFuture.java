@@ -40,6 +40,7 @@ import net.spy.memcached.compat.log.LoggerFactory;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.StatusCode;
 
 /**
  * Future for handling results from bulk gets.
@@ -78,7 +79,7 @@ public class BulkGetFuture<T>
       v.cancel(ign);
     }
     cancelled = true;
-    status = new OperationStatus(false, "Cancelled");
+    status = new OperationStatus(false, "Cancelled", StatusCode.CANCELLED);
     notifyListeners();
     return rv;
   }
@@ -173,7 +174,7 @@ public class BulkGetFuture<T>
       try {
         get();
       } catch (InterruptedException e) {
-        status = new OperationStatus(false, "Interrupted");
+        status = new OperationStatus(false, "Interrupted", StatusCode.INTERRUPTED);
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
         return status;
@@ -184,7 +185,6 @@ public class BulkGetFuture<T>
 
   public void setStatus(OperationStatus s) {
     status = s;
-    notifyListeners();
   }
 
   public boolean isCancelled() {
@@ -218,5 +218,11 @@ public class BulkGetFuture<T>
     return this;
   }
 
+  /**
+   * Signals that this future is complete.
+   */
+  public void signalComplete() {
+    notifyListeners();
+  }
 
 }

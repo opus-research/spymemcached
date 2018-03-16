@@ -14,12 +14,22 @@ public class TestConfig {
 		// empty
 	}
 
-	private static String resolveIpv6Addr() {
-		String ipv6 = System.getProperty(IPV6_PROP, "::1");;
-		if (IPV4_ADDR.equals(ipv6)) {
-			return "::ffff:" + ipv6;
+	private static final String resolveIpv6Addr() {
+		String ipv6 = System.getProperty(IPV6_PROP, "::1");
+		// If the ipv4 address was set but the ipv6 address wasn't then
+		// set the ipv6 address to use ipv4.
+		if (!IPV4_ADDR.equals("127.0.0.1") && !IPV4_ADDR.equals("localhost")
+				&& IPV6_ADDR.equals("::1")) {
+			return "::ffff:" + IPV4_ADDR;
 		}
 		return ipv6;
+	}
+	
+	public static final boolean defaultToIPV4() {
+		if(("::ffff:" + IPV4_ADDR).equals(IPV6_ADDR)) {
+			return true;
+		}
+		return false;
 	}
 
 	public static final boolean isMemcached() {

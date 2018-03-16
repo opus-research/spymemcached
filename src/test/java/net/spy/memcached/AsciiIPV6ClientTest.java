@@ -8,12 +8,15 @@ public class AsciiIPV6ClientTest extends AsciiClientTest {
 	@Override
 	protected void initClient(ConnectionFactory cf) throws Exception {
 		client=new MemcachedClient(cf,
-			AddrUtil.getAddresses("::1:11211"));
+			AddrUtil.getAddresses(TestConfig.IPV6_ADDR + ":11211"));
 	}
 
 	@Override
 	protected String getExpectedVersionSource() {
-		return "/0:0:0:0:0:0:0:1:11211";
+		if (TestConfig.defaultToIPV4()) {
+			return "/" + TestConfig.IPV4_ADDR + ":11211";
+		}
+		return "/" + TestConfig.IPV6_ADDR + ":11211";
 	}
 
 }

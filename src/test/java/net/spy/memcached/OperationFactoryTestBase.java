@@ -54,6 +54,7 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
   public static final String TEST_KEY = "someKey";
   protected OperationFactory ofact = null;
   protected OperationCallback genericCallback;
+  protected StoreOperation.Callback storeCallback;
   private byte[] testData;
 
   @Override
@@ -69,7 +70,18 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
         fail("Unexpected status:  " + status);
       }
     };
+    storeCallback = new StoreOperation.Callback() {
+      public void complete() {
+        fail("Unexpected invocation");
+      }
 
+      public void gotData(String key, long cas) {
+      }
+
+      public void receivedStatus(OperationStatus status) {
+        fail("Unexpected status:  " + status);
+      }
+    };
     testData = new byte[64];
     new Random().nextBytes(testData);
   }
@@ -89,7 +101,7 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
 
   public void testCASOperationCloning() {
     CASOperation op = ofact.cas(StoreType.set, "someKey", 727582, 8174, 7175,
-        testData, genericCallback);
+        testData, storeCallback);
 
     CASOperation op2 = cloneOne(CASOperation.class, op);
     assertKey(op2);
@@ -136,7 +148,7 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
     int exp = 823862;
     int flags = 7735;
     StoreOperation op = ofact.store(StoreType.add, TEST_KEY, flags, exp,
-        testData, genericCallback);
+        testData, storeCallback);
 
     StoreOperation op2 = cloneOne(StoreOperation.class, op);
     assertKey(op2);
@@ -150,7 +162,7 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
     int exp = 823862;
     int flags = 7735;
     StoreOperation op = ofact.store(StoreType.set, TEST_KEY, flags, exp,
-        testData, genericCallback);
+        testData, storeCallback);
 
     StoreOperation op2 = cloneOne(StoreOperation.class, op);
     assertKey(op2);

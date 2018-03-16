@@ -1,6 +1,5 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2011 Couchbase, Inc.
+ * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,45 +22,23 @@
 
 package net.spy.memcached.ops;
 
+import net.spy.memcached.ObserveResponse;
+
 /**
- * Operation that represents object storage.
+ * Observe operation.
  */
-public interface StoreOperation extends KeyedOperation {
-
-  /**
-   * Get the store type used by this operation.
-   */
-  StoreType getStoreType();
-
-  /**
-   * Get the flags to be set.
-   */
-  int getFlags();
-
-  /**
-   * Get the expiration value to be set.
-   */
-  int getExpiration();
-
-  /**
-   * Get the bytes to be set during this operation.
-   *
-   * <p>
-   * Note, this returns an exact reference to the bytes and the data
-   * <em>must not</em> be modified.
-   * </p>
-   */
-  byte[] getData();
+public interface ObserveOperation extends KeyedOperation {
   /**
    * Operation callback for the Observe request.
    */
   interface Callback extends OperationCallback {
     /**
-     * Callback for each result from a Store.
+     * Callback for each result from a observe.
      *
      * @param key the key that was retrieved
      * @param cas the CAS value for this record
+     * @param or the ObserveResponse
      */
-    void gotData(String key, long cas);
+    void gotData(String key, long cas, ObserveResponse or);
   }
 }

@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,47 +20,36 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.ops;
+package net.spy.memcached;
 
 /**
- * Operation that represents object storage.
+ * Response codes for a Observe operation.
  */
-public interface StoreOperation extends KeyedOperation {
-
+public enum ObserveResponse {
   /**
-   * Get the store type used by this operation.
+   * Response indicating the key was uninitialized.
    */
-  StoreType getStoreType();
-
+  UNINITIALIZED,
   /**
-   * Get the flags to be set.
+   * Response indicating the key was modified.
    */
-  int getFlags();
-
+  MODIFIED,
   /**
-   * Get the expiration value to be set.
+   * Response indicating the key was persisted.
    */
-  int getExpiration();
-
+  FOUND_PERSISTED,
   /**
-   * Get the bytes to be set during this operation.
-   *
-   * <p>
-   * Note, this returns an exact reference to the bytes and the data
-   * <em>must not</em> be modified.
-   * </p>
+   * Response indicating the key was found but not persisted.
    */
-  byte[] getData();
+  FOUND_NOT_PERSISTED,
   /**
-   * Operation callback for the Observe request.
+   * Response indicating the key was not found and persisted, as in
+   * the case of deletes - a real delete.
    */
-  interface Callback extends OperationCallback {
-    /**
-     * Callback for each result from a Store.
-     *
-     * @param key the key that was retrieved
-     * @param cas the CAS value for this record
-     */
-    void gotData(String key, long cas);
-  }
+  NOT_FOUND_PERSISTED,
+  /**
+   * Response indicating the key was not found and not
+   * persisted, as in the case of deletes - a logical delete.
+   */
+  NOT_FOUND_NOT_PERSISTED
 }

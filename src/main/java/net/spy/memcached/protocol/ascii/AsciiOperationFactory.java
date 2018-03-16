@@ -44,6 +44,7 @@ import net.spy.memcached.ops.MultiGetOperationCallback;
 import net.spy.memcached.ops.Mutator;
 import net.spy.memcached.ops.MutatorOperation;
 import net.spy.memcached.ops.NoopOperation;
+import net.spy.memcached.ops.ObserveOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 
@@ -90,6 +91,12 @@ public class AsciiOperationFactory extends BaseOperationFactory {
     return new GetlOperationImpl(key, exp, cb);
   }
 
+  public ObserveOperation observe(String key, long casId, int index,
+      ObserveOperation.Callback cb) {
+    throw new UnsupportedOperationException("Observe is not supported "
+        + "for ASCII protocol");
+  }
+
   public UnlockOperation unlock(String key, long casId,
           OperationCallback cb) {
     return new UnlockOperationImpl(key, casId, cb);
@@ -109,7 +116,7 @@ public class AsciiOperationFactory extends BaseOperationFactory {
   }
 
   public StoreOperation store(StoreType storeType, String key, int flags,
-      int exp, byte[] data, OperationCallback cb) {
+      int exp, byte[] data, StoreOperation.Callback cb) {
     return new StoreOperationImpl(storeType, key, flags, exp, data, cb);
   }
 
@@ -128,7 +135,7 @@ public class AsciiOperationFactory extends BaseOperationFactory {
   }
 
   public CASOperation cas(StoreType type, String key, long casId, int flags,
-      int exp, byte[] data, OperationCallback cb) {
+      int exp, byte[] data, StoreOperation.Callback cb) {
     return new CASOperationImpl(key, casId, flags, exp, data, cb);
   }
 

@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,47 +20,26 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.ops;
+package net.spy.memcached;
 
 /**
- * Operation that represents object storage.
+ * ReplicateTo codes for a Observe operation.
  */
-public interface StoreOperation extends KeyedOperation {
-
+public enum ReplicateTo {
   /**
-   * Get the store type used by this operation.
+   * Replicate to at least zero nodes.
    */
-  StoreType getStoreType();
-
+  ZERO,
   /**
-   * Get the flags to be set.
+   * Replicate to at least one node.
    */
-  int getFlags();
-
+  ONE,
   /**
-   * Get the expiration value to be set.
+   * Replicate to at least two nodes.
    */
-  int getExpiration();
-
+  TWO,
   /**
-   * Get the bytes to be set during this operation.
-   *
-   * <p>
-   * Note, this returns an exact reference to the bytes and the data
-   * <em>must not</em> be modified.
-   * </p>
+   * Replicate to at least three nodes.
    */
-  byte[] getData();
-  /**
-   * Operation callback for the Observe request.
-   */
-  interface Callback extends OperationCallback {
-    /**
-     * Callback for each result from a Store.
-     *
-     * @param key the key that was retrieved
-     * @param cas the CAS value for this record
-     */
-    void gotData(String key, long cas);
-  }
+  THREE
 }

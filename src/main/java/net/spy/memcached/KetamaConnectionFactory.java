@@ -22,10 +22,7 @@
 
 package net.spy.memcached;
 
-import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * ConnectionFactory instance that sets up a ketama compatible connection.
@@ -43,9 +40,6 @@ import java.util.Map;
  */
 public class KetamaConnectionFactory extends DefaultConnectionFactory {
 
-    private KetamaNodeKeyFormat.Format ketamaNodeKeyFormat;
-    private Map<InetSocketAddress, Integer> weights;
-
   /**
    * Create a KetamaConnectionFactory with the given maximum operation
    * queue length, and the given read buffer size.
@@ -53,30 +47,9 @@ public class KetamaConnectionFactory extends DefaultConnectionFactory {
    * @param opQueueMaxBlockTime the maximum time to block waiting for op
    *        queue operations to complete, in milliseconds
    */
-    public KetamaConnectionFactory(int qLen, int bufSize,
+  public KetamaConnectionFactory(int qLen, int bufSize,
       long opQueueMaxBlockTime) {
-      this(qLen, bufSize, opQueueMaxBlockTime,
-              DefaultHashAlgorithm.KETAMA_HASH,
-              KetamaNodeKeyFormat.SPYMEMCACHED,
-              new HashMap<InetSocketAddress, Integer>());
-  }
-
-  /** Create a KetamaConnectionFactory with the maximum operation queue length,
-   * the given read buffer size, the maximum time to block waiting operations,
-   * a specific hash algorithm, a set ring key format, and a given set of
-   * weights.
-   *
-   */
-  public KetamaConnectionFactory(
-          int qLen,
-          int bufSize,
-          long opQueueMaxBlockTime,
-          HashAlgorithm hash,
-          KetamaNodeKeyFormat.Format nodeKeyFormat,
-          Map<InetSocketAddress, Integer> weights) {
-      super(qLen, bufSize, hash);
-      this.ketamaNodeKeyFormat = nodeKeyFormat;
-      this.weights = weights;
+    super(qLen, bufSize, DefaultHashAlgorithm.KETAMA_HASH);
   }
 
   /**
@@ -94,21 +67,6 @@ public class KetamaConnectionFactory extends DefaultConnectionFactory {
    */
   @Override
   public NodeLocator createLocator(List<MemcachedNode> nodes) {
-        return new KetamaNodeLocator(nodes, getHashAlg(),
-                getKetamaNodeKeyFormat(), getWeights());
-    }
-
-  /**
-   * @return the ketamaNodeKeyFormat
-   */
-  public KetamaNodeKeyFormat.Format getKetamaNodeKeyFormat() {
-      return ketamaNodeKeyFormat;
-  }
-
-  /**
-   * @return the ketama node weights
-   */
-  public Map<InetSocketAddress, Integer> getWeights() {
-      return weights;
+    return new KetamaNodeLocator(nodes, getHashAlg());
   }
 }

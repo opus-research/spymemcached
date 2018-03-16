@@ -6,7 +6,7 @@ import net.spy.memcached.MemcachedNode;
  * Defines the set of all configuration dependencies
  * required for the KetamaNodeLocator algorithm to run
  */
-public interface KetamaNodeLocatorConfiguration<T> {
+public interface KetamaNodeLocatorConfiguration {
 
     /**
      * Returns a uniquely identifying key, suitable for hashing by the
@@ -17,7 +17,7 @@ public interface KetamaNodeLocatorConfiguration<T> {
      * 	      question (0 is the first repetition)
      * @return The key that represents the specific repetition of the node
      */
-    public String getKeyForNode(MemcachedNode<T> node, int repetition);
+    public String getKeyForNode(MemcachedNode node, int repetition);
 
     /**
      * Returns the number of discrete hashes that should be defined for each

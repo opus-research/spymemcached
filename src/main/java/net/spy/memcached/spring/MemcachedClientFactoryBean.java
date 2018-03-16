@@ -12,7 +12,6 @@ import net.spy.memcached.HashAlgorithm;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.OperationFactory;
 import net.spy.memcached.auth.AuthDescriptor;
-import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationQueueFactory;
 import net.spy.memcached.transcoders.Transcoder;
 
@@ -39,8 +38,7 @@ import org.springframework.beans.factory.FactoryBean;
  * @author Eran Harel
  */
 public class MemcachedClientFactoryBean implements FactoryBean {
-  private final ConnectionFactoryBuilder<Operation> connectionFactoryBuilder = 
-	  new ConnectionFactoryBuilder<Operation>();
+  private final ConnectionFactoryBuilder connectionFactoryBuilder = new ConnectionFactoryBuilder();
   private String servers;
 
   @Override

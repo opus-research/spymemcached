@@ -9,15 +9,15 @@ import net.spy.memcached.MemcachedNode;
  * A Default implementation of the configuration required for the
  * KetamaNodeLocator algorithm to run.
  */
-public class DefaultKetamaNodeLocatorConfiguration<T> implements
-		KetamaNodeLocatorConfiguration<T> {
+public class DefaultKetamaNodeLocatorConfiguration implements
+		KetamaNodeLocatorConfiguration {
 
 	final int NUM_REPS=160;
 
 	// Internal lookup map to try to carry forward the optimisation that was
 	// previously in KetamaNodeLocator
-	protected Map<MemcachedNode<T>, String> socketAddresses=
-		new HashMap<MemcachedNode<T>, String>();
+	protected Map<MemcachedNode, String> socketAddresses=
+		new HashMap<MemcachedNode, String>();
 
 	/**
 	 * Returns the socket address of a given MemcachedNode.
@@ -25,7 +25,7 @@ public class DefaultKetamaNodeLocatorConfiguration<T> implements
 	 * @param node The node which we're interested in
 	 * @return String the socket address of that node.
 	 */
-	protected String getSocketAddressForNode(MemcachedNode<T> node) {
+	protected String getSocketAddressForNode(MemcachedNode node) {
 		// Using the internal map retrieve the socket addresses
 		// for given nodes.
 		// I'm aware that this code is inherently thread-unsafe as
@@ -89,7 +89,7 @@ public class DefaultKetamaNodeLocatorConfiguration<T> implements
 	 * @return The key that represents the specific repetition of the
 	 *         node
 	 */
-	public String getKeyForNode(MemcachedNode<T> node, int repetition) {
+	public String getKeyForNode(MemcachedNode node, int repetition) {
 		return getSocketAddressForNode(node) + "-" + repetition;
 	}
 }

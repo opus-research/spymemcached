@@ -62,7 +62,7 @@ public abstract class BaseOperationFactory implements OperationFactory {
         if (!op.getNotMyVbucketNodes().isEmpty()) {
             for (Operation operation : rv) {
                 if (operation instanceof KeyedOperation) {
-                    Collection<MemcachedNode<Operation>> notMyVbucketNodes = op.getNotMyVbucketNodes();
+                    Collection<MemcachedNode> notMyVbucketNodes = op.getNotMyVbucketNodes();
                     ((KeyedOperation) operation).setNotMyVbucketNodes(notMyVbucketNodes);
                 }
             }

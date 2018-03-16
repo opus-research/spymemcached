@@ -26,7 +26,6 @@ package net.spy.memcached.protocol.binary;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.spy.memcached.CASResponse;

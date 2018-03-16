@@ -1,47 +1,33 @@
 package net.spy.memcached.internal;
 
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Additional flexibility for asyncGetBulk
- *
- * <p>
- * This interface is now returned from all asyncGetBulk
- * methods. Unlike {@link #get(long, TimeUnit)},
- * {@link #getSome(long, TimeUnit)} does not throw
- * CheckedOperationTimeoutException, thus allowing retrieval
- * of partial results after timeout occurs. This behavior is
- * especially useful in case of large multi gets.
- * </p>
- *
+ * Provides some additional flexibility.
+ * 
  * @author boris.partensky@gmail.com
  * @param <V>
- *
+ * 
  */
 public interface BulkFuture<V> extends Future<V> {
-
-	/**
-	 * @return true if timeout was reached, false otherwise
-	 */
+	
 	public boolean isTimeout();
 
-    /**
-     * Wait for the operation to complete and return results
+	/**
+	 * this method does not throw timeout exception. Instead, if timeout is reached,
+	 * it returns what's there and sets isTimeout flag. 
      *
-     * If operation could not complete within specified
-     * timeout, partial result is returned. Otherwise, the
-     * behavior is identical to {@link #get(long, TimeUnit)}
-     *
-     *
-     * @param timeout
-     * @param unit
-     * @return
-     * @throws InterruptedException
-     * @throws ExecutionException
-     */
-	public V getSome(long timeout, TimeUnit unit)
+	 * 
+	 * @param timeout
+	 * @param unit
+	 * @return
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 */
+	public V getSome(long to, TimeUnit unit)
 			throws InterruptedException, ExecutionException;
 
 }

@@ -167,7 +167,6 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
      * @throws ConfigurationException
      */
     public void subscribe(String bucketName, Reconfigurable rec) throws ConfigurationException {
-
         Bucket bucket = getBucketConfiguration(bucketName);
 
         ReconfigurableObserver obs = new ReconfigurableObserver(rec);

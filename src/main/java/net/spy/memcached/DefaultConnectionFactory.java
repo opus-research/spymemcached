@@ -109,7 +109,7 @@ public class DefaultConnectionFactory extends SpyObject
 		this(qLen, bufSize, DEFAULT_HASH);
 	}
 
-	/**
+    /**
      * Create a DefaultConnectionFactory with the given HashAlgorithm
      * and default parameters
      */

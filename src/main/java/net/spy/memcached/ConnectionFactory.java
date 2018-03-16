@@ -30,10 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
-import com.codahale.metrics.MetricRegistry;
 import net.spy.memcached.auth.AuthDescriptor;
-import net.spy.memcached.metrics.MetricCollector;
-import net.spy.memcached.metrics.MetricType;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.transcoders.Transcoder;
 
@@ -161,14 +158,4 @@ public interface ConnectionFactory {
    * Maximum number of timeout exception for shutdown connection.
    */
   int getTimeoutExceptionThreshold();
-
-  /**
-   * If true, metric collections are enabled.
-   */
-  MetricType enableMetrics();
-
-  /**
-   * The currently active {@link MetricCollector}.
-   */
-  MetricCollector getMetricCollector();
 }

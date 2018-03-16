@@ -151,6 +151,4 @@ public interface Operation {
    * written to the network, this will be true.
    */
   boolean isTimedOutUnsent();
-
-  long getWriteCompleteTimestamp();
 }

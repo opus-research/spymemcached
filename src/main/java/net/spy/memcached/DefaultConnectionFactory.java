@@ -34,15 +34,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import com.codahale.metrics.MetricRegistry;
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.compat.SpyObject;
-import net.spy.memcached.metrics.DefaultMetricCollector;
-import net.spy.memcached.metrics.MetricCollector;
-import net.spy.memcached.metrics.MetricType;
-import net.spy.memcached.metrics.NoopMetricCollector;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.protocol.ascii.AsciiMemcachedNodeImpl;
 import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
@@ -111,16 +105,9 @@ public class DefaultConnectionFactory extends SpyObject implements
    */
   public static final int DEFAULT_MAX_TIMEOUTEXCEPTION_THRESHOLD = 998;
 
-  /**
-   * Turn off metric collection by default.
-   */
-  public static final MetricType DEFAULT_METRIC_TYPE = MetricType.OFF;
-
   protected final int opQueueLen;
   private final int readBufSize;
   private final HashAlgorithm hashAlg;
-
-  private MetricCollector metrics = null;
 
   /**
    * Construct a DefaultConnectionFactory with the given parameters.
@@ -173,8 +160,7 @@ public class DefaultConnectionFactory extends SpyObject implements
           createOperationQueue(),
           getOpQueueMaxBlockTime(),
           doAuth,
-          getOperationTimeout()
-      );
+          getOperationTimeout());
     } else {
       throw new IllegalStateException("Unhandled operation factory type " + of);
     }
@@ -357,29 +343,6 @@ public class DefaultConnectionFactory extends SpyObject implements
    */
   public int getTimeoutExceptionThreshold() {
     return DEFAULT_MAX_TIMEOUTEXCEPTION_THRESHOLD;
-  }
-
-  @Override
-  public MetricType enableMetrics() {
-    return DEFAULT_METRIC_TYPE;
-  }
-
-  @Override
-  public MetricCollector getMetricCollector() {
-    if (metrics != null) {
-      return metrics;
-    }
-
-    String enableMetrics = System.getProperty("net.spy.metrics.enable", "false");
-    if (enableMetrics().equals(MetricType.OFF) || enableMetrics == "false") {
-      getLogger().debug("Metric collection disabled.");
-      metrics =  new NoopMetricCollector();
-    } else {
-      getLogger().info("Metric collection enabled (Profile " + enableMetrics() + ").");
-      metrics = new DefaultMetricCollector();
-    }
-
-    return metrics;
   }
 
   protected String getName() {

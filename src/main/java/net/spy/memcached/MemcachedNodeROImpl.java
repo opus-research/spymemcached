@@ -51,7 +51,7 @@ class MemcachedNodeROImpl implements MemcachedNode {
 	}
 
 	public int getBytesRemainingToWrite() {
-		return root.getBytesRemainingToWrite();
+		throw new UnsupportedOperationException();
 	}
 
 	public SocketChannel getChannel() {
@@ -71,11 +71,11 @@ class MemcachedNodeROImpl implements MemcachedNode {
 	}
 
 	public int getReconnectCount() {
-		return root.getReconnectCount();
+		throw new UnsupportedOperationException();
 	}
 
 	public int getSelectionOps() {
-		return root.getSelectionOps();
+		throw new UnsupportedOperationException();
 	}
 
 	public SelectionKey getSk() {
@@ -91,15 +91,15 @@ class MemcachedNodeROImpl implements MemcachedNode {
 	}
 
 	public boolean hasReadOp() {
-		return root.hasReadOp();
+		throw new UnsupportedOperationException();
 	}
 
 	public boolean hasWriteOp() {
-		return root.hasReadOp();
+		throw new UnsupportedOperationException();
 	}
 
 	public boolean isActive() {
-		return root.isActive();
+		throw new UnsupportedOperationException();
 	}
 
 	public void reconnecting() {
@@ -142,19 +142,4 @@ class MemcachedNodeROImpl implements MemcachedNode {
 		throw new UnsupportedOperationException();
 	}
 
-	public void authComplete() {
-		throw new UnsupportedOperationException();
-	}
-
-	public void setupForAuth() {
-		throw new UnsupportedOperationException();
-	}
-
-	public int getContinuousTimeout() {
-		throw new UnsupportedOperationException();
-	}
-
-	public void setContinuousTimeout(boolean isIncrease) {
-		throw new UnsupportedOperationException();
-	}
 }

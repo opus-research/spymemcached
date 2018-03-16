@@ -9,8 +9,6 @@ public class AuthDescriptor {
 
 	public final String[] mechs;
 	public final CallbackHandler cbh;
-	private int authAttempts;
-	private int allowedAuthAttempts;
 
 	/**
 	 * Request authentication using the given list of mechanisms and callback
@@ -22,14 +20,6 @@ public class AuthDescriptor {
 	public AuthDescriptor(String[] m, CallbackHandler h) {
 		mechs=m;
 		cbh=h;
-                authAttempts = 0;
-		String authThreshhold=System.getProperty(
-			"net.spy.memcached.auth.AuthThreshold");
-		if (authThreshhold != null) {
-			allowedAuthAttempts = Integer.parseInt(authThreshhold);
-		} else {
-			allowedAuthAttempts = -1; // auth forever
-		}
 	}
 
 	/**
@@ -44,16 +34,5 @@ public class AuthDescriptor {
 	public static AuthDescriptor typical(String u, String p) {
 		return new AuthDescriptor(new String[]{"CRAM-MD5", "PLAIN"},
 				new PlainCallbackHandler(u, p));
-	}
-
-	public boolean authThresholdReached() {
-		if (allowedAuthAttempts < 0) {
-			return false; // negative value means auth forever
-		} else if (authAttempts >= allowedAuthAttempts) {
-			return true;
-		} else {
-			authAttempts++;
-			return false;
-		}
 	}
 }

@@ -8,9 +8,7 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.compat.SpyObject;
@@ -38,18 +36,11 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 	private int toWrite=0;
 	protected Operation optimizedOp=null;
 	private volatile SelectionKey sk=null;
-	private boolean shouldAuth=false;
-	private CountDownLatch authLatch;
-	private ArrayList<Operation> reconnectBlocked;
-
-	// operation Future.get timeout counter
-	private final AtomicInteger continuousTimeout = new AtomicInteger(0);
-
 
 	public TCPMemcachedNodeImpl(SocketAddress sa, SocketChannel c,
 			int bufSize, BlockingQueue<Operation> rq,
 			BlockingQueue<Operation> wq, BlockingQueue<Operation> iq,
-			long opQueueMaxBlockTime, boolean waitForAuth) {
+			long opQueueMaxBlockTime) {
 		super();
 		assert sa != null : "No SocketAddress";
 		assert c != null : "No SocketChannel";
@@ -66,8 +57,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 		writeQ=wq;
 		inputQueue=iq;
 		this.opQueueMaxBlockTime = opQueueMaxBlockTime;
-		shouldAuth = waitForAuth;
-		setupForAuth();
 	}
 
 	/* (non-Javadoc)
@@ -95,12 +84,9 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 	 * @see net.spy.memcached.MemcachedNode#setupResend()
 	 */
 	public final void setupResend() {
-		// First, reset the current write op, or cancel it if we should
-		// be authenticating
+		// First, reset the current write op.
 		Operation op=getCurrentWriteOp();
-		if(shouldAuth && op != null) {
-		    op.cancel();
-		} else if(op != null) {
+		if(op != null) {
 			ByteBuffer buf=op.getBuffer();
 			if(buf != null) {
 				buf.reset();
@@ -118,13 +104,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 				op.cancel();
 			}
 		}
-
-		while(shouldAuth && hasWriteOp()) {
-			op=removeCurrentWriteOp();
-			getLogger().warn("Discarding partially completed op: %s", op);
-			op.cancel();
-		}
-
 
 		getWbuf().clear();
 		getRbuf().clear();
@@ -264,15 +243,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 	 */
 	public final void addOp(Operation op) {
 		try {
-			if (!authLatch.await(1, TimeUnit.SECONDS)) {
-			    op.cancel();
-				getLogger().warn(
-					"Operation canceled because authentication " +
-					"or reconnection and authentication has " +
-					"taken more than one second to complete.");
-				getLogger().debug("Canceled operation %s", op.toString());
-				return;
-			}
 			if(!inputQueue.offer(op, opQueueMaxBlockTime,
 					TimeUnit.MILLISECONDS)) {
 				throw new IllegalStateException("Timed out waiting to add "
@@ -349,7 +319,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 	 */
 	public final void reconnecting() {
 		reconnectAttempt++;
-		continuousTimeout.set(0);
 	}
 
 	/* (non-Javadoc)
@@ -357,7 +326,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 	 */
 	public final void connected() {
 		reconnectAttempt=0;
-		continuousTimeout.set(0);
 	}
 
 	/* (non-Javadoc)
@@ -448,25 +416,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.spy.memcached.MemcachedNode#setContinuousTimeout
-	 */
-	public void setContinuousTimeout(boolean timedOut) {
-		if (timedOut && isActive()) {
-			continuousTimeout.incrementAndGet();
-		} else {
-			continuousTimeout.set(0);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see net.spy.memcached.MemcachedNode#getContinuousTimeout
-	 */
-	public int getContinuousTimeout() {
-		return continuousTimeout.get();
-	}
-
-
 	public final void fixupOps() {
 		// As the selection key can be changed at any point due to node
 		// failure, we'll grab the current volatile value and configure it.
@@ -479,27 +428,4 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 			getLogger().debug("Selection key is not valid.");
 		}
 	}
-
-	public final void authComplete() {
-		if (reconnectBlocked != null && reconnectBlocked.size() > 0 ) {
-		    inputQueue.addAll(reconnectBlocked);
-		}
-		authLatch.countDown();
-	}
-
-	public final void setupForAuth() {
-		if (shouldAuth) {
-			authLatch = new CountDownLatch(1);
-			if (inputQueue.size() > 0) {
-				reconnectBlocked = new ArrayList<Operation>(
-				inputQueue.size() + 1);
-				inputQueue.drainTo(reconnectBlocked);
-			}
-			assert(inputQueue.size() == 0);
-			setupResend();
-		} else {
-			authLatch = new CountDownLatch(0);
-		}
-	}
-
 }

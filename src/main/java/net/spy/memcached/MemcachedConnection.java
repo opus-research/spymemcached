@@ -29,7 +29,6 @@ import java.util.concurrent.CountDownLatch;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Operation;
-import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationState;
 
 /**
@@ -65,7 +64,6 @@ public final class MemcachedConnection extends SpyObject {
 	private final Collection<ConnectionObserver> connObservers =
 		new ConcurrentLinkedQueue<ConnectionObserver>();
 	private final OperationFactory opFact;
-	private final int timeoutExceptionThreshold;
 
 	/**
 	 * Construct a memcached connection.
@@ -87,7 +85,6 @@ public final class MemcachedConnection extends SpyObject {
 		shouldOptimize = f.shouldOptimize();
 		maxDelay = f.getMaxReconnectDelay();
 		opFact = opfactory;
-		timeoutExceptionThreshold = f.getTimeoutExceptionThreshold();
 		selector=Selector.open();
 		List<MemcachedNode> connections=new ArrayList<MemcachedNode>(a.size());
 		for(SocketAddress sa : a) {
@@ -193,23 +190,10 @@ public final class MemcachedConnection extends SpyObject {
 			getLogger().debug("Selected %d, selected %d keys",
 					selected, selectedKeys.size());
 			emptySelects=0;
-
 			for(SelectionKey sk : selectedKeys) {
 				handleIO(sk);
-			}
-
+			} // for each selector
 			selectedKeys.clear();
-		}
-
-
-		// see if any connections blew up with large number of timeouts
-		for(SelectionKey sk : selector.keys()) {
-			MemcachedNode mn = (MemcachedNode)sk.attachment();
-			if (mn.getContinuousTimeout() > timeoutExceptionThreshold)
-			{
-				getLogger().info("%s exceeded continuous timeout threshold", sk);
-				lostConnection(mn);
-			}
 		}
 
 		if(!shutDown && !reconnectQueue.isEmpty()) {
@@ -327,7 +311,6 @@ public final class MemcachedConnection extends SpyObject {
 				}
 			}
 		} catch(ClosedChannelException e) {
-			// Note, not all channel closes end up here
 			if(!shutDown) {
 				getLogger().info("Closed channel and not shutting down.  "
 					+ "Queueing reconnect on %s", qa, e);
@@ -339,20 +322,10 @@ public final class MemcachedConnection extends SpyObject {
 			getLogger().info("Reconnecting due to failure to connect to %s",
 					qa, e);
 			queueReconnect(qa);
-		} catch (OperationException e) {
-			qa.setupForAuth(); // noop if !shouldAuth
-			getLogger().info("Reconnection due to exception " +
-				"handling a memcached operation on %s.  " +
-				"This may be due to an authentication failure.", qa, e);
-			lostConnection(qa);
 		} catch(Exception e) {
-			// Any particular error processing an item should simply
-			// cause us to reconnect to the server.
-			//
-			// One cause is just network oddness or servers
-			// restarting, which lead here with IOException
-
-			qa.setupForAuth(); // noop if !shouldAuth
+			// Various errors occur on Linux that wind up here.  However, any
+			// particular error processing an item should simply cause us to
+			// reconnect to the server.
 			getLogger().info("Reconnecting due to exception on %s", qa, e);
 			lostConnection(qa);
 		}
@@ -377,9 +350,8 @@ public final class MemcachedConnection extends SpyObject {
 		final SocketChannel channel = qa.getChannel();
 		int read=channel.read(rbuf);
 		if (read < 0) {
-		    // our model is to keep the connection alive for future ops
-		    // so we'll queue a reconnect if disconnected via an IOException
-		    throw new IOException("Disconnected unexpected, will reconnect.");
+		    // GRUMBLE.
+		    throw new IOException("Disconnected");
 		}
 		while(read > 0) {
 			getLogger().debug("Read %d bytes", read);

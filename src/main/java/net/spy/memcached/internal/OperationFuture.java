@@ -57,7 +57,6 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
   private final long timeout;
   private Operation op;
   private final String key;
-  private long cas;
 
   /**
    * Create an OperationFuture for a given async operation.
@@ -90,7 +89,6 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
     status = null;
     timeout = opTimeout;
     key = k;
-    cas = 0;
   }
 
   /**
@@ -187,23 +185,6 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
     return key;
   }
 
- /**
-   * Set the key for this operation.
-   *
-   * @param inCas the CAS value
-   */
-  public void setCas(long inCas) {
-    this.cas = inCas;
-  }
-
- /**
-   * Get the CAS for this operation.
-   *
-   * @return the CAS for this operation
-   */
-  public long getCas() {
-    return cas;
-  }
   /**
    * Get the current status of this operation.
    *

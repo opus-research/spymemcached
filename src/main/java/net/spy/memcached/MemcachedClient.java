@@ -66,7 +66,6 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatsOperation;
-import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.ops.TimedOutOperationStatus;
 import net.spy.memcached.transcoders.TranscodeService;
@@ -260,11 +259,11 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     return transcoder;
   }
 
-  public CountDownLatch broadcastOp(final BroadcastOpFactory of) {
+  CountDownLatch broadcastOp(final BroadcastOpFactory of) {
     return broadcastOp(of, mconn.getLocator().getAll(), true);
   }
 
-  public CountDownLatch broadcastOp(final BroadcastOpFactory of,
+  CountDownLatch broadcastOp(final BroadcastOpFactory of,
       Collection<MemcachedNode> nodes) {
     return broadcastOp(of, nodes, true);
   }
@@ -284,12 +283,9 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     final OperationFuture<Boolean> rv =
         new OperationFuture<Boolean>(key, latch, operationTimeout);
     Operation op = opFact.store(storeType, key, co.getFlags(), exp,
-        co.getData(), new StoreOperation.Callback() {
+        co.getData(), new OperationCallback() {
             public void receivedStatus(OperationStatus val) {
               rv.set(val.isSuccess(), val);
-            }
-            public void gotData(String key, long cas) {
-              rv.setCas(cas);
             }
 
             public void complete() {
@@ -489,7 +485,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     final OperationFuture<CASResponse> rv =
       new OperationFuture<CASResponse>(key, latch, operationTimeout);
     Operation op = opFact.cas(StoreType.set, key, casId, co.getFlags(), exp,
-        co.getData(), new StoreOperation.Callback() {
+        co.getData(), new OperationCallback() {
             public void receivedStatus(OperationStatus val) {
               if (val instanceof CASOperationStatus) {
                 rv.set(((CASOperationStatus) val).getCASResponse(), val);
@@ -501,9 +497,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
                 throw new RuntimeException("Unhandled state: " + val);
               }
             }
-            public void gotData(String key, long cas) {
-              rv.setCas(cas);
-            }
+
             public void complete() {
               latch.countDown();
             }

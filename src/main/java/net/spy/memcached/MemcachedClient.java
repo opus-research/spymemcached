@@ -183,7 +183,7 @@ public class MemcachedClient extends SpyThread
 		if(authDescriptor != null) {
 			addObserver(this);
 		}
-		setName("Memcached IO over " + mconn);
+		setName("Memcached IO over " + conn);
 		setDaemon(cf.isDaemon());
 		if (startIOThread) {
 			start();
@@ -1772,7 +1772,7 @@ public class MemcachedClient extends SpyThread
 	public void run() {
 		while(running) {
             try {
-                mconn.handleIO();
+                conn.handleIO();
             } catch (IOException e) {
                 logRunException(e);
             } catch (CancelledKeyException e) {

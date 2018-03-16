@@ -36,17 +36,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.ConcurrentModificationException;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -641,6 +631,7 @@ public class MemcachedConnection extends SpyThread {
               metrics.markMeter(OVERALL_RESPONSE_SUCC_METRIC);
             }
           } else if (currentOp.getState() == OperationState.RETRY) {
+            handleRetryInformation(currentOp.getErrorMsg());
             long timeOnWire = System.nanoTime() - currentOp.getWriteCompleteTimestamp();
             metrics.updateHistogram(OVERALL_AVG_TIME_ON_WIRE_METRIC, (int)(timeOnWire / 1000));
             getLogger().debug("Reschedule read op due to NOT_MY_VBUCKET error: "
@@ -661,6 +652,17 @@ public class MemcachedConnection extends SpyThread {
       read = channel.read(rbuf);
       qa.completedRead();
     }
+  }
+
+  /**
+   * Method that can be extended to handle the extracted error message
+   * for an operation in a RETRY state.
+   *
+   * @param retryMessage the message to use.
+   */
+  protected void handleRetryInformation(final byte[] retryMessage) {
+    getLogger().debug("Got RETRY message: " + new String(retryMessage)
+      + ", but not handled.");
   }
 
   // Make a debug string out of the given buffer's values

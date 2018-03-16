@@ -82,6 +82,7 @@ public  abstract class OperationImpl extends BaseOperationImpl
   private final byte[] header = new byte[MIN_RECV_PACKET];
   private int headerOffset = 0;
   private byte[] payload = null;
+  private byte[] errorMsg = null;
 
   // Response header fields
   protected int keyLen;
@@ -195,6 +196,9 @@ public  abstract class OperationImpl extends BaseOperationImpl
    */
   protected OperationStatus getStatusForErrorCode(int errCode, byte[] errPl)
     throws IOException {
+    errorMsg = new byte[errPl.length];
+    errorMsg = errPl.clone();
+
     switch (errCode) {
     case SUCCESS:
       return STATUS_OK;
@@ -362,4 +366,10 @@ public  abstract class OperationImpl extends BaseOperationImpl
   public String toString() {
     return "Cmd: " + cmd + " Opaque: " + opaque;
   }
+
+  @Override
+  public byte[] getErrorMsg() {
+    return errorMsg;
+  }
+
 }

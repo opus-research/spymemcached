@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.CancelledOperationStatus;
+import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
@@ -15,10 +16,10 @@ import net.spy.memcached.ops.OperationStatus;
 /**
  * Base class for protocol-specific operation implementations.
  */
-public abstract class BaseOperationImpl extends SpyObject {
+public abstract class BaseOperationImpl extends SpyObject implements Operation {
 
 	/**
-	 * Status object for cancelled operations.
+	 * Status object for canceled operations.
 	 */
 	public static final OperationStatus CANCELLED =
 		new CancelledOperationStatus();
@@ -28,6 +29,7 @@ public abstract class BaseOperationImpl extends SpyObject {
 	private OperationException exception = null;
 	protected OperationCallback callback = null;
 	private volatile MemcachedNode handlingNode = null;
+        private boolean timedout;
 
 	public BaseOperationImpl() {
 		super();
@@ -143,4 +145,22 @@ public abstract class BaseOperationImpl extends SpyObject {
 		handlingNode = to;
 	}
 
+        @Override
+        public void timedOut() {
+            timedout = true;
+        }
+
+        @Override
+        public boolean isTimedOut() {
+            return timedout;
+        }
+
+	@Override
+	public boolean isTimedOut(long ttl) {
+		long elapsed = System.nanoTime();
+		long ttlNanos = ttl * 1000 * 1000; /* ttl supplied is millis */
+		if (elapsed - creationTime > ttlNanos)
+			timedout = true;
+		return timedout;
+        }
 }

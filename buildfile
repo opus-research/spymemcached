@@ -62,11 +62,7 @@ define "spymemcached" do
   test.include "*Test"
   if SERVER_TYPE == 'memcached' then
     test.exclude '*VBucketMemcachedClientTest', '*BucketMonitorTest',
-              '*ConfigurationProviderHTTPTest', '*CouchbaseClientTest',
-              '*MembaseClientTest'
-  end
-  if SERVER_TYPE == 'membase' then
-    test.exclude '*CouchbaseClientTest'
+              '*ConfigurationProviderHTTPTest'
   end
   test.using :fork=>:each, :properties=>{ 'server.address_v4'=>TEST_SERVER_V4,
                'server.address_v6'=>TEST_SERVER_V6,
@@ -81,16 +77,14 @@ define "spymemcached" do
   manifest["Implementation-Vendor"] = COPYRIGHT
   manifest['Copyright'] = COPYRIGHT
   compile.with "log4j:log4j:jar:1.2.15", "jmock:jmock:jar:1.2.0",
-               "junit:junit:jar:4.7", "org.jboss.netty:netty:jar:3.1.5.GA",
+               "junit:junit:jar:4.4", "org.jboss.netty:netty:jar:3.1.5.GA",
                "org.springframework:spring-beans:jar:3.0.3.RELEASE",
                "org.codehaus.jettison:jettison:jar:1.1",
-               "commons-codec:commons-codec:jar:1.5",
+               "commons-codec:commons-codec:jar:1.4",
                "org.easymock:easymock:jar:2.4",
                "org.easymock:easymockclassextension:jar:2.4",
                "junit-addons:junit-addons:jar:1.4",
-               "cglib:cglib:jar:2.2.2", "asm:asm:jar:3.3.1",
-               "org.apache.httpcomponents:httpcore:jar:4.1.1",
-               "org.apache.httpcomponents:httpcore-nio:jar:4.1.1"
+               "cglib:cglib:jar:2.2.2", "asm:asm:jar:3.3.1"
 
   # Gen build
   gen_build_info "net.spy.memcached", "git"

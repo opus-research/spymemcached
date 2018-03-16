@@ -74,7 +74,6 @@ import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.ops.TimedOutOperationStatus;
-import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
 import net.spy.memcached.protocol.binary.BinaryOperationFactory;
 import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
@@ -2629,7 +2628,28 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   @Override
+  public long getOperationTimeout() {
+    return operationTimeout;
+  }
+
+  @Override
+  public MemcachedConnection getConnection() {
+    return mconn;
+  }
+
+  @Override
+  public TranscodeService getTranscoderService() {
+    return tcService;
+  }
+
+  @Override
+  public ExecutorService getExecutorService() {
+    return executorService;
+  }
+
+  @Override
   public String toString() {
     return connFactory.toString();
   }
 }
+

@@ -25,34 +25,41 @@ class GetOperationImpl extends OperationImpl
 
 	private final String key;
 	private final int exp;
+	private final int cmd;
 
 	public GetOperationImpl(String k, GetOperation.Callback cb) {
 		super(GET_CMD, generateOpaque(), cb);
 		key=k;
 		exp=0;
+		cmd=GET_CMD;
 	}
 
 	public GetOperationImpl(String k, GetsOperation.Callback cb) {
 		super(GET_CMD, generateOpaque(), cb);
 		key=k;
 		exp=0;
+		cmd=GET_CMD;
 	}
 
 	public GetOperationImpl(String k, int e, GetlOperation.Callback cb) {
 		super(GETL_CMD, generateOpaque(), cb);
 		key=k;
 		exp=e;
+		cmd=GETL_CMD;
 	}
 
 	public GetOperationImpl(String k, int e, GetAndTouchOperation.Callback cb) {
 		super(GAT_CMD, generateOpaque(), cb);
 		key=k;
 		exp=e;
+		cmd=GAT_CMD;
 	}
 
 	@Override
 	public void initialize() {
-		if (exp > 0) {
+		if (cmd == GETL_CMD) {
+			prepareBuffer(key, 0, EMPTY_BYTES, 0, exp);
+		} else if (cmd == GAT_CMD) {
 			prepareBuffer(key, 0, EMPTY_BYTES, exp);
 		} else {
 			prepareBuffer(key, 0, EMPTY_BYTES);
@@ -73,8 +80,11 @@ class GetOperationImpl extends OperationImpl
 			GetsOperation.Callback gcb=(GetsOperation.Callback)cb;
 			gcb.gotData(key, flags, responseCas, data);
 		} else if (cb instanceof GetlOperation.Callback) {
+			//getl return the key and value. So we need to strip off the key
+			byte[] value = new byte[data.length-key.length()];
+			System.arraycopy(data, key.length(), value, 0, data.length-key.length());
 			GetlOperation.Callback gcb=(GetlOperation.Callback)cb;
-			gcb.gotData(key, flags, responseCas, data);
+			gcb.gotData(key, flags, responseCas, value);
 		} else if (cb instanceof GetAndTouchOperation.Callback) {
 			GetAndTouchOperation.Callback gcb=(GetAndTouchOperation.Callback)cb;
 			gcb.gotData(key, flags, responseCas, data);

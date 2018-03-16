@@ -49,7 +49,6 @@ import net.spy.memcached.ops.NoopOperation;
 import net.spy.memcached.ops.ObserveOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.ReplicaReadOperation;
 import net.spy.memcached.ops.SASLAuthOperation;
 import net.spy.memcached.ops.SASLMechsOperation;
 import net.spy.memcached.ops.SASLStepOperation;
@@ -79,10 +78,6 @@ public class BinaryOperationFactory extends BaseOperationFactory {
   public ObserveOperation observe(String key, long casId, int index,
           ObserveOperation.Callback cb) {
     return new ObserveOperationImpl(key, casId, index, cb);
-  }
-  public ReplicaReadOperation replica(String key,
-          ReplicaReadOperation.Callback cb) {
-    return new ReplicaReadOperationImpl(key, cb);
   }
   public FlushOperation flush(int delay, OperationCallback cb) {
     return new FlushOperationImpl(cb);

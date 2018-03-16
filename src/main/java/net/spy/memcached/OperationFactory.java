@@ -44,7 +44,6 @@ import net.spy.memcached.ops.NoopOperation;
 import net.spy.memcached.ops.ObserveOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.ReplicaReadOperation;
 import net.spy.memcached.ops.SASLAuthOperation;
 import net.spy.memcached.ops.SASLMechsOperation;
 import net.spy.memcached.ops.SASLStepOperation;
@@ -102,14 +101,6 @@ public interface OperationFactory {
   ObserveOperation observe(String key, long casId, int index,
           ObserveOperation.Callback operationCallback);
 
-  /**
-   * Create a Replica Read operation.
-   *
-   * @param key the key to observe
-   * @return the ReplicaReadOperation
-   */
-  ReplicaReadOperation replica(String key,
-          ReplicaReadOperation.Callback operationCallback);
   /**
    * Create a flush operation.
    *

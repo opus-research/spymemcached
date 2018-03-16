@@ -121,8 +121,6 @@ public class MemcachedClient extends SpyThread
 
 	private final MemcachedConnection mconn;
 	final OperationFactory opFact;
-	
-	private ConnectionFactory connectionFactory;
 
 	final Transcoder<Object> transcoder;
 
@@ -178,7 +176,6 @@ public class MemcachedClient extends SpyThread
 			throw new IllegalArgumentException(
 				"Operation timeout must be positive.");
 		}
-		connectionFactory = cf;
 		tcService = new TranscodeService(cf.isDaemon());
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();
@@ -301,7 +298,6 @@ public class MemcachedClient extends SpyThread
 			throw new IllegalArgumentException(
 				"Operation timeout must be positive.");
 		}
-		connectionFactory = cf;
 		tcService = new TranscodeService(cf.isDaemon());
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();

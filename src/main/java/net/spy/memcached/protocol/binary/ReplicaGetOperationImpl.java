@@ -58,7 +58,7 @@ public class ReplicaGetOperationImpl extends SingleKeyOperationImpl
       pl.length - EXTRA_HDR_LEN - keyLen);
     ReplicaGetOperation.Callback gcb =
       (ReplicaGetOperation.Callback) getCallback();
-    gcb.gotData(key, flags, data);
+    gcb.gotData(key, flags, responseCas, data);
     getCallback().receivedStatus(STATUS_OK);
   }
 

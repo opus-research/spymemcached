@@ -33,7 +33,8 @@ public class MultiReplicaGetOperationCallback extends MultiOperationCallback
     super(original, todo);
   }
 
-  public void gotData(String key, int flags, byte[] data) {
-    ((ReplicaGetOperation.Callback) originalCallback).gotData(key, flags, data);
+  public void gotData(String key, int flags, long cas, byte[] data) {
+    ((ReplicaGetOperation.Callback) originalCallback).gotData(key, flags, cas,
+      data);
   }
 }

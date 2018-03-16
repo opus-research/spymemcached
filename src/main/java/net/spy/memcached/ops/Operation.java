@@ -81,9 +81,33 @@ public interface Operation {
 	 */
 	void setHandlingNode(MemcachedNode to);
 
-        public void timedOut();
+	/**
+	 * Mark this operation as one which has exceeded it's timeout value.
+	 */
+	public void timeOut();
 
-        public boolean isTimedOut();
+	/**
+	 * True if the operation has timed out.
+	 *
+	 * <p>A timed out operation may or may not have been sent to the server
+	 * already, but it exceeded either the specified or the default timeout
+	 * value.
+	 */
+	public boolean isTimedOut();
 
+	/**
+	 * True if the operation has timed out.
+	 *
+	 * The ttl allows the caller to specify how long the operation should
+	 * have been given since its creation, returning true if the operation
+	 * has exceeded that time period.
+	 *
+	 * <p>A timed out operation may or may not have been sent to the server
+	 * already, but it exceeded either the specified or the default timeout
+	 * value.
+	 *
+	 * @throws IllegalArgumentException if the operation has already timed out
+	 * and the ttl specified would allow it to become valid.
+	 */
 	public boolean isTimedOut(long ttl);
 }

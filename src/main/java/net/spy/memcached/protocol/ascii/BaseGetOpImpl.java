@@ -25,7 +25,6 @@ abstract class BaseGetOpImpl extends OperationImpl {
 	private byte[] data = null;
 	private int readOffset = 0;
 	private byte lookingFor = '\0';
-        private boolean timedout;
 
 	public BaseGetOpImpl(String c,
 			OperationCallback cb, Collection<String> k) {
@@ -150,15 +149,5 @@ abstract class BaseGetOpImpl extends OperationImpl {
 	protected final void wasCancelled() {
 		getCallback().receivedStatus(CANCELLED);
 	}
-
-        @Override
-        public void timedOut() {
-            timedout = true;
-        }
-
-        @Override
-        public boolean isTimedOut() {
-            return timedout;
-        }
 
 }

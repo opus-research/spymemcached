@@ -898,14 +898,14 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
         }
     }
 
-	public void checkState() {
-		if (shutDown) {
+    public void checkState() {
+		if(shutDown) {
 			throw new IllegalStateException("Shutting down");
 		}
 		assert isAlive() : "IO Thread is not running.";
 	}
 
-	/**
+    /**
 	 * Infinitely loop processing IO.
 	 */
 	@Override

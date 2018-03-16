@@ -1,15 +1,19 @@
 package net.spy.memcached.protocol.binary;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import net.spy.memcached.ops.ConcatenationOperation;
 import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.OperationCallback;
 
-class ConcatenationOperationImpl extends SingleKeyOperationImpl
+class ConcatenationOperationImpl extends OperationImpl
 	implements ConcatenationOperation {
 
 	private static final int APPEND=0x0e;
 	private static final int PREPEND=0x0f;
 
+	private final String key;
 	private final long cas;
 	private final ConcatenationType catType;
 	private final byte[] data;
@@ -27,7 +31,8 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl
 
 	public ConcatenationOperationImpl(ConcatenationType t, String k,
 			byte[] d, long c, OperationCallback cb) {
-		super(cmdMap(t), generateOpaque(), k, cb);
+		super(cmdMap(t), generateOpaque(), cb);
+		key=k;
 		data=d;
 		cas=c;
 		catType=t;
@@ -36,6 +41,10 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl
 	@Override
 	public void initialize() {
 		prepareBuffer(key, cas, data);
+	}
+
+	public Collection<String> getKeys() {
+		return Collections.singleton(key);
 	}
 
 	public long getCasValue() {
@@ -49,4 +58,5 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl
 	public ConcatenationType getStoreType() {
 		return catType;
 	}
+
 }

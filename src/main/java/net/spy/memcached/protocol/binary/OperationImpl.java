@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.spy.memcached.CASResponse;
 import net.spy.memcached.KeyUtil;
 import net.spy.memcached.ops.CASOperationStatus;
-import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationState;
@@ -18,7 +17,7 @@ import net.spy.memcached.protocol.BaseOperationImpl;
 /**
  * Base class for binary operations.
  */
-abstract class OperationImpl extends BaseOperationImpl implements Operation {
+abstract class OperationImpl extends BaseOperationImpl {
 
 	protected static final byte REQ_MAGIC = (byte)0x80;
 	protected static final byte RES_MAGIC = (byte)0x81;
@@ -62,7 +61,6 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 	protected long responseCas;
 
 	private int payloadOffset=0;
-        private boolean timedout;
 
 	/**
 	 * Construct with opaque.
@@ -294,14 +292,4 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 		}
 		return rv;
 	}
-
-        @Override
-        public void timedOut() {
-            timedout = true;
-        }
-
-        @Override
-        public boolean isTimedOut() {
-            return timedout;
-        }
 }

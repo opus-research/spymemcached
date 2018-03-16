@@ -22,8 +22,15 @@ use the following command:
 # Testing
 
 The latest version of spymemcached has a set of command line arguments
-that can be used to configure the location of your testing server. The
-arguments are listed below.
+that can be used to configure the location and type of your testing
+server. The arguments are listed below.
+
+    -Dserver.type=server_type
+
+This argument is used to specify the type of testing server you are
+using. By default this argument is set to memcached. It can be set to
+either "memcached", "membase" or "couchbase". Invalid testing server
+types will default to memcached.
 
     -Dserver.address_v4=ipv4_address_of_testing_server
 
@@ -35,16 +42,6 @@ server. By default it is set to localhost.
 This argument is used to set the ipv6 address of your testing server.
 By default it is set to ::1. If an ipv6 address is specified then an
 ipv4 address must be specified otherwise there may be test failures.
-
-    -Dserver.port_number=port_number_of_memcached
-
-This argument is used when memcahched is started on a port other than
-11211
-
-    -Dtest.type=ci
-
-This argument is used for CI testing where certain unit tests might
-be temporarily failing.
 
 # More Information
 

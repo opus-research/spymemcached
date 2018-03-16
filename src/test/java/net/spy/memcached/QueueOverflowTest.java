@@ -121,11 +121,6 @@ public class QueueOverflowTest extends ClientBaseCase {
   public void testOverflowingWriteQueue() throws Exception {
     byte[] b = new byte[8192];
     Random r = new Random();
-
-    // Do not execute this for CI
-    if (TestConfig.isCITest()) {
-      return;
-    }
     r.nextBytes(b);
     runOverflowTest(b);
   }
@@ -133,11 +128,6 @@ public class QueueOverflowTest extends ClientBaseCase {
   public void testOverflowingReadQueue() throws Exception {
     byte[] b = new byte[8192];
     Random r = new Random();
-
-    // Do not execute this for CI
-    if (TestConfig.isCITest()) {
-      return;
-    }
     r.nextBytes(b);
     client.set("x", 0, b);
 
@@ -153,7 +143,7 @@ public class QueueOverflowTest extends ClientBaseCase {
     Thread.sleep(50);
     for (Future<Object> f : c) {
       try {
-        f.get(1, TimeUnit.SECONDS);
+          f.get(1, TimeUnit.SECONDS);
       } catch (TimeoutException e) {
         // OK, just want to make sure the client doesn't crash
       } catch (ExecutionException e) {

@@ -215,22 +215,4 @@ abstract class BaseGetOpImpl extends OperationImpl {
   protected final void wasCancelled() {
     getCallback().receivedStatus(CANCELLED);
   }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Cmd: ");
-    sb.append(cmd);
-    sb.append(" Keys: ");
-    for (String key : keys) {
-      sb.append(key);
-      sb.append(" ");
-    }
-    if (hasExp) {
-      sb.append("Exp: ");
-      sb.append(exp);
-      sb.append(" ");
-    }
-    return sb.toString();
-  }
 }

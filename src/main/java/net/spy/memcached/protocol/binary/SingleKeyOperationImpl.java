@@ -73,12 +73,4 @@ abstract class SingleKeyOperationImpl extends OperationImpl implements
         + " for this operation");
     return vbucket;
   }
-
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString());
-    sb.append(" Key: ");
-    sb.append(key);
-    return sb.toString();
-  }
 }

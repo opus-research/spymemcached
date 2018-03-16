@@ -49,9 +49,4 @@ public class SASLStepOperationImpl extends SASLBaseOperationImpl implements
   protected byte[] buildResponse(SaslClient sc) throws SaslException {
     return sc.evaluateChallenge(challenge);
   }
-
-  @Override
-  public String toString() {
-    return "SASL steps operation";
-  }
 }

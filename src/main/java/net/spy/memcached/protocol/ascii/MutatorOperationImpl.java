@@ -103,16 +103,4 @@ final class MutatorOperationImpl extends OperationImpl implements
   public Mutator getType() {
     return mutator;
   }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Cmd: ");
-    sb.append(mutator.name());
-    sb.append(" Key: ");
-    sb.append(key);
-    sb.append(" Amount: ");
-    sb.append(amount);
-    return sb.toString();
-  }
 }

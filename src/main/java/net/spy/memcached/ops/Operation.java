@@ -72,7 +72,6 @@ public interface Operation {
    * Invoked when we start writing all of the bytes from this operation to
    * the sockets write buffer.
    */
-
   void writing();
   /**
    * Invoked after having written all of the bytes from the supplied output

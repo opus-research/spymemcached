@@ -39,10 +39,10 @@ import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.couch.DocsOperationImpl;
-import net.spy.memcached.protocol.couch.ViewFetcherOperation;
-import net.spy.memcached.protocol.couch.ViewFetcherOperationImpl;
-import net.spy.memcached.protocol.couch.ViewsFetcherOperation;
-import net.spy.memcached.protocol.couch.ViewsFetcherOperationImpl;
+import net.spy.memcached.protocol.couch.GetViewOperation.GetViewCallback;
+import net.spy.memcached.protocol.couch.GetViewOperationImpl;
+import net.spy.memcached.protocol.couch.GetViewsOperation.GetViewsCallback;
+import net.spy.memcached.protocol.couch.GetViewsOperationImpl;
 import net.spy.memcached.protocol.couch.HttpOperation;
 import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
 import net.spy.memcached.protocol.couch.Query;
@@ -153,8 +153,8 @@ public class CouchbaseClient extends MembaseClient
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new ViewFetcherOperationImpl(request, bucketName, designDocumentName,
-            viewName, new ViewFetcherOperation.ViewFetcherCallback() {
+        new GetViewOperationImpl(request, bucketName, designDocumentName,
+            viewName, new GetViewCallback() {
               private View view = null;
 
               @Override
@@ -193,8 +193,8 @@ public class CouchbaseClient extends MembaseClient
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-    final HttpOperation op = new ViewsFetcherOperationImpl(request, bucketName,
-        designDocumentName, new ViewsFetcherOperation.ViewsFetcherCallback() {
+    final HttpOperation op = new GetViewsOperationImpl(request, bucketName,
+        designDocumentName, new GetViewsCallback() {
           private List<View> views = null;
 
           @Override

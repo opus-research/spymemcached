@@ -29,7 +29,7 @@ import java.util.List;
  * The Flag enum contains a list all of the different flags that can be passed
  * in a tap message in the flag field.
  */
-public enum TapFlag {
+public enum TapRequestFlag {
   /**
    * Tap backfill flag definition.
    */
@@ -75,32 +75,32 @@ public enum TapFlag {
    *
    * @param flag - The new flag value
    */
-  TapFlag(byte flag) {
+  TapRequestFlag(byte flag) {
     this.flag = flag;
   }
 
-  public static List<TapFlag> getFlags(short f) {
-    List<TapFlag> flags = new LinkedList<TapFlag>();
-    if ((f & TapFlag.BACKFILL.flag) == 1) {
-      flags.add(TapFlag.BACKFILL);
+  public static List<TapRequestFlag> getFlags(short f) {
+    List<TapRequestFlag> flags = new LinkedList<TapRequestFlag>();
+    if ((f & TapRequestFlag.BACKFILL.flag) == 1) {
+      flags.add(TapRequestFlag.BACKFILL);
     }
-    if ((f & TapFlag.DUMP.flag) == 1) {
-      flags.add(TapFlag.DUMP);
+    if ((f & TapRequestFlag.DUMP.flag) == 1) {
+      flags.add(TapRequestFlag.DUMP);
     }
-    if ((f & TapFlag.LIST_VBUCKETS.flag) == 1) {
-      flags.add(TapFlag.LIST_VBUCKETS);
+    if ((f & TapRequestFlag.LIST_VBUCKETS.flag) == 1) {
+      flags.add(TapRequestFlag.LIST_VBUCKETS);
     }
-    if ((f & TapFlag.TAKEOVER_VBUCKETS.flag) == 1) {
-      flags.add(TapFlag.TAKEOVER_VBUCKETS);
+    if ((f & TapRequestFlag.TAKEOVER_VBUCKETS.flag) == 1) {
+      flags.add(TapRequestFlag.TAKEOVER_VBUCKETS);
     }
-    if ((f & TapFlag.SUPPORT_ACK.flag) == 1) {
-      flags.add(TapFlag.SUPPORT_ACK);
+    if ((f & TapRequestFlag.SUPPORT_ACK.flag) == 1) {
+      flags.add(TapRequestFlag.SUPPORT_ACK);
     }
-    if ((f & TapFlag.KEYS_ONLY.flag) == 1) {
-      flags.add(TapFlag.KEYS_ONLY);
+    if ((f & TapRequestFlag.KEYS_ONLY.flag) == 1) {
+      flags.add(TapRequestFlag.KEYS_ONLY);
     }
-    if ((f & TapFlag.CHECKPOINT.flag) == 1) {
-      flags.add(TapFlag.CHECKPOINT);
+    if ((f & TapRequestFlag.CHECKPOINT.flag) == 1) {
+      flags.add(TapRequestFlag.CHECKPOINT);
     }
 
     return flags;

@@ -22,46 +22,51 @@
 
 package net.spy.memcached.tapmessage;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
- * Builds a tap message.
+ * The Flag enum contains a list all of the different flags that can be passed
+ * in a tap message in the flag field.
  */
-public class MessageBuilder {
-  private RequestMessage message;
+public enum TapResponseFlag {
+  /**
+   * This message requires acknowledgement
+   */
+  TAP_ACK((byte) 0x01),
 
-  public MessageBuilder() {
-    this.message = new RequestMessage();
-    message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
-    message.setOpcode(TapOpcode.REQUEST);
+  /**
+   * This message doesn't contain a value
+   */
+  TAP_NO_VALUE((byte) 0x02);
+
+  /**
+   * The flag value.
+   */
+  private byte flag;
+
+  /**
+   * Defines the flag value.
+   *
+   * @param flag - The new flag value
+   */
+  TapResponseFlag(byte flag) {
+    this.flag = flag;
   }
 
-  public void doBackfill(long date) {
-    message.setBackfill(date);
-    message.setFlags(TapRequestFlag.BACKFILL);
+  public static List<TapResponseFlag> getFlags(short f) {
+    List<TapResponseFlag> flags = new LinkedList<TapResponseFlag>();
+    if ((f & TapResponseFlag.TAP_ACK.flag) == 1) {
+      flags.add(TapResponseFlag.TAP_ACK);
+    }
+    if ((f & TapResponseFlag.TAP_NO_VALUE.flag) == 1) {
+      flags.add(TapResponseFlag.TAP_NO_VALUE);
+    }
+
+    return flags;
   }
 
-  public void doDump() {
-    message.setFlags(TapRequestFlag.DUMP);
-  }
-
-  public void specifyVbuckets(short[] vbucketlist) {
-    message.setVbucketlist(vbucketlist);
-    message.setFlags(TapRequestFlag.LIST_VBUCKETS);
-  }
-
-  public void supportAck() {
-    message.setFlags(TapRequestFlag.SUPPORT_ACK);
-  }
-
-  public void keysOnly() {
-    message.setFlags(TapRequestFlag.KEYS_ONLY);
-  }
-
-  public void takeoverVbuckets(short[] vbucketlist) {
-    message.setVbucketlist(vbucketlist);
-    message.setFlags(TapRequestFlag.TAKEOVER_VBUCKETS);
-  }
-
-  public RequestMessage getMessage() {
-    return message;
+  public byte getFlag() {
+    return flag;
   }
 }

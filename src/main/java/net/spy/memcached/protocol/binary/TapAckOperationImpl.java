@@ -62,9 +62,4 @@ public class TapAckOperationImpl extends TapOperationImpl {
   public void streamClosed(OperationState state) {
     transitionState(state);
   }
-
-  @Override
-  public String toString() {
-    return "Cmd: tap ack Opcode: " + opcode + " Opaque: " + opaque;
-  }
 }

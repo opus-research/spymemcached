@@ -83,10 +83,6 @@ class StoreOperationImpl extends SingleKeyOperationImpl implements
     prepareBuffer(key, cas, data, flags, exp);
   }
 
-  public byte[] getBytes() {
-    return data;
-  }
-
   public long getCasValue() {
     return cas;
   }

@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2013 Couchbase, Inc.
+ * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import net.spy.memcached.auth.AuthDescriptor;
-import net.spy.memcached.metrics.MetricType;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationQueueFactory;
 import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
@@ -70,9 +69,6 @@ public class ConnectionFactoryBuilder {
   protected int timeoutExceptionThreshold =
       DefaultConnectionFactory.DEFAULT_MAX_TIMEOUTEXCEPTION_THRESHOLD;
 
-  protected MetricType metricType
-    = DefaultConnectionFactory.DEFAULT_METRIC_TYPE;
-
   /**
    * Set the operation queue factory.
    */
@@ -95,7 +91,6 @@ public class ConnectionFactoryBuilder {
     setTimeoutExceptionThreshold(cf.getTimeoutExceptionThreshold());
     setTranscoder(cf.getDefaultTranscoder());
     setUseNagleAlgorithm(cf.useNagleAlgorithm());
-    setEnableMetrics(cf.enableMetrics());
   }
 
   public ConnectionFactoryBuilder setOpQueueFactory(OperationQueueFactory q) {
@@ -270,16 +265,6 @@ public class ConnectionFactoryBuilder {
   }
 
   /**
-   * Enable or disable metric collection.
-   *
-   * @param type the metric type to use (or disable).
-   */
-  public ConnectionFactoryBuilder setEnableMetrics(MetricType type) {
-    metricType = type;
-    return this;
-  }
-
-  /**
    * Get the ConnectionFactory set up with the provided parameters.
    */
   public ConnectionFactory build() {
@@ -383,11 +368,6 @@ public class ConnectionFactoryBuilder {
       @Override
       public int getTimeoutExceptionThreshold() {
         return timeoutExceptionThreshold;
-      }
-
-      @Override
-      public MetricType enableMetrics() {
-        return metricType;
       }
 
     };

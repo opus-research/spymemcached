@@ -98,12 +98,6 @@ public class AsciiOperationFactory extends BaseOperationFactory {
     return new MutatorOperationImpl(m, key, by, cb);
   }
 
-  public Operation observe(String key, long cas, long expiration,
-      String observeSet, OperationCallback cb) {
-    throw new UnsupportedOperationException("Observe is not supported for "
-        + "ASCII protocol");
-  }
-
   public StatsOperation stats(String arg, StatsOperation.Callback cb) {
     return new StatsOperationImpl(arg, cb);
   }
@@ -116,12 +110,6 @@ public class AsciiOperationFactory extends BaseOperationFactory {
   public KeyedOperation touch(String key, int expiration,
       OperationCallback cb) {
     throw new UnsupportedOperationException("Touch is not supported for "
-        + "ASCII protocol");
-  }
-
-  public Operation unobserve(String key, long cas, String observeSet,
-      OperationCallback cb) {
-    throw new UnsupportedOperationException("Unobserve is not supported for "
         + "ASCII protocol");
   }
 

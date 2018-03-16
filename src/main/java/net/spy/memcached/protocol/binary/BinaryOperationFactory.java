@@ -99,11 +99,6 @@ public class BinaryOperationFactory extends BaseOperationFactory {
     return new MutatorOperationImpl(m, key, by, def, exp, cb);
   }
 
-  public Operation observe(String key, long cas, long expiration,
-      String observeSet, OperationCallback cb) {
-    return new ObserveOperationImpl(key, cas, expiration, observeSet, cb);
-  }
-
   public StatsOperation stats(String arg,
       net.spy.memcached.ops.StatsOperation.Callback cb) {
     return new StatsOperationImpl(arg, cb);
@@ -117,11 +112,6 @@ public class BinaryOperationFactory extends BaseOperationFactory {
   public KeyedOperation touch(String key, int expiration,
       OperationCallback cb) {
     return new TouchOperationImpl(key, expiration, cb);
-  }
-
-  public Operation unobserve(String key, long cas, String observeSet,
-      OperationCallback cb) {
-    return new UnobserveOperationImpl(key, cas, observeSet, cb);
   }
 
   public VersionOperation version(OperationCallback cb) {

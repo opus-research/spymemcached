@@ -150,19 +150,6 @@ public interface OperationFactory {
       OperationCallback cb);
 
   /**
-   * Creates an observe operation.
-   *
-   * @param keythe key to observe
-   * @param cas the cas of the key to observe
-   * @param expiration the observe set expiration time
-   * @param observeSet the observe set name
-   * @param cb the status callback
-   * @return the new observe operation
-   */
-  Operation observe(String key, long cas, long expiration, String observeSet,
-      OperationCallback cb);
-
-  /**
    * Get a new StatsOperation.
    *
    * @param arg the stat parameter (see protocol docs)
@@ -194,18 +181,6 @@ public interface OperationFactory {
    * @return A touch operation
    */
   KeyedOperation touch(String key, int expiration, OperationCallback cb);
-
-  /**
-   * Creates an unobserve operation.
-   *
-   * @param keythe key to observe
-   * @param cas the cas of the key to observe
-   * @param observeSet the observe set name
-   * @param cb the status callback
-   * @return the new observe operation
-   */
-  Operation unobserve(String key, long cas, String observeSet,
-      OperationCallback cb);
 
   /**
    * Get a concatenation operation.

@@ -62,7 +62,8 @@ define "spymemcached" do
   test.include "*Test"
   if SERVER_TYPE == 'memcached' then
     test.exclude '*VBucketMemcachedClientTest', '*BucketMonitorTest',
-              '*ConfigurationProviderHTTPTest', '*CouchbaseClientTest'
+              '*ConfigurationProviderHTTPTest', '*CouchbaseClientTest',
+              '*MembaseClientTest'
   end
   if SERVER_TYPE == 'membase' then
     test.exclude '*CouchbaseClientTest'
@@ -80,7 +81,7 @@ define "spymemcached" do
   manifest["Implementation-Vendor"] = COPYRIGHT
   manifest['Copyright'] = COPYRIGHT
   compile.with "log4j:log4j:jar:1.2.15", "jmock:jmock:jar:1.2.0",
-               "junit:junit:jar:4.7", "org.jboss.netty:netty:jar:3.1.5.GA",
+               "junit:junit:jar:4.4", "org.jboss.netty:netty:jar:3.1.5.GA",
                "org.springframework:spring-beans:jar:3.0.3.RELEASE",
                "org.codehaus.jettison:jettison:jar:1.1",
                "commons-codec:commons-codec:jar:1.5",

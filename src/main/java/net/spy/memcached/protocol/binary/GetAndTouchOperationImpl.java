@@ -61,4 +61,13 @@ public class GetAndTouchOperationImpl extends SingleKeyOperationImpl implements
     gcb.gotData(key, flags, responseCas, data);
     getCallback().receivedStatus(STATUS_OK);
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(super.toString());
+    sb.append(" Exp: ");
+    sb.append(exp);
+    return sb.toString();
+  }
 }

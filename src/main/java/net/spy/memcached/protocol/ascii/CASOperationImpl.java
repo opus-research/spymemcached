@@ -115,4 +115,21 @@ class CASOperationImpl extends OperationImpl implements CASOperation {
   public StoreType getStoreType() {
     return StoreType.set;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Cmd: cas");
+    sb.append(" Key: ");
+    sb.append(key);
+    sb.append(" Cas Value: ");
+    sb.append(casValue);
+    sb.append(" Flags: ");
+    sb.append(flags);
+    sb.append(" Exp: ");
+    sb.append(exp);
+    sb.append(" Data: ");
+    sb.append(data);
+    return sb.toString();
+  }
 }

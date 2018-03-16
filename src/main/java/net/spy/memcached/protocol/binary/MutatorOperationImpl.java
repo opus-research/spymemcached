@@ -70,7 +70,7 @@ class MutatorOperationImpl extends SingleKeyOperationImpl implements
         new OperationStatus(true, String.valueOf(decodeLong(pl, 0))));
   }
 
-  public int getBy() {
+  public long getBy() {
     return (int) by;
   }
 
@@ -84,5 +84,18 @@ class MutatorOperationImpl extends SingleKeyOperationImpl implements
 
   public Mutator getType() {
     return mutator;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(super.toString());
+    sb.append(" Amount: ");
+    sb.append(by);
+    sb.append(" Default: ");
+    sb.append(def);
+    sb.append(" Exp: ");
+    sb.append(exp);
+    return sb.toString();
   }
 }

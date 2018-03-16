@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,49 +22,40 @@
 
 package net.spy.memcached;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.io.PrintWriter;
 
-import net.spy.memcached.vbucket.config.Config;
+import net.spy.memcached.tapmessage.BaseMessage;
 
 /**
- * Interface for locating a node by hash value.
+ * A utility class for printing the bytes of a tap message.
  */
-public interface NodeLocator {
+public final class TapMessagePrinter {
+
+  private TapMessagePrinter() {
+    // Empty
+  }
 
   /**
-   * Get the primary location for the given key.
-   *
-   * @param k the object key
-   * @return the QueueAttachment containing the primary storage for a key
+   * Prints the message in byte form in a pretty way. This function is mainly
+   * used for debugging.\ purposes.
    */
-  MemcachedNode getPrimary(String k);
-
-  /**
-   * Get an iterator over the sequence of nodes that make up the backup
-   * locations for a given key.
-   *
-   * @param k the object key
-   * @return the sequence of backup nodes.
-   */
-  Iterator<MemcachedNode> getSequence(String k);
-
-  /**
-   * Get all memcached nodes. This is useful for broadcasting messages.
-   */
-  Collection<MemcachedNode> getAll();
-
-  /**
-   * Create a read-only copy of this NodeLocator.
-   */
-  NodeLocator getReadonlyCopy();
-
-  /**
-   * Update locator status.
-   *
-   * @param nodes New locator nodes.
-   * @param conf Locator configuration.
-   */
-  void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+  public static void printMessage(BaseMessage message, PrintWriter p) {
+    int colNum = 0;
+    byte[] mbytes = message.getBytes().array();
+    p.printf("   %5s%5s%5s%5s\n", "0", "1", "2", "3");
+    p.print("   ----------------------");
+    for (int i = 0; i < mbytes.length; i++) {
+      if ((i % 4) == 0) {
+        p.printf("\n%3d|", colNum);
+        colNum += 4;
+      }
+      int field = mbytes[i];
+      if (field < 0) {
+        field = field + 256;
+      }
+      p.printf("%5x", field);
+    }
+    p.print("\n\n");
+    p.flush();
+  }
 }

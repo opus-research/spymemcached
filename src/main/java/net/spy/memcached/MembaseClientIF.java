@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,49 +22,24 @@
 
 package net.spy.memcached;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.concurrent.Future;
 
-import net.spy.memcached.vbucket.config.Config;
+import net.spy.memcached.transcoders.Transcoder;
 
 /**
- * Interface for locating a node by hash value.
+ * This interface is provided as a helper for testing clients of the
+ * MembaseClient.
  */
-public interface NodeLocator {
+public interface MembaseClientIF extends MemcachedClientIF {
 
-  /**
-   * Get the primary location for the given key.
-   *
-   * @param k the object key
-   * @return the QueueAttachment containing the primary storage for a key
-   */
-  MemcachedNode getPrimary(String k);
+  Future<CASValue<Object>> asyncGetAndLock(final String key, int exp);
 
-  /**
-   * Get an iterator over the sequence of nodes that make up the backup
-   * locations for a given key.
-   *
-   * @param k the object key
-   * @return the sequence of backup nodes.
-   */
-  Iterator<MemcachedNode> getSequence(String k);
+  <T> Future<CASValue<T>> asyncGetAndLock(final String key, int exp,
+      final Transcoder<T> tc);
 
-  /**
-   * Get all memcached nodes. This is useful for broadcasting messages.
-   */
-  Collection<MemcachedNode> getAll();
+  <T> CASValue<T> getAndLock(String key, int exp, Transcoder<T> tc);
 
-  /**
-   * Create a read-only copy of this NodeLocator.
-   */
-  NodeLocator getReadonlyCopy();
+  CASValue<Object> getAndLock(String key, int exp);
 
-  /**
-   * Update locator status.
-   *
-   * @param nodes New locator nodes.
-   * @param conf Locator configuration.
-   */
-  void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+  int getNumVBuckets();
 }

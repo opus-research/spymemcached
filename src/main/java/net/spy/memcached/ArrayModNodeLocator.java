@@ -28,6 +28,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import net.spy.memcached.vbucket.config.Config;
+
 /**
  * NodeLocator implementation for dealing with simple array lookups using a
  * modulus of the hash code and node list length.
@@ -78,7 +80,7 @@ public final class ArrayModNodeLocator implements NodeLocator {
   }
 
   @Override
-  public void updateLocator(List<MemcachedNode> newNodes) {
+  public void updateLocator(List<MemcachedNode> newNodes, Config conf) {
     this.nodes = newNodes.toArray(new MemcachedNode[newNodes.size()]);
   }
 

@@ -1,7 +1,12 @@
 .settings
-cobertura.ser
-target/
-reports/
-junit*
+.classpath
+.project
 *.iml
 *~
+bin/
+build/
+cobertura.ser
+junit*
+lib/ivy*
+target/
+reports/

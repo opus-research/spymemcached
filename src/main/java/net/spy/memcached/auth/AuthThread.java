@@ -24,6 +24,7 @@
 package net.spy.memcached.auth;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,11 +36,14 @@ import net.spy.memcached.compat.SpyThread;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.SASLMechsOperation;
 
 /**
  * A thread that does SASL authentication.
  */
 public class AuthThread extends SpyThread {
+
+  public static final String MECH_SEPARATOR = " ";
 
   private final MemcachedConnection conn;
   private final AuthDescriptor authDescriptor;
@@ -55,17 +59,85 @@ public class AuthThread extends SpyThread {
     start();
   }
 
+  /**
+   * Determine the best (strongest) authentication method supported by the
+   * client and the server.
+   *
+   * <p>As of now, MD5-CRAM is used if supported, otherwise the fallback
+   * method is PLAIN.</p>
+   *
+   * @param types a stringified list of supported mechs by the server.
+   * @return the determined auth type.
+   */
+  private AuthType determineAuthType(String types) {
+    if(types.contains("CRAM-MD5")) {
+      return AuthType.CRAM_MD5;
+    } else if(types.contains("PLAIN")) {
+      return AuthType.PLAIN;
+    } else {
+      getLogger().warn("Received unknown SASL auth mechanism: " + types);
+    }
+    return null;
+  }
+
+  private String[] listSupportedSASLMechanisms(AtomicBoolean done) {
+    final CountDownLatch listMechsLatch = new CountDownLatch(1);
+    final AtomicReference<String> supportedMechs = new AtomicReference<String>();
+    Operation listMechsOp = opFact.saslMechs(new OperationCallback() {
+      @Override
+      public void receivedStatus(OperationStatus status) {
+        if(status.isSuccess()) {
+          supportedMechs.set(status.getMessage());
+          getLogger().debug("Received SASL supported mechs: "
+            + status.getMessage());
+        }
+      }
+
+      @Override
+      public void complete() {
+        listMechsLatch.countDown();
+      }
+
+    });
+
+    conn.insertOperation(node, listMechsOp);
+
+    try {
+      listMechsLatch.await(10, TimeUnit.SECONDS);
+    } catch(InterruptedException ex) {
+        // we can be interrupted if we were in the
+        // process of auth'ing and the connection is
+        // lost or dropped due to bad auth
+        Thread.currentThread().interrupt();
+        if (listMechsOp != null) {
+          listMechsOp.cancel();
+        }
+        done.set(true); // If we were interrupted, tear down.
+    }
+
+    String supported = supportedMechs.get();
+    if (supported == null || supported.isEmpty()) {
+      throw new IllegalStateException("Got empty SASL auth mech list.");
+    }
+
+    return supported.split(MECH_SEPARATOR);
+  }
+
   @Override
   public void run() {
-    OperationStatus priorStatus = null;
     final AtomicBoolean done = new AtomicBoolean();
 
+    String[] supportedMechs = listSupportedSASLMechanisms(done);
+
+    OperationStatus priorStatus = null;
     while (!done.get()) {
       final CountDownLatch latch = new CountDownLatch(1);
       final AtomicReference<OperationStatus> foundStatus =
-          new AtomicReference<OperationStatus>();
+        new AtomicReference<OperationStatus>();
 
       final OperationCallback cb = new OperationCallback() {
+
+        @Override
         public void receivedStatus(OperationStatus val) {
           // If the status we found was null, we're done.
           if (val.getMessage().length() == 0) {
@@ -77,13 +149,14 @@ public class AuthThread extends SpyThread {
           }
         }
 
+        @Override
         public void complete() {
           latch.countDown();
         }
       };
 
       // Get the prior status to create the correct operation.
-      final Operation op = buildOperation(priorStatus, cb);
+      final Operation op = buildOperation(priorStatus, cb, supportedMechs);
       conn.insertOperation(node, op);
 
       try {
@@ -109,16 +182,16 @@ public class AuthThread extends SpyThread {
         }
       }
     }
-    return;
   }
 
-  private Operation buildOperation(OperationStatus st, OperationCallback cb) {
+  private Operation buildOperation(OperationStatus st, OperationCallback cb,
+    final String [] supportedMechs) {
     if (st == null) {
-      return opFact.saslAuth(authDescriptor.getMechs(),
+      return opFact.saslAuth(supportedMechs,
           node.getSocketAddress().toString(), null,
           authDescriptor.getCallback(), cb);
     } else {
-      return opFact.saslStep(authDescriptor.getMechs(), KeyUtil.getKeyBytes(
+      return opFact.saslStep(supportedMechs, KeyUtil.getKeyBytes(
           st.getMessage()), node.getSocketAddress().toString(), null,
           authDescriptor.getCallback(), cb);
     }

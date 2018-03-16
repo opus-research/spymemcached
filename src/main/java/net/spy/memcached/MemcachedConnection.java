@@ -36,7 +36,17 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.ConcurrentModificationException;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -814,7 +824,6 @@ public class MemcachedConnection extends SpyThread {
         metrics.markMeter(OVERALL_RESPONSE_SUCC_METRIC);
       }
     } else if (currentOp.getState() == OperationState.RETRY) {
-      handleRetryInformation(currentOp.getErrorMsg());
       getLogger().debug("Reschedule read op due to NOT_MY_VBUCKET error: "
         + "%s ", currentOp);
       ((VBucketAware) currentOp).addNotMyVbucketNode(
@@ -874,11 +883,6 @@ public class MemcachedConnection extends SpyThread {
       }
     }
     return sb.toString();
-  }
-
-  protected void handleRetryInformation(final byte[] retryMessage) {
-    getLogger().debug("Got RETRY message: " + new String(retryMessage)
-      + ", but not handled.");
   }
 
   /**

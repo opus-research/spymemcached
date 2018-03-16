@@ -6,7 +6,7 @@ import java.util.Map;
 public class Node {
     private final Status status;
     private final String hostname;
-    private final Map<Port, String> ports;
+    private Map<Port, String> ports;
 
     public Node(Status status, String hostname, Map<Port, String> ports) {
         this.status = status;
@@ -34,8 +34,8 @@ public class Node {
         Node node = (Node) o;
 
         if (!hostname.equals(node.hostname)) return false;
-        if (status != node.status) return false;
         if (!ports.equals(node.ports)) return false;
+        if (status != node.status) return false;
 
         return true;
     }

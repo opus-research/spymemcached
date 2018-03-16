@@ -10,9 +10,7 @@ import net.spy.memcached.ops.ConcatenationOperation;
 import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
 import net.spy.memcached.ops.FlushOperation;
-import net.spy.memcached.ops.GetAndTouchOperation;
 import net.spy.memcached.ops.GetOperation;
-import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Mutator;
@@ -60,17 +58,6 @@ public interface OperationFactory {
 	FlushOperation flush(int delay, OperationCallback operationCallback);
 
 	/**
-	 * Gets the value of a key and resets its timeout.
-	 *
-	 * @param key the key to get a value for and reset its timeout
-	 * @param expiration the new expiration for the key
-	 * @param cb the callback that will contain the result
-	 * @return a new GATOperation
-	 */
-	GetAndTouchOperation getAndTouch(String key, int expiration,
-			GetAndTouchOperation.Callback cb);
-
-	/**
 	 * Create a get operation.
 	 *
 	 * @param key the key to get
@@ -78,18 +65,6 @@ public interface OperationFactory {
 	 * @return a new GetOperation
 	 */
 	GetOperation get(String key, GetOperation.Callback callback);
-
-	/**
-	 * Create a getl operation. A getl gets the value for a key and then
-	 * locks the value for a given amount of time. The maximum default lock
-	 * time is 30 seconds.
-	 *
-	 * @param key the key to get and lock
-	 * @param exp the amount of time the lock should be valid for in seconds.
-	 * @param callback the callback that will contain the results
-	 * @return a new GetOperation
-	 */
-	GetlOperation getl(String key, int exp, GetlOperation.Callback callback);
 
 	/**
 	 * Create a gets operation.
@@ -146,15 +121,6 @@ public interface OperationFactory {
 	 */
 	StoreOperation store(StoreType storeType, String key, int flags, int exp,
 			byte[] data, OperationCallback cb);
-
-	/**
-	 * Resets a keys expiration time
-	 * @param key The key whose expiration time is to be reset.
-	 * @param expiration The new expiration time for the key
-	 * @param cb The status callback
-	 * @return A touch operation
-	 */
-	KeyedOperation touch(String key, int expiration, OperationCallback cb);
 
 	/**
 	 * Get a concatenation operation.

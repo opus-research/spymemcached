@@ -68,7 +68,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
   // Response header fields
   protected int keyLen;
   protected byte responseCmd;
-  protected short errorCode;
+  protected int errorCode;
   protected int responseOpaque;
   protected long responseCas;
 
@@ -120,7 +120,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
           : "Unexpected response command value";
         keyLen = decodeShort(header, 2);
         // TODO: Examine extralen and datatype
-        errorCode = (short) decodeShort(header, 6);
+        errorCode = decodeShort(header, 6);
         int bytesToRead = decodeInt(header, 8);
         payload = new byte[bytesToRead];
         responseOpaque = decodeInt(header, 12);
@@ -154,7 +154,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 
   protected void finishedPayload(byte[] pl) throws IOException {
     OperationStatus status = getStatusForErrorCode(errorCode, pl);
-    ErrorCode ec = ErrorCode.getErrorCode(errorCode);
+    ErrorCode ec = ErrorCode.getErrorCode((byte)errorCode);
 
     if (status == null) {
       handleError(OperationErrorType.SERVER, new String(pl));
@@ -176,9 +176,9 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
    * @param errCode the error code
    * @return the status to return, or null if this is an exceptional case
    */
-  protected OperationStatus getStatusForErrorCode(short errCode, byte[] errPl)
+  protected OperationStatus getStatusForErrorCode(int errCode, byte[] errPl)
     throws IOException {
-    ErrorCode ec = ErrorCode.getErrorCode(errCode);
+    ErrorCode ec = ErrorCode.getErrorCode((byte)errCode);
     switch (ec) {
     case SUCCESS:
       return STATUS_OK;

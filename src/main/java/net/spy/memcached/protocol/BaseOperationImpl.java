@@ -171,7 +171,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
       assert false;
     }
     callback.receivedStatus(new OperationStatus(false,
-        exception.getMessage(), ErrorCode.EXCEPTION, exception));
+        exception.getMessage(), ErrorCode.EXCEPTION));
     transitionState(OperationState.COMPLETE);
     throw exception;
   }

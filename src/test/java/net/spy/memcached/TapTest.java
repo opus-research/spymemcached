@@ -72,8 +72,8 @@ public class TapTest extends ClientBaseCase {
         if (items.containsKey(key)) {
           items.put(key, true);
         } else {
-          System.err.println("Received additional item likely left over from" +
-            " previous test: " + m.getKey());
+          System.err.println("Received additional item likely left over from"
+            + " previous test: " + m.getKey());
           System.err.println("ResponseMessage : \n" + m);
         }
       }

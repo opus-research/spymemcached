@@ -1,7 +1,5 @@
 package net.spy.memcached;
 
-import org.couchbase.mock.CouchbaseMock;
-
 /**
  * User: vitaly.rudenya
  * Date: 07.07.11
@@ -9,7 +7,7 @@ import org.couchbase.mock.CouchbaseMock;
  */
 public class MultiNodeFailureBaseBucketTest extends AbstractMultiNodeFailure {
     @Override
-    protected CouchbaseMock.BucketType getBucketType() {
-        return CouchbaseMock.BucketType.BASE;
+    protected String getBucketType() {
+        return BASE_BUCKET_TYPE;
     }
 }

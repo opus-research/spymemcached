@@ -2,9 +2,6 @@ package net.spy.memcached;
 
 import junit.framework.TestCase;
 import net.spy.memcached.vbucket.ConfigurationProviderHTTP;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.couchbase.mock.CouchbaseMock;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +13,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.codec.binary.Base64;
 
 /**
  * Tests case when 50% of nodes are fail.
@@ -33,6 +31,11 @@ public abstract class AbstractMultiNodeFailure extends TestCase {
     private static final List<URI> BASE_LIST = new ArrayList<URI>();
     private static final String HTTP_USER_NAME = "Administrator";
     private static final String HTTP_PASSWORD = "password";
+    private static final String STARTUP_URL = "http://localhost:8091/setup/startNodes?numnodes=2&numVBuckets=512";
+    private static final String SHUTDOWN_NODE_URL = "http://localhost:8091/setup/failNode?portNo=";
+
+    public static final String BASE_BUCKET_TYPE = "BASE";
+    public static final String CACHE_BUCKET_TYPE = "CACHE";
 
     private Process couchBaseMockProcess;
 
@@ -46,40 +49,32 @@ public abstract class AbstractMultiNodeFailure extends TestCase {
 
     private MemcachedClient memcachedClient;
 
-    private Log logger = LogFactory.getLog(this.getClass());
-
-    protected abstract CouchbaseMock.BucketType getBucketType();
+    protected abstract String getBucketType();
 
     public void setUp() throws Exception {
+        CouchbaseMockRunner couchbaseMock = new CouchbaseMockRunner();
+        couchbaseMock.setDaemon(true);
+        couchbaseMock.start();
+
         try {
-
-            CouchbaseMockRunner couchbaseMock = new CouchbaseMockRunner();
-            couchbaseMock.setDaemon(true);
-            couchbaseMock.start();
-
-            try {
-                //wait for mock server startup
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                logger.error(ex);
-            }
-
-            final URL startupUrl = new URL("http://localhost:8091/setup/startNodes?numnodes=2&numVBuckets=512");
-            URLConnection connection = urlConnBuilder(startupUrl);
-            connection.getInputStream().close();
-
-            try {
-                //wait for mock server nodes startup
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                logger.error(ex);
-            }
-
-            memcachedClient = new MemcachedClient(BASE_LIST, BUCKET_NAME, USER_NAME, USER_PASSWORD);
-        } catch (Exception e) {
-            logger.error(e);
-            throw e;
+            //wait for mock server startup
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+            //Nothing critical here
         }
+
+        final URL startupUrl = new URL(STARTUP_URL);
+        URLConnection connection = urlConnBuilder(startupUrl);
+        connection.getInputStream().close();
+
+        try {
+            //wait for mock server nodes startup
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+            //Nothing critical here
+        }
+
+        memcachedClient = new MemcachedClient(BASE_LIST, BUCKET_NAME, USER_NAME, USER_PASSWORD);
     }
 
     public void testNodeFail() throws Exception {
@@ -89,7 +84,7 @@ public abstract class AbstractMultiNodeFailure extends TestCase {
         try {
             Thread.sleep(500);
         } catch (InterruptedException ex) {
-            logger.error(ex);
+            //Nothing critical here
         }
 
         failPrimaryNode();
@@ -97,15 +92,10 @@ public abstract class AbstractMultiNodeFailure extends TestCase {
         try {
             Thread.sleep(500);
         } catch (InterruptedException ex) {
-            logger.error(ex);
+            //Nothing critical here
         }
-        try {
-                    assertEquals(OBJ_KEY, memcachedClient.get(OBJ_KEY));
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.error(e);
-            fail("Fail during getting data with primary non active node");
-        }
+
+        assertEquals("Fail during getting data with primary non active node.", OBJ_KEY, memcachedClient.get(OBJ_KEY));
     }
 
     public void tearDown() throws Exception {
@@ -117,17 +107,16 @@ public abstract class AbstractMultiNodeFailure extends TestCase {
      */
     private void failPrimaryNode() {
 
-        int port = ((InetSocketAddress) memcachedClient.getNodeLocator().getPrimary(OBJ_KEY).getSocketAddress()).
-                getPort();
-
-        logger.info("Failing primary node on port no " + port);
+        InetSocketAddress address =
+                (InetSocketAddress) memcachedClient.getNodeLocator().getPrimary(OBJ_KEY).getSocketAddress();
+        int port = address.getPort();
 
         try {
-            final URL shutdownNodeUrl = new URL("http://localhost:8091/setup/failNode?portNo=" + port);
+            final URL shutdownNodeUrl = new URL(SHUTDOWN_NODE_URL + port);
             URLConnection connection = urlConnBuilder(shutdownNodeUrl);
             connection.getInputStream().close();
         } catch (IOException e) {
-            fail("Can't shutdown primary node");
+            fail("Can't shutdown primary node. " + e.getLocalizedMessage());
         }
     }
 
@@ -150,7 +139,7 @@ public abstract class AbstractMultiNodeFailure extends TestCase {
             clearText.append(password);
         }
         // and apache base64 codec has extra \n\l we have to strip off
-        String encodedText = org.apache.commons.codec.binary.Base64.encodeBase64String(clearText.toString().getBytes());
+        String encodedText = Base64.encodeBase64String(clearText.toString().getBytes());
         char[] encodedWoNewline = new char[encodedText.length() - 2];
         encodedText.getChars(0, encodedText.length() - 2, encodedWoNewline, 0);
         return "Basic " + new String(encodedWoNewline);
@@ -203,7 +192,7 @@ public abstract class AbstractMultiNodeFailure extends TestCase {
             try {
                 ProcessBuilder processBuilder =
                         new ProcessBuilder("java", "-classpath", classPath, "org.couchbase.mock.CouchbaseMock",
-                                getBucketType().toString());
+                                getBucketType());
                 couchBaseMockProcess = processBuilder.start();
 
                 StreamReader error = new StreamReader(couchBaseMockProcess.getErrorStream());

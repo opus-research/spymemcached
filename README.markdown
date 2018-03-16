@@ -1,64 +1,79 @@
-# Building
+Building:
 
-Spymemcached can be compiled using Apache Ant by running the following
-command:
+	Spymemcached can be compiled using Apache buildr and requires a
+	running memcached or Membase instance in order for all unit tests
+	to pass successfully. To build Spymemcached with a memcached instance
+	running on localhost on port 11211 use the following command:
 
-    ant
+	buildr package
 
-This will generate binary, source, and javadoc jars in the build
-directory of the project.
+	This will generate binary source, and javadoc jars in the target
+	directory of the project.
 
-To run the Spymemcached tests against Membase Server run the
-following command:
+	To compile the Spymemcached against Membase running on localhost use
+	the following command:
 
-    ant test -Dserver.type=membase
+	buildr package SPYMC_SERVER_TYPE="membase"
 
-To test Spymemcached against Membase running on a different host
-use the following command:
+	To compile Spymemcached against Membase running on a different host
+	use the following command:
 
-    ant test -Dserver.type=membase \
-        -Dserver.address_v4=ip_address_of_membase
+	buildr package SPYMC_SERVER_TYPE="membase" \
+	SPYMC_TEST_SERVER_V4="ip_address_of_membase"
 
-# Testing
+	To compile Spymemcached on localhost against memcached and skip all
+	tests run the following command:
 
-The latest version of spymemcached has a set of command line arguments
-that can be used to configure the location and type of your testing
-server. The arguments are listed below.
+	buildr TEST=no
 
-    -Dserver.type=server_type
+Testing:
 
-This argument is used to specify the type of testing server you are
-using. By default this argument is set to memcached. It can be set to
-either "memcached", "membase" or "couchbase". Invalid testing server
-types will default to memcached.
+	The latest version of spymemcached has a set of command line
+	arguments that can be used to configure the location and type of your
+	testing server. The arguments are listed below.
 
-    -Dserver.address_v4=ipv4_address_of_testing_server
+	SPYMC_SERVER_TYPE="server_type"
 
-This argument is used to specify the ipv4 address of your testing
-server. By default it is set to localhost.
+	This argument is used to specify the type of testing server you are
+	using. By default this argument is set to memcached. It can be set to
+	either "memcached" or "membase". Invalid testing server types will
+	default to memcached.
 
-    -Dserver.address_v6=ipv6_address_of_testing_server
+	SPYMC_TEST_SERVER_V4="ip_address_of_testing_server"
 
-This argument is used to set the ipv6 address of your testing server.
-By default it is set to ::1. If an ipv6 address is specified then an
-ipv4 address must be specified otherwise there may be test failures.
+	This argument is used to specify the ipv4 address of your testing
+	server. By default it is set to localhost.
 
-# More Information
+	SPYMC_TEST_SERVER_V6
 
-For more information about Spymemcached see the links below:
+	This argument is used to set the ipv6 address of your testing server.
+	By default it is set to ::1. This argument does not need to be
+	specified if SPYMC_TEST_SERVER_V4 is specified. If an ipv4 address is
+	specified, but an ipv6 address is not specified then the ipv6 address
+	will default to the ipv4 address. If an ipv6 address is specified
+	then an ipv4 address must be specified otherwise there may be test
+	failures.
 
-## Project Page The
+More Information:
 
-[Spymemcached Project Home](http://code.google.com/p/spymemcached/)
-contains a wiki, issue tracker, and downloads section.
+	For more information about Spymemcached see the following links
+	below:
 
-## Github
+	Spymemcached Project Home:
 
-[The gitub page](http://github.com/dustin/java-memcached-client)
-contains the latest Spymemcached source.
+	http://code.google.com/p/spymemcached/
 
-## Couchbase.org
+	Contains a wiki, issue tracker, and downloads section.
 
-At [couchbase.org](http://www.couchbase.org/code/couchbase/java) you
-can find a download's section for the latest release as well as an
-extensive tutorial to help new users learn how to use Spymemcached.
+	Github:
+
+	http://github.com/dustin/java-memcached-client
+
+	Contains the latest Spymemcached source.
+
+	Couchbase.org:
+
+	http://www.couchbase.org/products/sdk/membase-java
+
+	Contains a download's section for the latest release as well as an
+	extensive tutorial to help new users learn how to use Spymemcached.

@@ -203,8 +203,9 @@ public class TapClient {
    *           Membase cluster.
    * @throws IOException if there are errors connecting to the cluster.
    */
-  public Operation tapCustom(String id, RequestMessage message)
-    throws ConfigurationException, IOException {
+  public Operation tapCustom(String id, RequestMessage message,
+      String keyFilter, String valueFilter) throws ConfigurationException,
+      IOException {
     final TapConnectionProvider conn;
     if (vBucketAware) {
       conn = new TapConnectionProvider(baseList, bucketName, usr, pwd);

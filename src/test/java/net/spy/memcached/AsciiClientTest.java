@@ -7,7 +7,8 @@ import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.ascii.ExtensibleOperationImpl;
 
 /**
- * This test assumes a client is running on localhost:11211.
+ * This test assumes a server is running on the host specified
+ * on the command line or localhost:11211 by default.
  */
 public class AsciiClientTest extends ProtocolBaseCase {
 
@@ -34,7 +35,7 @@ public class AsciiClientTest extends ProtocolBaseCase {
 
 	@Override
 	protected String getExpectedVersionSource() {
-		return "/127.0.0.1:11211";
+		return "/" + TestConfig.IPV4_ADDR + ":11211";
 	}
 
 }

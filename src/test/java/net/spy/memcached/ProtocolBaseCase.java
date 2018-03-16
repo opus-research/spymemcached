@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Callable;
@@ -51,6 +52,8 @@ import net.spy.memcached.internal.OperationFuture;
 import net.spy.memcached.internal.OperationCompletionListener;
 import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
+import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.transcoders.SerializingTranscoder;
 import net.spy.memcached.transcoders.Transcoder;
 
@@ -541,32 +544,38 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
     assertEquals(9, client.decr("mtest2", 1, 9, 1));
     Thread.sleep(2000);
     assertNull(client.get("mtest"));
-    assert !client.asyncGet("mtest").getStatus().isSuccess();
+    OperationStatus status = client.asyncGet("mtest").getStatus();
+    assertFalse(status.isSuccess());
+    assertEquals(StatusCode.ERR_NOT_FOUND, status.getStatusCode());
   }
 
   public void testAsyncIncrement() throws Exception {
     String k = "async-incr";
     client.set(k, 0, "5");
-    Future<Long> f = client.asyncIncr(k, 1);
+    OperationFuture<Long> f = client.asyncIncr(k, 1);
+    assertEquals(StatusCode.SUCCESS, f.getStatus().getStatusCode());
     assertEquals(6, (long) f.get());
   }
 
   public void testAsyncIncrementNonExistent() throws Exception {
     String k = "async-incr-non-existent";
-    Future<Long> f = client.asyncIncr(k, 1);
+    OperationFuture<Long> f = client.asyncIncr(k, 1);
+    assertEquals(StatusCode.ERR_NOT_FOUND, f.getStatus().getStatusCode());
     assertEquals(-1, (long) f.get());
   }
 
   public void testAsyncDecrement() throws Exception {
     String k = "async-decr";
     client.set(k, 0, "5");
-    Future<Long> f = client.asyncDecr(k, 1);
+    OperationFuture<Long> f = client.asyncDecr(k, 1);
+    assertEquals(StatusCode.SUCCESS, f.getStatus().getStatusCode());
     assertEquals(4, (long) f.get());
   }
 
   public void testAsyncDecrementNonExistent() throws Exception {
     String k = "async-decr-non-existent";
-    Future<Long> f = client.asyncDecr(k, 1);
+    OperationFuture<Long> f = client.asyncDecr(k, 1);
+    assertEquals(StatusCode.ERR_NOT_FOUND, f.getStatus().getStatusCode());
     assertEquals(-1, (long) f.get());
   }
 
@@ -886,6 +895,7 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
     assertTrue(client.set(key, 5, "test").get());
     OperationFuture<Boolean> op = client.append(0, key, "es");
     assertTrue(op.get());
+    assertEquals(StatusCode.SUCCESS, op.getStatus().getStatusCode());
     assert op.getStatus().isSuccess();
     assertEquals("testes", client.get(key));
   }
@@ -895,6 +905,7 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
     assertTrue(client.set(key, 5, "test").get());
     OperationFuture<Boolean> op = client.prepend(0, key, "es");
     assertTrue(op.get());
+    assertEquals(StatusCode.SUCCESS, op.getStatus().getStatusCode());
     assert op.getStatus().isSuccess();
     assertEquals("estest", client.get(key));
   }
@@ -969,14 +980,25 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
   }
 
   public void testGetBulkWithCallback() throws Exception {
-    client.set("getBulkWithCallback1", 0, "content").get();
+    final int items = 1000;
+    List<String> keysList = new ArrayList<String>(items);
+    for (int i = 0; i < items; i++) {
+      assertTrue(client.set("getBulkWithCallback" + i, 0, "content").get());
+      keysList.add("getBulkWithCallback" + i);
+    }
+
     BulkFuture<Map<String, Object>> asyncGetBulk =
-      client.asyncGetBulk("getBulkWithCallback1");
+      client.asyncGetBulk(keysList);
 
     final CountDownLatch latch = new CountDownLatch(1);
     asyncGetBulk.addListener(new BulkGetCompletionListener() {
       @Override
       public void onComplete(BulkGetFuture<?> f) throws Exception {
+        assertEquals(items, f.get().size());
+        assertTrue(f.getStatus().isSuccess());
+        assertTrue(f.isDone());
+        assertFalse(f.isCancelled());
+        assertEquals(StatusCode.SUCCESS, f.getStatus().getStatusCode());
         latch.countDown();
       }
     });

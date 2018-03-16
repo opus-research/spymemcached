@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -118,6 +119,12 @@ public class DefaultConnectionFactory extends SpyObject implements
    */
   public static final MetricType DEFAULT_METRIC_TYPE = MetricType.OFF;
 
+  /**
+   * The time to wait for the authentication to complete when a operation
+   * is written in milliseconds.
+   */
+  public static final long DEFAULT_AUTH_WAIT_TIME = 1000;
+
   protected final int opQueueLen;
   private final int readBufSize;
   private final HashAlgorithm hashAlg;
@@ -169,7 +176,9 @@ public class DefaultConnectionFactory extends SpyObject implements
           createWriteOperationQueue(),
           createOperationQueue(),
           getOpQueueMaxBlockTime(),
-          getOperationTimeout());
+          getOperationTimeout(),
+          getAuthWaitTime(),
+          this);
     } else if (of instanceof BinaryOperationFactory) {
       boolean doAuth = false;
       if (getAuthDescriptor() != null) {
@@ -181,7 +190,9 @@ public class DefaultConnectionFactory extends SpyObject implements
           createOperationQueue(),
           getOpQueueMaxBlockTime(),
           doAuth,
-          getOperationTimeout());
+          getOperationTimeout(),
+          getAuthWaitTime(),
+          this);
     } else {
       throw new IllegalStateException("Unhandled operation factory type " + of);
     }
@@ -258,6 +269,14 @@ public class DefaultConnectionFactory extends SpyObject implements
     return DEFAULT_OP_QUEUE_MAX_BLOCK_TIME;
   }
 
+  /**
+   * @return the time to wait for the authentication to complete when a
+   * operation is written in milliseconds.
+   */
+  @Override
+  public long getAuthWaitTime() {
+    return DEFAULT_AUTH_WAIT_TIME;
+  }
 
   /**
    * Returns the stored {@link ExecutorService} for listeners.
@@ -272,12 +291,20 @@ public class DefaultConnectionFactory extends SpyObject implements
   @Override
   public ExecutorService getListenerExecutorService() {
     if (executorService == null) {
+      ThreadFactory threadFactory = new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+          return new Thread(r, "FutureNotifyListener");
+        }
+      };
+
       executorService = new ThreadPoolExecutor(
         0,
         Runtime.getRuntime().availableProcessors(),
         60L,
         TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>()
+        new LinkedBlockingQueue<Runnable>(),
+        threadFactory
       );
     }
 

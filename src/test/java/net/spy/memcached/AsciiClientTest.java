@@ -26,10 +26,13 @@ package net.spy.memcached;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
+
+import net.spy.memcached.internal.GetFuture;
 import net.spy.memcached.internal.OperationFuture;
 
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.protocol.ascii.ExtensibleOperationImpl;
 import org.junit.Test;
 
@@ -85,6 +88,40 @@ public class AsciiClientTest extends ProtocolBaseCase {
       fail("Expected an UnsupportedOperationException");
     } catch (UnsupportedOperationException ex) {
       //expected
+    }
+  }
+
+  public void testAddGetSetStatusCodes() throws Exception {
+    OperationFuture<Boolean> set = client.set("statusCode1", 0, "value");
+    set.get();
+    assertEquals(StatusCode.SUCCESS, set.getStatus().getStatusCode());
+
+    GetFuture<Object> get = client.asyncGet("statusCode1");
+    get.get();
+    assertEquals(StatusCode.SUCCESS, get.getStatus().getStatusCode());
+
+    OperationFuture<Boolean> add = client.add("statusCode1", 0, "value2");
+    add.get();
+    assertEquals(StatusCode.ERR_NOT_STORED, add.getStatus().getStatusCode());
+  }
+
+  public void testAsyncIncrementWithDefault() throws Exception {
+    String k = "async-incr-with-default";
+    try {
+      client.asyncIncr(k, 1, 5);
+      assertTrue(false);
+    } catch (UnsupportedOperationException e) {
+      assertTrue(true);
+    }
+  }
+
+  public void testAsyncDecrementWithDefault() throws Exception {
+    String k = "async-decr-with-default";
+    try {
+      client.asyncDecr(k, 1, 5);
+      assertTrue(false);
+    } catch (UnsupportedOperationException e) {
+      assertTrue(true);
     }
   }
 

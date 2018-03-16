@@ -38,6 +38,7 @@ import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -58,6 +59,7 @@ import net.spy.memcached.compat.log.LoggerFactory;
 import net.spy.memcached.internal.OperationFuture;
 import net.spy.memcached.metrics.MetricCollector;
 import net.spy.memcached.metrics.MetricType;
+import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.NoopOperation;
 import net.spy.memcached.ops.Operation;
@@ -68,6 +70,7 @@ import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VBucketAware;
 import net.spy.memcached.protocol.binary.BinaryOperationFactory;
+import net.spy.memcached.protocol.binary.MultiGetOperationImpl;
 import net.spy.memcached.protocol.binary.TapAckOperationImpl;
 import net.spy.memcached.util.StringUtils;
 
@@ -89,12 +92,6 @@ public class MemcachedConnection extends SpyThread {
    * find those bugs and often works around them.
    */
   private static final int EXCESSIVE_EMPTY = 0x1000000;
-
-  /**
-   * If an operation gets cloned more than this ceiling, cancel it for
-   * safety reasons.
-   */
-  private static final int MAX_CLONE_COUNT = 100;
 
   private static final String RECON_QUEUE_METRIC =
     "[MEM] Reconnecting Nodes (ReconnectQueue)";
@@ -200,7 +197,7 @@ public class MemcachedConnection extends SpyThread {
   /**
    * Holds operations that need to be retried.
    */
-  protected final Collection<Operation> retryOps;
+  private final List<Operation> retryOps;
 
   /**
    * Holds all nodes that are scheduled for shutdown.
@@ -247,11 +244,11 @@ public class MemcachedConnection extends SpyThread {
     addedQueue = new ConcurrentLinkedQueue<MemcachedNode>();
     failureMode = fm;
     shouldOptimize = f.shouldOptimize();
-    maxDelay = f.getMaxReconnectDelay();
+    maxDelay = TimeUnit.SECONDS.toMillis(f.getMaxReconnectDelay());
     opFact = opfactory;
     timeoutExceptionThreshold = f.getTimeoutExceptionThreshold();
     selector = Selector.open();
-    retryOps = new ArrayList<Operation>();
+    retryOps = Collections.synchronizedList(new ArrayList<Operation>());
     nodesToShutdown = new ConcurrentLinkedQueue<MemcachedNode>();
     listenerExecutorService = f.getListenerExecutorService();
     this.bufSize = bufSize;
@@ -317,10 +314,10 @@ public class MemcachedConnection extends SpyThread {
     for (SocketAddress sa : addrs) {
       SocketChannel ch = SocketChannel.open();
       ch.configureBlocking(false);
-      MemcachedNode qa =
-          this.connectionFactory.createMemcachedNode(sa, ch, bufSize);
+      MemcachedNode qa = connectionFactory.createMemcachedNode(sa, ch, bufSize);
+      qa.setConnection(this);
       int ops = 0;
-      ch.socket().setTcpNoDelay(!this.connectionFactory.useNagleAlgorithm());
+      ch.socket().setTcpNoDelay(!connectionFactory.useNagleAlgorithm());
 
       try {
         if (ch.connect(sa)) {
@@ -433,8 +430,11 @@ public class MemcachedConnection extends SpyThread {
     if (!shutDown && !reconnectQueue.isEmpty()) {
       attemptReconnects();
     }
-    redistributeOperations(retryOps);
-    retryOps.clear();
+
+    if (!retryOps.isEmpty()) {
+      redistributeOperations(new ArrayList<Operation>(retryOps));
+      retryOps.clear();
+    }
 
     handleShutdownQueue();
   }
@@ -830,6 +830,7 @@ public class MemcachedConnection extends SpyThread {
         metrics.markMeter(OVERALL_RESPONSE_SUCC_METRIC);
       }
     } else if (currentOp.getState() == OperationState.RETRY) {
+      handleRetryInformation(currentOp.getErrorMsg());
       getLogger().debug("Reschedule read op due to NOT_MY_VBUCKET error: "
         + "%s ", currentOp);
       ((VBucketAware) currentOp).addNotMyVbucketNode(
@@ -889,6 +890,19 @@ public class MemcachedConnection extends SpyThread {
       }
     }
     return sb.toString();
+  }
+
+  /**
+   * Optionally handle retry (NOT_MY_VBUKET) responses.
+   *
+   * This method can be overridden in subclasses to handle the content
+   * of the retry message appropriately.
+   *
+   * @param retryMessage the body of the retry message.
+   */
+  protected void handleRetryInformation(final byte[] retryMessage) {
+    getLogger().debug("Got RETRY message: " + new String(retryMessage)
+      + ", but not handled.");
   }
 
   /**
@@ -958,36 +972,56 @@ public class MemcachedConnection extends SpyThread {
    *
    * @param ops the operations to redistribute.
    */
-  private void redistributeOperations(final Collection<Operation> ops) {
+  public void redistributeOperations(final Collection<Operation> ops) {
     for (Operation op : ops) {
-      if (op.isCancelled() || op.isTimedOut()) {
-        continue;
-      }
+      redistributeOperation(op);
+    }
+  }
 
-      if (op.getCloneCount() >= MAX_CLONE_COUNT) {
-        getLogger().warn("Cancelling operation " + op + "because it has been "
-          + "retried (cloned) more than " + MAX_CLONE_COUNT + "times.");
-        op.cancel();
-        continue;
-      }
+  /**
+   * Redistribute the given operation to (potentially) other nodes.
+   *
+   * Note that operations can only be redistributed if they have not been
+   * cancelled already, timed out already or do not have definite targets
+   * (a key).
+   *
+   * @param op the operation to redistribute.
+   */
+  public void redistributeOperation(Operation op) {
+    if (op.isCancelled() || op.isTimedOut()) {
+      return;
+    }
 
-      if (op instanceof KeyedOperation) {
-        KeyedOperation ko = (KeyedOperation) op;
-        int added = 0;
-        for (String k : ko.getKeys()) {
-          for (Operation newop : opFact.clone(ko)) {
+    // The operation gets redistributed but has never been actually written,
+    // it we just straight re-add it without cloning.
+    if (op.getState() == OperationState.WRITE_QUEUED) {
+      addOperation(op.getHandlingNode(), op);
+    }
+
+    if (op instanceof MultiGetOperationImpl) {
+      for (String key : ((MultiGetOperationImpl) op).getRetryKeys()) {
+        addOperation(key, opFact.get(key,
+          (GetOperation.Callback) op.getCallback()));
+      }
+    } else if (op instanceof KeyedOperation) {
+      KeyedOperation ko = (KeyedOperation) op;
+      int added = 0;
+      for (Operation newop : opFact.clone(ko)) {
+        if (newop instanceof KeyedOperation) {
+          KeyedOperation newKeyedOp = (KeyedOperation) newop;
+          for (String k : newKeyedOp.getKeys()) {
             addOperation(k, newop);
-
-            op.addClone(newop);
-            newop.setCloneCount(op.getCloneCount()+1);
-
-            added++;
           }
+        } else {
+          newop.cancel();
+          getLogger().warn("Could not redistribute cloned non-keyed " +
+            "operation", newop);
         }
-        assert added > 0 : "Didn't add any new operations when redistributing";
-      } else {
-        op.cancel();
+        added++;
       }
+      assert added > 0 : "Didn't add any new operations when redistributing";
+    } else {
+      op.cancel();
     }
   }
 
@@ -1378,6 +1412,24 @@ public class MemcachedConnection extends SpyThread {
     } else {
       getLogger().warn("Problem handling memcached IO", e);
     }
+  }
+
+  /**
+   * Returns whether the connection is shut down or not.
+   *
+   * @return true if the connection is shut down, false otherwise.
+   */
+  public boolean isShutDown() {
+    return shutDown;
+  }
+
+  /**
+   * Add a operation to the retry queue.
+   *
+   * @param op the operation to retry.
+   */
+  public void retryOperation(Operation op) {
+    retryOps.add(op);
   }
 
 }

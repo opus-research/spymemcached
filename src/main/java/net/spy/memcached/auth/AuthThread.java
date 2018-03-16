@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2013 Couchbase, Inc.
+ * Copyright (C) 2009-2014 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.OperationFactory;
 import net.spy.memcached.compat.SpyThread;
+import net.spy.memcached.compat.log.Level;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
@@ -41,6 +42,18 @@ import net.spy.memcached.ops.OperationStatus;
  * A thread that does SASL authentication.
  */
 public class AuthThread extends SpyThread {
+
+  /**
+   * If a SASL step takes longer than this period in milliseconds, a warning
+   * will be issued instead of a debug message.
+   */
+  public static final int AUTH_ROUNDTRIP_THRESHOLD = 250;
+
+  /**
+   * If the total AUTH steps take longer than this period in milliseconds, a
+   * warning will be issued instead of a debug message.
+   */
+  public static final int AUTH_TOTAL_THRESHOLD = 1000;
 
   public static final String MECH_SEPARATOR = " ";
 
@@ -58,7 +71,7 @@ public class AuthThread extends SpyThread {
     start();
   }
 
-  private String[] listSupportedSASLMechanisms(AtomicBoolean done) {
+  protected String[] listSupportedSASLMechanisms(AtomicBoolean done) {
     final CountDownLatch listMechsLatch = new CountDownLatch(1);
     final AtomicReference<String> supportedMechs =
       new AtomicReference<String>();
@@ -82,7 +95,11 @@ public class AuthThread extends SpyThread {
     conn.insertOperation(node, listMechsOp);
 
     try {
-      listMechsLatch.await();
+      if (!conn.isShutDown()) {
+        listMechsLatch.await();
+      } else {
+        done.set(true); // Connection is shutting down, tear.down.
+      }
     } catch(InterruptedException ex) {
       // we can be interrupted if we were in the
       // process of auth'ing and the connection is
@@ -105,17 +122,27 @@ public class AuthThread extends SpyThread {
   @Override
   public void run() {
     final AtomicBoolean done = new AtomicBoolean();
+    long totalStart = System.nanoTime();
 
     String[] supportedMechs;
+    long mechsStart = System.nanoTime();
     if (authDescriptor.getMechs() == null
       || authDescriptor.getMechs().length == 0) {
       supportedMechs = listSupportedSASLMechanisms(done);
     } else {
       supportedMechs = authDescriptor.getMechs();
     }
+    long mechsDiff = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()
+      - mechsStart);
+    String msg = String.format("SASL List Mechanisms took %dms on %s",
+      mechsDiff, node.toString());
+    Level level = mechsDiff
+      >= AUTH_ROUNDTRIP_THRESHOLD ? Level.WARN : Level.DEBUG;
+    getLogger().log(level, msg);
 
     OperationStatus priorStatus = null;
     while (!done.get()) {
+      long stepStart = System.nanoTime();
       final CountDownLatch latch = new CountDownLatch(1);
       final AtomicReference<OperationStatus> foundStatus =
         new AtomicReference<OperationStatus>();
@@ -145,7 +172,11 @@ public class AuthThread extends SpyThread {
       conn.insertOperation(node, op);
 
       try {
-        latch.await();
+        if (!conn.isShutDown()) {
+          latch.await();
+        } else {
+          done.set(true); // Connection is shutting down, tear.down.
+        }
         Thread.sleep(100);
       } catch (InterruptedException e) {
         // we can be interrupted if we were in the
@@ -156,6 +187,14 @@ public class AuthThread extends SpyThread {
           op.cancel();
         }
         done.set(true); // If we were interrupted, tear down.
+      } finally {
+        long stepDiff = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()
+          - stepStart);
+        msg = String.format("SASL Step took %dms on %s",
+          stepDiff, node.toString());
+        level = mechsDiff
+          >= AUTH_ROUNDTRIP_THRESHOLD ? Level.WARN : Level.DEBUG;
+        getLogger().log(level, msg);
       }
 
       // Get the new status to inspect it.
@@ -167,6 +206,13 @@ public class AuthThread extends SpyThread {
         }
       }
     }
+
+    long totalDiff = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()
+      - totalStart);
+    msg = String.format("SASL Auth took %dms on %s",
+      totalDiff, node.toString());
+    level = mechsDiff >= AUTH_TOTAL_THRESHOLD ? Level.WARN : Level.DEBUG;
+    getLogger().log(level, msg);
   }
 
   private Operation buildOperation(OperationStatus st, OperationCallback cb,

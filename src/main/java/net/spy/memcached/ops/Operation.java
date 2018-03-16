@@ -160,21 +160,9 @@ public interface Operation {
   long getWriteCompleteTimestamp();
 
   /**
-   * Add the clone from this operation.
+   * Returns the raw bytes of the error message content.
    *
-   * @param op the cloned operation.
+   * @return the raw error message content.
    */
-  void addClone(Operation op);
-
-  /**
-   * Returns the number of times this operation has been cloned.
-   *
-   * @return the number of clones.
-   */
-  int getCloneCount();
-
-  /**
-   * Sets the clone count for this operation.
-   */
-  void setCloneCount(int count);
+  byte[] getErrorMsg();
 }

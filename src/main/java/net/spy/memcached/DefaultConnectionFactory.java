@@ -35,7 +35,7 @@ import net.spy.memcached.transcoders.Transcoder;
  * </p>
  */
 public class DefaultConnectionFactory extends SpyObject
-	implements ConnectionFactory<Operation> {
+	implements ConnectionFactory {
 
 	/**
 	 * Default failure mode.
@@ -116,7 +116,7 @@ public class DefaultConnectionFactory extends SpyObject
 		this(DEFAULT_OP_QUEUE_LEN, DEFAULT_READ_BUFFER_SIZE);
 	}
 
-	public MemcachedNode<Operation> createMemcachedNode(SocketAddress sa,
+	public MemcachedNode createMemcachedNode(SocketAddress sa,
 			SocketChannel c, int bufSize) {
 
 		OperationFactory of = getOperationFactory();
@@ -185,8 +185,8 @@ public class DefaultConnectionFactory extends SpyObject
 	/* (non-Javadoc)
 	 * @see net.spy.memcached.ConnectionFactory#createLocator(java.util.List)
 	 */
-	public NodeLocator<Operation> createLocator(List<MemcachedNode<Operation>> nodes) {
-		return new ArrayModNodeLocator<Operation>(nodes, getHashAlg());
+	public NodeLocator createLocator(List<MemcachedNode> nodes) {
+		return new ArrayModNodeLocator(nodes, getHashAlg());
 	}
 
 	/**

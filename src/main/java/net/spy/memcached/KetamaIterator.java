@@ -9,14 +9,14 @@ import net.spy.memcached.compat.SpyObject;
  * Implements an Iterator which the KetamaNodeLoctaor may return to a client for
  * iterating through alternate nodes for a given key.
  */
-class KetamaIterator<T> extends SpyObject implements Iterator<MemcachedNode<T>> {
+class KetamaIterator extends SpyObject implements Iterator<MemcachedNode> {
 
     final String key;
     long hashVal;
     int remainingTries;
     int numTries = 0;
     final HashAlgorithm hashAlg;
-    final TreeMap<Long, MemcachedNode<T>> ketamaNodes;
+    final TreeMap<Long, MemcachedNode> ketamaNodes;
 
     /**
      * Create a new KetamaIterator to be used by a client for an operation.
@@ -26,7 +26,7 @@ class KetamaIterator<T> extends SpyObject implements Iterator<MemcachedNode<T>> 
      * @param ketamaNodes the continuum in the form of a TreeMap to be used when selecting a node
      * @param hashAlg the hash algorithm to use when selecting within the continuumq
      */
-    protected KetamaIterator(final String k, final int t, TreeMap<Long, MemcachedNode<T>> ketamaNodes, final HashAlgorithm hashAlg) {
+    protected KetamaIterator(final String k, final int t, TreeMap<Long, MemcachedNode> ketamaNodes, final HashAlgorithm hashAlg) {
 	super();
 	this.ketamaNodes = ketamaNodes;
 	this.hashAlg = hashAlg;
@@ -48,7 +48,7 @@ class KetamaIterator<T> extends SpyObject implements Iterator<MemcachedNode<T>> 
 	return remainingTries > 0;
     }
 
-    public MemcachedNode<T> next() {
+    public MemcachedNode next() {
 	try {
 	    return getNodeForKey(hashVal);
 	} finally {
@@ -60,12 +60,12 @@ class KetamaIterator<T> extends SpyObject implements Iterator<MemcachedNode<T>> 
 	throw new UnsupportedOperationException("remove not supported");
     }
 
-    private MemcachedNode<T> getNodeForKey(long hash) {
-	final MemcachedNode<T> rv;
+    private MemcachedNode getNodeForKey(long hash) {
+	final MemcachedNode rv;
 	if (!ketamaNodes.containsKey(hash)) {
 	    // Java 1.6 adds a ceilingKey method, but I'm still stuck in 1.5
 	    // in a lot of places, so I'm doing this myself.
-	    SortedMap<Long, MemcachedNode<T>> tailMap = ketamaNodes.tailMap(hash);
+	    SortedMap<Long, MemcachedNode> tailMap = ketamaNodes.tailMap(hash);
 	    if (tailMap.isEmpty()) {
 		hash = ketamaNodes.firstKey();
 	    } else {

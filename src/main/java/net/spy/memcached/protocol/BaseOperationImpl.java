@@ -30,12 +30,12 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	private boolean cancelled = false;
 	private OperationException exception = null;
 	protected OperationCallback callback = null;
-	private volatile MemcachedNode<Operation> handlingNode = null;
+	private volatile MemcachedNode handlingNode = null;
 	private boolean timedout;
 	private long creationTime;
 	private boolean timedOutUnsent = false;
 	protected int vbucket;
-	protected Collection<MemcachedNode<Operation>> notMyVbucketNodes = new HashSet<MemcachedNode<Operation>>();
+	protected Collection<MemcachedNode> notMyVbucketNodes = new HashSet<MemcachedNode>();
 
 	public BaseOperationImpl() {
 		super();
@@ -148,11 +148,11 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 		assert false;
 	}
 
-	public MemcachedNode<Operation> getHandlingNode() {
+	public MemcachedNode getHandlingNode() {
 		return handlingNode;
 	}
 
-	public void setHandlingNode(MemcachedNode<Operation> to) {
+	public void setHandlingNode(MemcachedNode to) {
 		handlingNode = to;
 	}
 
@@ -164,15 +164,15 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 		this.vbucket = vbucket;
 	}
 
-	public Collection<MemcachedNode<Operation>> getNotMyVbucketNodes() {
+	public Collection<MemcachedNode> getNotMyVbucketNodes() {
 		return notMyVbucketNodes;
 	}
 
-	public void addNotMyVbucketNode(MemcachedNode<Operation> node) {
+	public void addNotMyVbucketNode(MemcachedNode node) {
 		notMyVbucketNodes.add(node);
 	}
 
-	public void setNotMyVbucketNodes(Collection<MemcachedNode<Operation>> nodes) {
+	public void setNotMyVbucketNodes(Collection<MemcachedNode> nodes) {
 		notMyVbucketNodes = nodes;
 	}
 

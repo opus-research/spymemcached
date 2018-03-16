@@ -11,7 +11,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Collection;
 
-public class MockMemcachedNode<T> implements MemcachedNode<T> {
+import net.spy.memcached.ops.Operation;
+
+public class MockMemcachedNode implements MemcachedNode {
 	private final InetSocketAddress socketAddress;
 	public SocketAddress getSocketAddress() {return socketAddress;}
 
@@ -28,7 +30,7 @@ public class MockMemcachedNode<T> implements MemcachedNode<T> {
 			return false;
 		}
 
-		MockMemcachedNode<T> that = (MockMemcachedNode<T>) o;
+		MockMemcachedNode that = (MockMemcachedNode) o;
 
 		if (socketAddress != null
 				? !socketAddress.equals(that.socketAddress)
@@ -56,16 +58,16 @@ public class MockMemcachedNode<T> implements MemcachedNode<T> {
 	public void transitionWriteItem() {
 		// noop
 	}
-	public T getCurrentReadOp() {return null;}
-	public T removeCurrentReadOp() {return null;}
-	public T getCurrentWriteOp() {return null;}
-	public T removeCurrentWriteOp() {return null;}
+	public Operation getCurrentReadOp() {return null;}
+	public Operation removeCurrentReadOp() {return null;}
+	public Operation getCurrentWriteOp() {return null;}
+	public Operation removeCurrentWriteOp() {return null;}
 	public boolean hasReadOp() {return false;}
 	public boolean hasWriteOp() {return false;}
-	public void addOp(T op) {
+	public void addOp(Operation op) {
 		// noop
 	}
-	public void insertOp(T op) {
+	public void insertOp(Operation op) {
 		// noop
 	}
 	public int getSelectionOps() {return 0;}
@@ -96,7 +98,7 @@ public class MockMemcachedNode<T> implements MemcachedNode<T> {
 		// noop
 	}
 
-	public Collection<T> destroyInputQueue() {
+	public Collection<Operation> destroyInputQueue() {
 		return null;
 	}
 

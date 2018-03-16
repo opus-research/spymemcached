@@ -19,14 +19,14 @@ public interface ConfigurationProvider {
      * @param rec reconfigurable that will receive updates
      * @throws ConfigurationException
      */
-    void subscribe(String bucketName, Reconfigurable rec) throws ConfigurationException;
+    void subscribe(final String bucketName, final Reconfigurable rec) throws ConfigurationException;
 
     /**
      * Unsubscribe from updates on a given bucket and given reconfigurable
      * @param vbucketName bucket name
      * @param rec reconfigurable
      */
-    void unsubscribe(String vbucketName, Reconfigurable rec);
+    void unsubscribe(final String vbucketName, final Reconfigurable rec);
 
     /**
      * Shutdowns a monitor connections to the REST service

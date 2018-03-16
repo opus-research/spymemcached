@@ -6,11 +6,15 @@ import java.util.List;
 
 public class CacheConfig implements Config {
 
-    private final HashAlgorithm hashAlgorithm = HashAlgorithm.NATIVE_HASH;
+    private HashAlgorithm hashAlgorithm = HashAlgorithm.NATIVE_HASH;
 
     private int vbucketsCount;
 
-    private final int serversCount;
+    private int mask;
+
+    private int serversCount;
+
+    private int replicasCount;
 
     private List<String> servers;
 
@@ -18,6 +22,7 @@ public class CacheConfig implements Config {
 
     public CacheConfig(int serversCount) {
         this.serversCount = serversCount;
+        this.mask = vbucketsCount - 1;
     }
 
     public int getReplicasCount() {

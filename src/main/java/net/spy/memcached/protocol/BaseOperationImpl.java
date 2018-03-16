@@ -57,8 +57,8 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
   private OperationException exception = null;
   protected OperationCallback callback = null;
   private volatile MemcachedNode handlingNode = null;
-  private boolean timedout;
-  private long creationTime;
+  private volatile boolean timedout = false;
+  private final long creationTime;
   private boolean timedOutUnsent = false;
   protected Collection<MemcachedNode> notMyVbucketNodes =
       new HashSet<MemcachedNode>();
@@ -213,7 +213,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
       // operation
       if (timedout) {
         throw new IllegalArgumentException("Operation has already timed out;"
-            + " ttl specified would allow it to be valid.");
+           + " ttl specified would allow it to be valid.");
       }
     }
     return timedout;

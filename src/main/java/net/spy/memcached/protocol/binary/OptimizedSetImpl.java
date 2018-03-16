@@ -45,7 +45,7 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 		int keylen = KeyUtil.getKeyBytes(k).length;
 
 		byteCount += MIN_RECV_PACKET + StoreOperationImpl.EXTRA_LEN
-			+ keylen + op.getData().length;
+			+ keylen + op.getBytes().length;
 	}
 
 	public int size() {
@@ -68,7 +68,7 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 
 			int myOpaque = generateOpaque();
 			callbacks.put(myOpaque, so.getCallback());
-			byte[] data = so.getData();
+			byte[] data = so.getBytes();
 
 			// Custom header
 			bb.put(REQ_MAGIC);
@@ -153,4 +153,5 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 		}
 
 	}
+
 }

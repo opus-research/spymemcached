@@ -97,11 +97,4 @@ abstract class BaseStoreOperationImpl extends OperationImpl {
   public byte[] getData() {
     return data;
   }
-
-  @Override
-  public String toString() {
-    String s = "Cmd: " + type + " Key: " + key + " Flags: " + flags + " Exp: "
-      + exp + " Data Length: " + data.length;
-    return s;
-  }
 }

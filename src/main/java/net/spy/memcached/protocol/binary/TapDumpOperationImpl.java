@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached.protocol.binary;
 
 import java.util.UUID;
@@ -10,32 +16,36 @@ import net.spy.memcached.tapmessage.TapFlag;
 import net.spy.memcached.tapmessage.TapMagic;
 import net.spy.memcached.tapmessage.TapOpcode;
 
-public class TapDumpOperationImpl extends TapOperationImpl implements TapOperation {
-	private final String id;
+/**
+ * Implementation of a tap dump operation.
+ */
+public class TapDumpOperationImpl extends TapOperationImpl implements
+    TapOperation {
+  private final String id;
 
-	TapDumpOperationImpl(String id, OperationCallback cb) {
-		super(cb);
-		this.id = id;
-	}
+  TapDumpOperationImpl(String id, OperationCallback cb) {
+    super(cb);
+    this.id = id;
+  }
 
-	@Override
-	public void initialize() {
-		RequestMessage message = new RequestMessage();
-		message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
-		message.setOpcode(TapOpcode.REQUEST);
-		message.setFlags(TapFlag.DUMP);
-		message.setFlags(TapFlag.SUPPORT_ACK);
-		if (id != null) {
-			message.setName(id);
-		} else {
-			message.setName(UUID.randomUUID().toString());
-		}
+  @Override
+  public void initialize() {
+    RequestMessage message = new RequestMessage();
+    message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
+    message.setOpcode(TapOpcode.REQUEST);
+    message.setFlags(TapFlag.DUMP);
+    message.setFlags(TapFlag.SUPPORT_ACK);
+    if (id != null) {
+      message.setName(id);
+    } else {
+      message.setName(UUID.randomUUID().toString());
+    }
 
-		setBuffer(message.getBytes());
-	}
+    setBuffer(message.getBytes());
+  }
 
-	@Override
-	public void streamClosed(OperationState state) {
-		transitionState(state);
-	}
+  @Override
+  public void streamClosed(OperationState state) {
+    transitionState(state);
+  }
 }

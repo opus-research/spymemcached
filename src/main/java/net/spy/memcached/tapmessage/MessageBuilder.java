@@ -1,42 +1,51 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached.tapmessage;
 
+/**
+ * Builds a tap message.
+ */
 public class MessageBuilder {
-	RequestMessage message;
+  private RequestMessage message;
 
-	public MessageBuilder() {
-		this.message = new RequestMessage();
-		message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
-		message.setOpcode(TapOpcode.REQUEST);
-	}
+  public MessageBuilder() {
+    this.message = new RequestMessage();
+    message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
+    message.setOpcode(TapOpcode.REQUEST);
+  }
 
-	public void doBackfill(long date) {
-		message.setBackfill(date);
-		message.setFlags(TapFlag.BACKFILL);
-	}
+  public void doBackfill(long date) {
+    message.setBackfill(date);
+    message.setFlags(TapFlag.BACKFILL);
+  }
 
-	public void doDump() {
-		message.setFlags(TapFlag.DUMP);
-	}
+  public void doDump() {
+    message.setFlags(TapFlag.DUMP);
+  }
 
-	public void specifyVbuckets(int[] vbucketlist) {
-		message.setVbucketlist(vbucketlist);
-		message.setFlags(TapFlag.LIST_VBUCKETS);
-	}
+  public void specifyVbuckets(int[] vbucketlist) {
+    message.setVbucketlist(vbucketlist);
+    message.setFlags(TapFlag.LIST_VBUCKETS);
+  }
 
-	public void supportAck() {
-		message.setFlags(TapFlag.SUPPORT_ACK);
-	}
+  public void supportAck() {
+    message.setFlags(TapFlag.SUPPORT_ACK);
+  }
 
-	public void keysOnly() {
-		message.setFlags(TapFlag.KEYS_ONLY);
-	}
+  public void keysOnly() {
+    message.setFlags(TapFlag.KEYS_ONLY);
+  }
 
-	public void takeoverVbuckets(int[] vbucketlist) {
-		message.setVbucketlist(vbucketlist);
-		message.setFlags(TapFlag.TAKEOVER_VBUCKETS);
-	}
+  public void takeoverVbuckets(int[] vbucketlist) {
+    message.setVbucketlist(vbucketlist);
+    message.setFlags(TapFlag.TAKEOVER_VBUCKETS);
+  }
 
-	public RequestMessage getMessage() {
-		return message;
-	}
+  public RequestMessage getMessage() {
+    return message;
+  }
 }

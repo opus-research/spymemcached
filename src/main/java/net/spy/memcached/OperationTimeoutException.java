@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached;
 
 /**
@@ -8,14 +14,13 @@ package net.spy.memcached;
  */
 public class OperationTimeoutException extends RuntimeException {
 
-	private static final long serialVersionUID = 1479557202445843619L;
+  private static final long serialVersionUID = 1479557202445843619L;
 
-	public OperationTimeoutException(String message) {
-        super(message);
-    }
+  public OperationTimeoutException(String message) {
+    super(message);
+  }
 
-    public OperationTimeoutException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
+  public OperationTimeoutException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached;
 
 import java.nio.ByteBuffer;
@@ -8,73 +14,73 @@ import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.ascii.ExtensibleOperationImpl;
 
 /**
- *
  * @author Matt Ingenthron <ingenthr@cep.net>
  */
 public class TimeoutNowriteTest extends ClientBaseCase {
 
-	@Override
-	protected void tearDown() throws Exception {
-		// override teardown to avoid the flush phase
-		client.shutdown();
-	}
+  @Override
+  protected void tearDown() throws Exception {
+    // override teardown to avoid the flush phase
+    client.shutdown();
+  }
 
-	@Override
-	protected void initClient() throws Exception {
-		client=new MemcachedClient(new DefaultConnectionFactory() {
-			@Override
-			public long getOperationTimeout() {
-				return 1000; // 1 sec
-			}
-			@Override
-			public FailureMode getFailureMode() {
-				return FailureMode.Retry;
-			}},
-			AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":11211"));
-	}
+  @Override
+  protected void initClient() throws Exception {
+    client = new MemcachedClient(new DefaultConnectionFactory() {
+      @Override
+      public long getOperationTimeout() {
+        return 1000; // 1 sec
+      }
 
-	public void testTimeoutDontwrite() {
-		Operation op = new ExtensibleOperationImpl(new OperationCallback(){
-			public void complete() {
-				System.err.println("Complete.");
-			}
+      @Override
+      public FailureMode getFailureMode() {
+        return FailureMode.Retry;
+      }
+    }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":11211"));
+  }
 
-			public void receivedStatus(OperationStatus s) {
-				System.err.println("Received a line.");
-			}}) {
+  public void testTimeoutDontwrite() {
+    Operation op = new ExtensibleOperationImpl(new OperationCallback() {
+      public void complete() {
+        System.err.println("Complete.");
+      }
 
-			@Override
-			public void handleLine(String line) {
-				System.out.println("Woo! A line!");
-			}
+      public void receivedStatus(OperationStatus s) {
+        System.err.println("Received a line.");
+      }
+    }) {
 
-			@Override
-			public void initialize() {
-				setBuffer(ByteBuffer.wrap("garbage\r\n".getBytes()));
-			}
+      @Override
+      public void handleLine(String line) {
+        System.out.println("Woo! A line!");
+      }
 
-			};
-	try {
-	    Thread.sleep(1100);
-	} catch (InterruptedException ex) {
-	    System.err.println("Interrupted when sleeping for timeout nowrite");
-	}
+      @Override
+      public void initialize() {
+        setBuffer(ByteBuffer.wrap("garbage\r\n".getBytes()));
+      }
 
-	client.addOp("x", op);
-	System.err.println("Operation attempted:");
-	System.err.println(op);
-	System.err.println("Trying to get:");
-	try {
-		client.get("x");
-		String retValString = new String();
-		System.err.println(retValString);
-	}
-	catch (net.spy.memcached.OperationTimeoutException ex) {
-		System.err.println("Timed out successfully: " + ex.getMessage());
-	}
+    };
+    try {
+      Thread.sleep(1100);
+    } catch (InterruptedException ex) {
+      System.err.println("Interrupted when sleeping for timeout nowrite");
+    }
 
-	System.err.println("Op timed out is " + op.isTimedOut());
-	assert(op.isTimedOut() == true);
-	}
+    client.addOp("x", op);
+    System.err.println("Operation attempted:");
+    System.err.println(op);
+    System.err.println("Trying to get:");
+    try {
+      client.get("x");
+      String retValString = new String();
+      System.err.println(retValString);
+    } catch (net.spy.memcached.OperationTimeoutException ex) {
+      System.err.println("Timed out successfully: " + ex.getMessage());
+    }
+
+    System.err.println("Op timed out is " + op.isTimedOut());
+    assert op.isTimedOut();
+  }
 
 }

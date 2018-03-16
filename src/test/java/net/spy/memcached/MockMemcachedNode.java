@@ -1,6 +1,9 @@
 /**
- *
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
  */
+
 package net.spy.memcached;
 
 import java.io.IOException;
@@ -13,108 +16,169 @@ import java.util.Collection;
 
 import net.spy.memcached.ops.Operation;
 
+/**
+ * A MockMemcachedNode.
+ */
 public class MockMemcachedNode implements MemcachedNode {
-	private final InetSocketAddress socketAddress;
-	public SocketAddress getSocketAddress() {return socketAddress;}
+  private final InetSocketAddress socketAddress;
 
-	public MockMemcachedNode(InetSocketAddress socketAddress) {
-		this.socketAddress = socketAddress;
-	}
+  public SocketAddress getSocketAddress() {
+    return socketAddress;
+  }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
+  public MockMemcachedNode(InetSocketAddress socketAddress) {
+    this.socketAddress = socketAddress;
+  }
 
-		MockMemcachedNode that = (MockMemcachedNode) o;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
-		if (socketAddress != null
-				? !socketAddress.equals(that.socketAddress)
-				: that.socketAddress != null) {
-			return false;
-		}
+    MockMemcachedNode that = (MockMemcachedNode) o;
 
-		return true;
-	}
+    if (socketAddress != null ? !socketAddress.equals(that.socketAddress)
+        : that.socketAddress != null) {
+      return false;
+    }
 
-	@Override
-	public int hashCode() {
-		return (socketAddress != null ? socketAddress.hashCode() : 0);
-	}
+    return true;
+  }
 
-	public void copyInputQueue() {
-		// noop
-	}
-	public void setupResend() {
-		// noop
-	}
-	public void fillWriteBuffer(boolean optimizeGets) {
-		// noop
-	}
-	public void transitionWriteItem() {
-		// noop
-	}
-	public Operation getCurrentReadOp() {return null;}
-	public Operation removeCurrentReadOp() {return null;}
-	public Operation getCurrentWriteOp() {return null;}
-	public Operation removeCurrentWriteOp() {return null;}
-	public boolean hasReadOp() {return false;}
-	public boolean hasWriteOp() {return false;}
-	public void addOp(Operation op) {
-		// noop
-	}
-	public void insertOp(Operation op) {
-		// noop
-	}
-	public int getSelectionOps() {return 0;}
-	public ByteBuffer getRbuf() {return null;}
-	public ByteBuffer getWbuf() {return null;}
-	public boolean isActive() {return false;}
-	public void reconnecting() {
-		// noop
-	}
-	public void connected() {
-		// noop
-	}
-	public int getReconnectCount() {return 0;}
-	public void registerChannel(SocketChannel ch, SelectionKey selectionKey) {
-		// noop
-	}
-	public void setChannel(SocketChannel to) {
-		// noop
-	}
-	public SocketChannel getChannel() {return null;}
-	public void setSk(SelectionKey to) {
-		// noop
-	}
-	public SelectionKey getSk() {return null;}
-	public int getBytesRemainingToWrite() {return 0;}
-	public int writeSome() throws IOException {return 0;}
-	public void fixupOps() {
-		// noop
-	}
+  @Override
+  public int hashCode() {
+    return (socketAddress != null ? socketAddress.hashCode() : 0);
+  }
 
-	public Collection<Operation> destroyInputQueue() {
-		return null;
-	}
+  public void copyInputQueue() {
+    // noop
+  }
 
-	public void authComplete() {
-		// noop
-	}
+  public void setupResend() {
+    // noop
+  }
 
-	public void setupForAuth() {
-		// noop
-	}
+  public void fillWriteBuffer(boolean optimizeGets) {
+    // noop
+  }
 
-	public int getContinuousTimeout() {
-		return 0;
-	}
+  public void transitionWriteItem() {
+    // noop
+  }
 
-	public void setContinuousTimeout(boolean timedOut) {
-		// noop
-	}
+  public Operation getCurrentReadOp() {
+    return null;
+  }
+
+  public Operation removeCurrentReadOp() {
+    return null;
+  }
+
+  public Operation getCurrentWriteOp() {
+    return null;
+  }
+
+  public Operation removeCurrentWriteOp() {
+    return null;
+  }
+
+  public boolean hasReadOp() {
+    return false;
+  }
+
+  public boolean hasWriteOp() {
+    return false;
+  }
+
+  public void addOp(Operation op) {
+    // noop
+  }
+
+  public void insertOp(Operation op) {
+    // noop
+  }
+
+  public int getSelectionOps() {
+    return 0;
+  }
+
+  public ByteBuffer getRbuf() {
+    return null;
+  }
+
+  public ByteBuffer getWbuf() {
+    return null;
+  }
+
+  public boolean isActive() {
+    return false;
+  }
+
+  public void reconnecting() {
+    // noop
+  }
+
+  public void connected() {
+    // noop
+  }
+
+  public int getReconnectCount() {
+    return 0;
+  }
+
+  public void registerChannel(SocketChannel ch, SelectionKey selectionKey) {
+    // noop
+  }
+
+  public void setChannel(SocketChannel to) {
+    // noop
+  }
+
+  public SocketChannel getChannel() {
+    return null;
+  }
+
+  public void setSk(SelectionKey to) {
+    // noop
+  }
+
+  public SelectionKey getSk() {
+    return null;
+  }
+
+  public int getBytesRemainingToWrite() {
+    return 0;
+  }
+
+  public int writeSome() throws IOException {
+    return 0;
+  }
+
+  public void fixupOps() {
+    // noop
+  }
+
+  public Collection<Operation> destroyInputQueue() {
+    return null;
+  }
+
+  public void authComplete() {
+    // noop
+  }
+
+  public void setupForAuth() {
+    // noop
+  }
+
+  public int getContinuousTimeout() {
+    return 0;
+  }
+
+  public void setContinuousTimeout(boolean timedOut) {
+    // noop
+  }
 }

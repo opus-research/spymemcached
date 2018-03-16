@@ -1,39 +1,48 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached.vbucket.config;
 
 import java.util.List;
 
 import net.spy.memcached.HashAlgorithm;
 
+/**
+ * A Config.
+ */
 public interface Config {
 
-    // Config access
+  // Config access
 
-    int getReplicasCount();
+  int getReplicasCount();
 
-    int getVbucketsCount();
+  int getVbucketsCount();
 
-    int getServersCount();
+  int getServersCount();
 
-    HashAlgorithm getHashAlgorithm();
+  HashAlgorithm getHashAlgorithm();
 
-    String getServer(int serverIndex);
+  String getServer(int serverIndex);
 
-    // VBucket access
+  // VBucket access
 
-    int getVbucketByKey(String key);
+  int getVbucketByKey(String key);
 
-    int getMaster(int vbucketIndex);
+  int getMaster(int vbucketIndex);
 
-    int getReplica(int vbucketIndex, int replicaIndex);
+  int getReplica(int vbucketIndex, int replicaIndex);
 
-    int foundIncorrectMaster(int vbucket, int wrongServer);
+  int foundIncorrectMaster(int vbucket, int wrongServer);
 
-    ConfigDifference compareTo(Config config);
+  ConfigDifference compareTo(Config config);
 
-    List<String> getServers();
+  List<String> getServers();
 
-    List<VBucket> getVbuckets();
+  List<VBucket> getVbuckets();
 
-    ConfigType getConfigType();
+  ConfigType getConfigType();
 
 }

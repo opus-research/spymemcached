@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached;
 
 import java.net.SocketAddress;
@@ -7,81 +13,85 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+/**
+ * A ClientBaseCase.
+ */
 public abstract class ClientBaseCase extends TestCase {
 
-	protected MemcachedClient client = null;
-	protected Boolean membase;
-	protected Boolean moxi;
+  protected MemcachedClient client = null;
+  protected Boolean membase;
+  protected Boolean moxi;
 
-	protected void initClient() throws Exception {
-		initClient(new DefaultConnectionFactory() {
-			@Override
-			public long getOperationTimeout() {
-				return 15000;
-			}
-			@Override
-			public FailureMode getFailureMode() {
-				return FailureMode.Retry;
-			}
-		});
-	}
+  protected void initClient() throws Exception {
+    initClient(new DefaultConnectionFactory() {
+      @Override
+      public long getOperationTimeout() {
+        return 15000;
+      }
 
-	protected void initClient(ConnectionFactory cf) throws Exception {
-		client=new MemcachedClient(cf,
-			AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":11211"));
-	}
+      @Override
+      public FailureMode getFailureMode() {
+        return FailureMode.Retry;
+      }
+    });
+  }
 
-	protected Collection<String> stringify(Collection<?> c) {
-		Collection<String> rv=new ArrayList<String>();
-		for(Object o : c) {
-			rv.add(String.valueOf(o));
-		}
-		return rv;
-	}
+  protected void initClient(ConnectionFactory cf) throws Exception {
+    client =
+        new MemcachedClient(cf, AddrUtil.getAddresses(TestConfig.IPV4_ADDR
+            + ":11211"));
+  }
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		initClient();
-	}
+  protected Collection<String> stringify(Collection<?> c) {
+    Collection<String> rv = new ArrayList<String>();
+    for (Object o : c) {
+      rv.add(String.valueOf(o));
+    }
+    return rv;
+  }
 
-	@Override
-	protected void tearDown() throws Exception {
-		// Shut down, start up, flush, and shut down again.  Error tests have
-		// unpredictable timing issues.
-		client.shutdown();
-		client=null;
-		initClient();
-		flushPause();
-		assertTrue(client.flush().get());
-		client.shutdown();
-		client=null;
-		super.tearDown();
-	}
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    initClient();
+  }
 
-	protected void flushPause() throws InterruptedException {
-		// nothing useful
-	}
+  @Override
+  protected void tearDown() throws Exception {
+    // Shut down, start up, flush, and shut down again. Error tests have
+    // unpredictable timing issues.
+    client.shutdown();
+    client = null;
+    initClient();
+    flushPause();
+    assertTrue(client.flush().get());
+    client.shutdown();
+    client = null;
+    super.tearDown();
+  }
 
-	protected boolean isMoxi() {
-	    if (moxi != null) {
-		    return moxi.booleanValue();
-	    }
-		// some tests are invalid if using moxi
+  protected void flushPause() throws InterruptedException {
+    // nothing useful
+  }
 
-		Map<SocketAddress, Map<String, String>> stats = client.getStats("proxy");
-		for (Map<String, String> node : stats.values()) {
-			if (node.get("basic:version") != null) {
-				moxi = true;
-				   System.err.println("Using proxy");
-				break;
-			} else {
-				moxi = false;
-				   System.err.println("Not using proxy");
-			}
+  protected boolean isMoxi() {
+    if (moxi != null) {
+      return moxi.booleanValue();
+    }
+    // some tests are invalid if using moxi
 
-	    }
-	    return moxi.booleanValue();
-	}
+    Map<SocketAddress, Map<String, String>> stats = client.getStats("proxy");
+    for (Map<String, String> node : stats.values()) {
+      if (node.get("basic:version") != null) {
+        moxi = true;
+        System.err.println("Using proxy");
+        break;
+      } else {
+        moxi = false;
+        System.err.println("Not using proxy");
+      }
 
+    }
+    return moxi.booleanValue();
+  }
 }

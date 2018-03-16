@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2011 Couchbase, Inc.
+ * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,30 +20,58 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.ops;
+package net.spy.memcached.tapmessage;
 
-import net.spy.memcached.MemcachedNode;
-import net.spy.memcached.tapmessage.ResponseMessage;
-import net.spy.memcached.tapmessage.TapOpcode;
+import java.util.LinkedList;
+import java.util.List;
+
+import net.spy.memcached.ops.OperationState;
+import net.spy.memcached.ops.TapOperation;
 
 /**
- * Tap operation.
+ * Holds multiple operations that when put together for a tap stream.
  */
-public interface TapOperation extends Operation {
+public class TapStream {
+  private final List<TapOperation> ops;
 
-  /**
-   * Operation callback for the tap dump request.
-   */
-  interface Callback extends OperationCallback {
-    /**
-     * Callback for each result from a get.
-     *
-     * @param message the response message sent from the server
-     */
-    void gotData(ResponseMessage message);
-
-    void gotAck(MemcachedNode node, TapOpcode opcode, int opaque);
+  public TapStream() {
+    ops = new LinkedList<TapOperation>();
   }
 
-  void streamClosed(OperationState state);
+  public void cancel() {
+    for (TapOperation op : ops) {
+      op.cancel();
+    }
+  }
+
+  public boolean isCompleted() {
+    for (TapOperation op : ops) {
+      if (!op.getState().equals(OperationState.COMPLETE)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public boolean isCancelled() {
+    for (TapOperation op : ops) {
+      if (!op.isCancelled()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public boolean hasErrored() {
+    for (TapOperation op : ops) {
+      if (!op.hasErrored()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public void addOp(TapOperation op) {
+    ops.add(op);
+  }
 }

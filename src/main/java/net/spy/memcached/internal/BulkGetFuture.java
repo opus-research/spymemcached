@@ -117,6 +117,7 @@ public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
         if (!latch.await(to, unit)) {
             for (Operation op : ops) {
                 if (op.getState() != OperationState.COMPLETE) {
+                	System.out.println(op.getState());
                     MemcachedConnection.opTimedOut(op);
                     timedoutOps.add(op);
                 } else {

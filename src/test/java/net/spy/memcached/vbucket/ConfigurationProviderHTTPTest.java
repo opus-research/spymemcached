@@ -28,7 +28,6 @@ public class ConfigurationProviderHTTPTest extends TestCase {
     }
 
     public void testSubscribe() throws Exception {
-
         configProvider.subscribe(DEFAULT_BUCKET_NAME, reconfigurable);
     }
 
@@ -42,10 +41,5 @@ public class ConfigurationProviderHTTPTest extends TestCase {
 
     public void testGetAnonymousAuthBucket() throws Exception {
         assertEquals("default", configProvider.getAnonymousAuthBucket());
-    }
-
-    public void testBuildAuthHeader() {
-	ConfigurationProviderHTTP.buildAuthHeader("foo", "bar");
-
     }
 }

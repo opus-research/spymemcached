@@ -37,17 +37,17 @@ import org.springframework.beans.factory.FactoryBean;
  * </p>
  * @author Eran Harel
  */
-public class MemcachedClientFactoryBean implements FactoryBean {
+public class MemcachedClientFactoryBean implements FactoryBean<MemcachedClient> {
   private final ConnectionFactoryBuilder connectionFactoryBuilder = new ConnectionFactoryBuilder();
   private String servers;
 
   @Override
-  public Object getObject() throws Exception {
+  public MemcachedClient getObject() throws Exception {
     return new MemcachedClient(connectionFactoryBuilder.build(), AddrUtil.getAddresses(servers));
   }
 
   @Override
-  public Class getObjectType() {
+  public Class<MemcachedClient> getObjectType() {
     return MemcachedClient.class;
   }
 

@@ -843,8 +843,8 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 
   public void testUTF8Value() throws Exception {
     final String key = "junit.plaintext." + System.currentTimeMillis();
-    final String value = "Здравствуйте Здравствуйте �"
-        + "�дравствуйте Skiing rocks if you can find the time "
+    final String value = "Здравствуйте Здравствуйте �"
+        + "�дравствуйте Skiing rocks if you can find the time "
         + "to go!";
 
     assertTrue(client.set(key, 6000, value).get());
@@ -881,24 +881,6 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
     final String key = "prepend.missing";
     assertFalse(client.prepend(0, key, "es").get());
     assertNull(client.get(key));
-  }
-
-  public void testAppendWithoutCAS() throws Exception {
-    final String key = "append.key";
-    assertTrue(client.set(key, 5, "test").get());
-    OperationFuture<Boolean> op = client.append(key, "es");
-    assertTrue(op.get());
-    assert op.getStatus().isSuccess();
-    assertEquals("testes", client.get(key));
-  }
-
-  public void testPrependWithoutCAS() throws Exception {
-    final String key = "prepend.key";
-    assertTrue(client.set(key, 5, "test").get());
-    OperationFuture<Boolean> op = client.prepend(key, "es");
-    assertTrue(op.get());
-    assert op.getStatus().isSuccess();
-    assertEquals("estest", client.get(key));
   }
 
   public void testSetReturnsCAS() throws Exception {

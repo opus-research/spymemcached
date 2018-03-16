@@ -132,7 +132,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
         int magic = header[0];
         assert magic == RES_MAGIC : "Invalid magic:  " + magic;
         responseCmd = header[1];
-        assert cmd == 0xFF || responseCmd == cmd : "Unexpected response"
+        assert cmd == -1 || responseCmd == cmd : "Unexpected response"
             + " command value";
         keyLen = decodeShort(header, 2);
         // TODO: Examine extralen and datatype
@@ -347,5 +347,10 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
       rv = SEQ_NUMBER.incrementAndGet();
     }
     return rv;
+  }
+
+  @Override
+  public String toString() {
+    return "Cmd: " + cmd + " Opaque: " + opaque;
   }
 }

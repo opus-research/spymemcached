@@ -82,7 +82,7 @@ public interface Operation {
 	void setHandlingNode(MemcachedNode to);
 
 	/**
-	 * Mark this operation as one which has exceeded it's timeout value.
+	 * Mark this operation as one which has exceeded its timeout value.
 	 */
 	public void timeOut();
 

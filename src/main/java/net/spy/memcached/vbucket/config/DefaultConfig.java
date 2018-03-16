@@ -127,8 +127,4 @@ public class DefaultConfig implements Config {
         return hashAlgorithm;
     }
 
-    public ConfigType getConfigType() {
-	return ConfigType.MEMBASE;
-    }
-
 }

@@ -280,10 +280,12 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     return transcoder;
   }
 
+  @Override
   public CountDownLatch broadcastOp(final BroadcastOpFactory of) {
     return broadcastOp(of, mconn.getLocator().getAll(), true);
   }
 
+  @Override
   public CountDownLatch broadcastOp(final BroadcastOpFactory of,
       Collection<MemcachedNode> nodes) {
     return broadcastOp(of, nodes, true);

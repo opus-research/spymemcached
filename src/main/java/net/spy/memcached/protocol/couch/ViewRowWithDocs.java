@@ -33,17 +33,29 @@ public class ViewRowWithDocs implements ViewRow {
   private final Object doc;
 
   public ViewRowWithDocs(String id, String key, String value, Object doc) {
-    this.id = parseField(id);
-    this.key = parseField(key);
-    this.value = parseField(value);
-    this.doc = parseField((String)doc);
-  }
-
-  private String parseField(String field) {
-    if (field != null && field.equals("null")) {
-      return null;
+    // The id can be the string "null" so convert it to null
+    if (id != null && id.equals("null")) {
+      this.id = null;
     } else {
-      return field;
+      this.id = id;
+    }
+    // The key can be the string "null" so convert it to null
+    if (key != null && key.equals("null")) {
+      this.key = null;
+    } else {
+      this.key = key;
+    }
+    // The value can be the string "null" so convert it to null
+    if (value != null && value.equals("null")) {
+      this.value = null;
+    } else {
+      this.value = value;
+    }
+    // The doc can be the string "null" so convert it to null
+    if (doc != null && doc.equals("null")) {
+      this.doc = null;
+    } else {
+      this.doc = doc;
     }
   }
 

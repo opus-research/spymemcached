@@ -29,7 +29,7 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.tapmessage.RequestMessage;
-import net.spy.memcached.tapmessage.TapRequestFlag;
+import net.spy.memcached.tapmessage.TapFlag;
 import net.spy.memcached.tapmessage.TapMagic;
 import net.spy.memcached.tapmessage.TapOpcode;
 
@@ -50,8 +50,8 @@ public class TapDumpOperationImpl extends TapOperationImpl implements
     RequestMessage message = new RequestMessage();
     message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
     message.setOpcode(TapOpcode.REQUEST);
-    message.setFlags(TapRequestFlag.DUMP);
-    message.setFlags(TapRequestFlag.SUPPORT_ACK);
+    message.setFlags(TapFlag.DUMP);
+    message.setFlags(TapFlag.SUPPORT_ACK);
     if (id != null) {
       message.setName(id);
     } else {

@@ -30,14 +30,15 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.tapmessage.BaseMessage;
 import net.spy.memcached.tapmessage.ResponseMessage;
+import net.spy.memcached.tapmessage.TapFlag;
 import net.spy.memcached.tapmessage.TapOpcode;
-import net.spy.memcached.tapmessage.TapResponseFlag;
 
 /**
  * Abstract implementation of a tap operation.
  */
 public abstract class TapOperationImpl extends OperationImpl implements
     TapOperation {
+  private static final byte TAP_FLAG_ACK = 0x1;
 
   private int bytesProcessed;
   private int bodylen;
@@ -73,8 +74,8 @@ public abstract class TapOperationImpl extends OperationImpl implements
         }
         if (bytesProcessed >= message.length) {
           ResponseMessage response = new ResponseMessage(message);
-          for (TapResponseFlag flag : response.getFlags()) {
-            if (flag == TapResponseFlag.TAP_ACK) {
+          for (TapFlag flag : response.getFlags()) {
+            if (flag.getFlag() == TAP_FLAG_ACK) {
               ((Callback) getCallback()).gotAck(response.getOpcode(),
                 response.getOpaque());
             }

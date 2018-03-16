@@ -8,7 +8,6 @@ import java.net.URI;
 import java.net.InetSocketAddress;
 import java.net.URLConnection;
 import java.net.HttpURLConnection;
-import java.net.Authenticator;
 import java.net.URL;
 import java.io.IOException;
 import java.io.InputStream;
@@ -267,7 +266,9 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
 		}
 		return buffer.toString();
 	    } finally {
-	    reader.close();
+	    	if (reader != null) {
+	    		reader.close();
+	    	}
 	}
     }
 

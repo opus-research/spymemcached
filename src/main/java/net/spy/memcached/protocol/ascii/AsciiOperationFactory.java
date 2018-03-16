@@ -48,6 +48,7 @@ import net.spy.memcached.ops.ObserveOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 
+import net.spy.memcached.ops.ReplicaReadOperation;
 import net.spy.memcached.ops.SASLAuthOperation;
 import net.spy.memcached.ops.SASLMechsOperation;
 import net.spy.memcached.ops.SASLStepOperation;
@@ -94,6 +95,12 @@ public class AsciiOperationFactory extends BaseOperationFactory {
   public ObserveOperation observe(String key, long casId, int index,
       ObserveOperation.Callback cb) {
     throw new UnsupportedOperationException("Observe is not supported "
+        + "for ASCII protocol");
+  }
+
+  public ReplicaReadOperation replica(String key,
+      ReplicaReadOperation.Callback cb) {
+    throw new UnsupportedOperationException("Replica Read is not supported "
         + "for ASCII protocol");
   }
 

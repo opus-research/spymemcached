@@ -31,10 +31,12 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.util.DefaultKetamaNodeLocatorConfiguration;
 import net.spy.memcached.util.KetamaNodeLocatorConfiguration;
 import net.spy.memcached.vbucket.config.Config;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is an implementation of the Ketama consistent hash strategy from
@@ -46,7 +48,9 @@ import net.spy.memcached.vbucket.config.Config;
  * @see <a href="http://www.last.fm/user/RJ/journal/2007/04/10/392555/">RJ's
  *      blog post</a>
  */
-public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
+public final class KetamaNodeLocator implements NodeLocator {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(KetamaNodeLocator.class);
 
   private volatile TreeMap<Long, MemcachedNode> ketamaNodes;
   private final Collection<MemcachedNode> allNodes;
@@ -185,7 +189,7 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
                     | ((long) (digest[1 + h * 4] & 0xFF) << 8)
                     | (digest[h * 4] & 0xFF);
             newNodeMap.put(k, node);
-            getLogger().debug("Adding node %s in position %d", node, k);
+            LOG.debug("Adding node %s in position %d", node, k);
           }
         }
       } else {

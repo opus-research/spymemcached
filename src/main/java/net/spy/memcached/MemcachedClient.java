@@ -47,7 +47,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.auth.AuthThreadMonitor;
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.internal.BulkFuture;
 import net.spy.memcached.internal.BulkGetFuture;
 import net.spy.memcached.internal.GetFuture;
@@ -69,6 +68,9 @@ import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Client to a memcached server.
@@ -120,8 +122,9 @@ import net.spy.memcached.transcoders.Transcoder;
  *      }
  * </pre>
  */
-public class MemcachedClient extends SpyObject implements MemcachedClientIF,
-    ConnectionObserver {
+public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(MemcachedClient.class);
 
   protected volatile boolean shuttingDown = false;
 
@@ -522,7 +525,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
               if (val instanceof CASOperationStatus) {
                 rv.set(((CASOperationStatus) val).getCASResponse(), val);
               } else if (val instanceof CancelledOperationStatus) {
-                getLogger().debug("CAS operation cancelled");
+                LOG.debug("CAS operation cancelled");
               } else {
                 throw new RuntimeException("Unhandled state: " + val);
               }
@@ -1115,7 +1118,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       public void receivedStatus(OperationStatus status) {
         rv.setStatus(status);
         if (!status.isSuccess()) {
-          getLogger().warn("Unsuccessful get:  %s", status);
+          LOG.warn("Unsuccessful get:  %s", status);
         }
       }
 
@@ -1398,7 +1401,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
           @SuppressWarnings("synthetic-access")
           public void receivedStatus(OperationStatus status) {
             if (!status.isSuccess()) {
-              getLogger().warn("Unsuccessful stat fetch: %s", status);
+              LOG.warn("Unsuccessful stat fetch: %s", status);
             }
           }
 
@@ -1439,7 +1442,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     } catch (InterruptedException e) {
       throw new RuntimeException("Interrupted", e);
     }
-    getLogger().debug("Mutation returned %s", rv);
+    LOG.debug("Mutation returned %s", rv);
     return rv.get();
   }
 
@@ -1803,7 +1806,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   public boolean shutdown(long timeout, TimeUnit unit) {
     // Guard against double shutdowns (bug 8).
     if (shuttingDown) {
-      getLogger().info("Suppressing duplicate attempt to shut down");
+      LOG.info("Suppressing duplicate attempt to shut down");
       return false;
     }
     shuttingDown = true;
@@ -1824,7 +1827,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
         mconn.setName(baseName + " - SHUTTING DOWN (informed client)");
         tcService.shutdown();
       } catch (IOException e) {
-        getLogger().warn("exception while shutting down", e);
+        LOG.warn("exception while shutting down", e);
       }
     }
     return rv;

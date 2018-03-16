@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import net.spy.memcached.MemcachedNode;
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.CancelledOperationStatus;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
@@ -38,10 +37,15 @@ import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Base class for protocol-specific operation implementations.
  */
-public abstract class BaseOperationImpl extends SpyObject implements Operation {
+public abstract class BaseOperationImpl implements Operation {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(BaseOperationImpl.class);
 
   /**
    * Status object for canceled operations.
@@ -101,7 +105,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
    * This is called on each subclass whenever an operation was cancelled.
    */
   protected void wasCancelled() {
-    getLogger().debug("was cancelled.");
+    LOG.debug("was cancelled.");
   }
 
   public final synchronized OperationState getState() {
@@ -125,7 +129,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
    * Transition the state of this operation to the given state.
    */
   protected final synchronized void transitionState(OperationState newState) {
-    getLogger().debug("Transitioned state from %s to %s", state, newState);
+    LOG.debug("Transitioned state from %s to %s", state, newState);
     state = newState;
     // Discard our buffer when we no longer need it.
     if(state != OperationState.WRITE_QUEUED
@@ -151,7 +155,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 
   protected void handleError(OperationErrorType eType, String line)
     throws IOException {
-    getLogger().error("Error:  %s", line);
+    LOG.error("Error:  %s", line);
     switch (eType) {
     case GENERAL:
       exception = new OperationException();

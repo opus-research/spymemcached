@@ -38,11 +38,16 @@ import net.spy.memcached.transcoders.Transcoder;
 import net.spy.memcached.vbucket.Reconfigurable;
 import net.spy.memcached.vbucket.config.Bucket;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A client for Membase Server.
  */
 public class MembaseClient extends MemcachedClient implements MembaseClientIF,
     Reconfigurable {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(MembaseClient.class);
 
   protected volatile boolean reconfiguring = false;
 
@@ -161,7 +166,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF,
     try {
       mconn.reconfigure(bucket);
     } catch (IllegalArgumentException ex) {
-      getLogger().warn(
+      LOG.warn(
           "Failed to reconfigure client, staying with previous configuration.",
           ex);
     } finally {

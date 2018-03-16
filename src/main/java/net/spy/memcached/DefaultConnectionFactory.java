@@ -36,7 +36,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.auth.AuthDescriptor;
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.protocol.ascii.AsciiMemcachedNodeImpl;
 import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
@@ -56,7 +55,7 @@ import net.spy.memcached.transcoders.Transcoder;
  *
  * </p>
  */
-public class DefaultConnectionFactory extends SpyObject implements
+public class DefaultConnectionFactory implements
     ConnectionFactory {
 
   /**

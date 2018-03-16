@@ -23,13 +23,11 @@
 package net.spy.memcached.transcoders;
 
 import net.spy.memcached.CachedData;
-import net.spy.memcached.compat.SpyObject;
 
 /**
  * Transcoder that serializes and unserializes longs.
  */
-public final class IntegerTranscoder extends SpyObject implements
-    Transcoder<Integer> {
+public final class IntegerTranscoder implements Transcoder<Integer> {
 
   private static final int FLAGS = SerializingTranscoder.SPECIAL_INT;
 

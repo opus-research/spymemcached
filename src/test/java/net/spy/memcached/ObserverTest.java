@@ -28,7 +28,8 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import net.spy.memcached.compat.SpyObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test observer hooks.
@@ -74,13 +75,16 @@ public class ObserverTest extends ClientBaseCase {
     assertFalse("Didn't clean up observer.", client.removeObserver(obs));
   }
 
-  static class LoggingObserver extends SpyObject implements ConnectionObserver {
+  static class LoggingObserver implements ConnectionObserver {
+    private static final Logger LOG =
+      LoggerFactory.getLogger(LoggingObserver.class);
     public void connectionEstablished(SocketAddress sa, int reconnectCount) {
-      getLogger().info("Connection established to %s (%s)", sa, reconnectCount);
+      LOG.info("Connection established to " + sa + " (" + reconnectCount
+          + ")");
     }
 
     public void connectionLost(SocketAddress sa) {
-      getLogger().info("Connection lost from %s", sa);
+      LOG.info("Connection lost from " + sa);
     }
   }
 }

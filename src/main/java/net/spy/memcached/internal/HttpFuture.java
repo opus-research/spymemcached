@@ -30,14 +30,18 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import net.spy.memcached.OperationTimeoutException;
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.couch.HttpOperation;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A future http response.
  */
-public class HttpFuture<T> extends SpyObject implements Future<T> {
+public class HttpFuture<T> implements Future<T> {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(HttpFuture.class);
   protected final AtomicReference<T> objRef;
   protected final CountDownLatch latch;
   protected final long timeout;
@@ -105,7 +109,7 @@ public class HttpFuture<T> extends SpyObject implements Future<T> {
         status = new OperationStatus(false, "Interrupted");
         Thread.currentThread().isInterrupted();
       } catch (ExecutionException e) {
-        getLogger().warn("Error getting status of operation", e);
+        LOG.warn("Error getting status of operation", e);
       }
     }
     return status;

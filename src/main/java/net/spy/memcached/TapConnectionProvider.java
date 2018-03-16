@@ -37,7 +37,6 @@ import javax.naming.ConfigurationException;
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.auth.AuthThreadMonitor;
 import net.spy.memcached.auth.PlainCallbackHandler;
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
@@ -49,11 +48,16 @@ import net.spy.memcached.vbucket.config.Bucket;
 import net.spy.memcached.vbucket.config.Config;
 import net.spy.memcached.vbucket.config.ConfigType;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A TapConnectionProvider.
  */
-public class TapConnectionProvider extends SpyObject implements
-    ConnectionObserver, Reconfigurable {
+public class TapConnectionProvider implements ConnectionObserver,
+    Reconfigurable {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(TapConnectionProvider.class);
 
   private volatile boolean shuttingDown = false;
 
@@ -284,7 +288,7 @@ public class TapConnectionProvider extends SpyObject implements
   public boolean shutdown(long timeout, TimeUnit unit) {
     // Guard against double shutdowns (bug 8).
     if (shuttingDown) {
-      getLogger().info("Suppressing duplicate attempt to shut down");
+      LOG.info("Suppressing duplicate attempt to shut down");
       return false;
     }
     shuttingDown = true;
@@ -308,7 +312,7 @@ public class TapConnectionProvider extends SpyObject implements
           this.configurationProvider.shutdown();
         }
       } catch (IOException e) {
-        getLogger().warn("exception while shutting down", e);
+        LOG.warn("exception while shutting down", e);
       }
     }
     return rv;

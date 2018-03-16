@@ -25,16 +25,21 @@ package net.spy.memcached.auth;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.OperationFactory;
-import net.spy.memcached.compat.SpyObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This will ensure no more than one AuthThread will exist for a given
  * MemcachedNode.
  */
-public class AuthThreadMonitor extends SpyObject {
+public class AuthThreadMonitor {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(AuthThreadMonitor.class);
 
   private Map<Object, AuthThread> nodeMap;
 
@@ -67,7 +72,7 @@ public class AuthThreadMonitor extends SpyObject {
     AuthThread toStop = nodeMap.get(nodeToStop);
     if (toStop != null) {
       if (toStop.isAlive()) {
-        getLogger().warn(
+        LOG.warn(
             "Incomplete authentication interrupted for node " + nodeToStop);
         toStop.interrupt();
       }

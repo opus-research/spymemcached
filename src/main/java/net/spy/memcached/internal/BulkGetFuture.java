@@ -34,10 +34,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import net.spy.memcached.MemcachedConnection;
-import net.spy.memcached.compat.log.LoggerFactory;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Future for handling results from bulk gets.
@@ -47,6 +49,8 @@ import net.spy.memcached.ops.OperationStatus;
  * @param <T> types of objects returned from the GET
  */
 public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(BulkGetFuture.class);
   private final Map<String, Future<T>> rvMap;
   private final Collection<Operation> ops;
   private final CountDownLatch latch;
@@ -97,9 +101,8 @@ public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
     Map<String, T> ret = internalGet(to, unit, timedoutOps);
     if (timedoutOps.size() > 0) {
       timeout = true;
-      LoggerFactory.getLogger(getClass()).warn(
-          new CheckedOperationTimeoutException("Operation timed out: ",
-              timedoutOps).getMessage());
+      LOG.warn(new CheckedOperationTimeoutException("Operation timed out: ",
+          timedoutOps).getMessage());
     }
     return ret;
 

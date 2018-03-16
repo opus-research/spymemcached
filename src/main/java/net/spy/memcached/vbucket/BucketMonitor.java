@@ -29,8 +29,6 @@ import java.text.ParseException;
 import java.util.Observable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import net.spy.memcached.vbucket.config.Bucket;
 import net.spy.memcached.vbucket.config.ConfigurationParser;
@@ -46,11 +44,16 @@ import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The BucketMonitor will open an HTTP comet stream to monitor for changes to
  * the list of nodes. If the list of nodes changes
  */
 public class BucketMonitor extends Observable {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(BucketMonitor.class);
 
   private final URI cometStreamURI;
   private Bucket bucket;
@@ -102,8 +105,7 @@ public class BucketMonitor extends Observable {
 
   public void startMonitor() {
     if (channel != null) {
-      Logger.getLogger(BucketMonitor.class.getName()).log(Level.WARNING,
-          "Bucket monitor is already started.");
+      LOG.warn("Bucket monitor is already started.");
       return;
     }
     createChannel();
@@ -113,17 +115,15 @@ public class BucketMonitor extends Observable {
     channel.write(request);
     try {
       String response = this.handler.getLastResponse();
-      logFiner("Getting server list returns this last chunked response:\n"
-          + response);
+      LOG.debug("Getting server list returns this last chunked response: "
+        + response);
       Bucket bucketToMonitor = this.configParser.parseBucket(response);
       setBucket(bucketToMonitor);
     } catch (ParseException ex) {
-      Logger.getLogger(BucketMonitor.class.getName()).log(Level.WARNING,
-        "Invalid client configuration received from server. Staying with "
-        + "existing configuration.", ex);
-      Logger.getLogger(BucketMonitor.class.getName()).log(Level.FINE,
-        "Invalid client configuration received:\n" + handler.getLastResponse()
-        + "\n");
+      LOG.warn("Invalid client configuration received from server."
+        + "Staying with existing configuration.", ex);
+      LOG.warn("Invalid client configuration received:\n"
+          + handler.getLastResponse());
     }
   }
 
@@ -202,10 +202,6 @@ public class BucketMonitor extends Observable {
     return httpPass;
   }
 
-  private void logFiner(String msg) {
-    Logger.getLogger(BucketMonitor.class.getName()).log(Level.FINER, msg);
-  }
-
   /**
    * Shut down the monitor in a graceful way (and release all resources).
    */
@@ -233,9 +229,8 @@ public class BucketMonitor extends Observable {
       Bucket updatedBucket = this.configParser.parseBucket(response);
       setBucket(updatedBucket);
     } catch (ParseException e) {
-      Logger.getLogger(BucketMonitor.class.getName()).log(Level.SEVERE,
-          "Invalid client configuration received from server. Staying with "
-          +  "existing configuration.", e);
+      LOG.error("Invalid client configuration received from server."
+        + "Staying with existing configuration.", e);
     }
   }
 

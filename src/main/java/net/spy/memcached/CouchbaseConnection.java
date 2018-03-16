@@ -34,7 +34,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import net.spy.memcached.CouchbaseNode.EventLogger;
 import net.spy.memcached.CouchbaseNode.MyHttpRequestExecutionHandler;
-import net.spy.memcached.compat.SpyThread;
 import net.spy.memcached.couch.AsyncConnectionManager;
 import net.spy.memcached.protocol.couch.HttpOperation;
 import net.spy.memcached.vbucket.Reconfigurable;
@@ -56,12 +55,16 @@ import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Establishes a connection to a Couchbase cluster.
  */
-public final class CouchbaseConnection extends SpyThread implements
+public final class CouchbaseConnection extends Thread implements
     Reconfigurable {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(CouchbaseConnection.class);
   private static final int NUM_CONNS = 1;
 
   private volatile boolean shutDown;
@@ -119,7 +122,7 @@ public final class CouchbaseConnection extends SpyThread implements
           new AsyncConnectionManager(
               new HttpHost(a.getHostName(), a.getPort()), NUM_CONNS,
               protocolHandler, params);
-      getLogger().info("Added %s to connect queue", a);
+      LOG.info("Added " + a + " to connect queue");
 
       CouchbaseNode node = connFactory.createCouchDBNode(a, connMgr);
       node.init();
@@ -144,7 +147,7 @@ public final class CouchbaseConnection extends SpyThread implements
       try {
         qa.shutdown();
       } catch (IOException e) {
-        getLogger().error("Error shutting down connection to "
+        LOG.error("Error shutting down connection to "
             + qa.getSocketAddress());
       }
       redistributeOperations(notCompletedOperations);
@@ -173,7 +176,7 @@ public final class CouchbaseConnection extends SpyThread implements
 
   public boolean shutdown() throws IOException {
     if (shutDown) {
-      getLogger().info("Suppressing duplicate attempt to shut down");
+      LOG.info("Suppressing duplicate attempt to shut down");
       return false;
     }
     shutDown = true;
@@ -182,7 +185,7 @@ public final class CouchbaseConnection extends SpyThread implements
       if (n != null) {
         n.shutdown();
         if (n.hasWriteOps()) {
-          getLogger().warn("Shutting down with ops waiting to be written");
+          LOG.warn("Shutting down with ops waiting to be written");
         }
       }
     }
@@ -245,7 +248,7 @@ public final class CouchbaseConnection extends SpyThread implements
       // schedule shutdown for the oddNodes
       nodesToShutdown.addAll(oddNodes);
     } catch (IOException e) {
-      getLogger().error("Connection reconfiguration failed", e);
+      LOG.error("Connection reconfiguration failed", e);
     } finally {
       reconfiguring = false;
     }
@@ -262,16 +265,16 @@ public final class CouchbaseConnection extends SpyThread implements
         }
       }
     }
-    getLogger().info("Shut down memcached client");
+    LOG.info("Shut down memcached client");
   }
 
   private void logRunException(Exception e) {
     if (shutDown) {
       // There are a couple types of errors that occur during the
       // shutdown sequence that are considered OK. Log at debug.
-      getLogger().debug("Exception occurred during shutdown", e);
+      LOG.debug("Exception occurred during shutdown", e);
     } else {
-      getLogger().warn("Problem handling memcached IO", e);
+      LOG.warn("Problem handling memcached IO", e);
     }
   }
 }

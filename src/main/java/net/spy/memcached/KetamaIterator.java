@@ -25,13 +25,12 @@ package net.spy.memcached;
 import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import net.spy.memcached.compat.SpyObject;
 
 /**
  * Implements an Iterator which the KetamaNodeLoctaor may return to a client for
  * iterating through alternate nodes for a given key.
  */
-class KetamaIterator extends SpyObject implements Iterator<MemcachedNode> {
+class KetamaIterator implements Iterator<MemcachedNode> {
 
   private final String key;
   private long hashVal;

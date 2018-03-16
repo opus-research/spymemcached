@@ -31,17 +31,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.spy.memcached.compat.SpyObject;
-
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A ConfigParserJSON.
  */
-public class ConfigurationParserJSON extends SpyObject implements
+public class ConfigurationParserJSON implements
     ConfigurationParser {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(ConfigurationParserJSON.class);
+
   private static final String NAME_ATTR = "name";
   private static final String URI_ATTR = "uri";
   private static final String STREAMING_URI_ATTR = "streamingUri";
@@ -70,10 +73,10 @@ public class ConfigurationParserJSON extends SpyObject implements
         Pool pool = new Pool(name, new URI(uri), new URI(streamingUri));
         parsedBase.put(name, pool);
       } catch (JSONException e) {
-        getLogger().error("One of the pool configuration can not be parsed.",
+        LOG.error("One of the pool configuration can not be parsed.",
             e);
       } catch (URISyntaxException e) {
-        getLogger().error("Server provided an incorrect uri.", e);
+        LOG.error("Server provided an incorrect uri.", e);
       }
     }
     return parsedBase;
@@ -132,7 +135,7 @@ public class ConfigurationParserJSON extends SpyObject implements
         try {
           status = Status.valueOf(statusValue);
         } catch (IllegalArgumentException e) {
-          getLogger().error("Unknown status value: " + statusValue);
+          LOG.error("Unknown status value: " + statusValue);
         }
         String hostname = nodeJO.get("hostname").toString();
         JSONObject portsJO = nodeJO.getJSONObject("ports");

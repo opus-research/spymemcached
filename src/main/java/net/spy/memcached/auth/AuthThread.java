@@ -31,15 +31,19 @@ import net.spy.memcached.KeyUtil;
 import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.OperationFactory;
-import net.spy.memcached.compat.SpyThread;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A thread that does SASL authentication.
  */
-public class AuthThread extends SpyThread {
+public class AuthThread extends Thread {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(AuthThread.class);
 
   private final MemcachedConnection conn;
   private final AuthDescriptor authDescriptor;
@@ -71,7 +75,7 @@ public class AuthThread extends SpyThread {
           if (val.getMessage().length() == 0) {
             done.set(true);
             node.authComplete();
-            getLogger().info("Authenticated to " + node.getSocketAddress());
+            LOG.info("Authenticated to " + node.getSocketAddress());
           } else {
             foundStatus.set(val);
           }
@@ -104,7 +108,7 @@ public class AuthThread extends SpyThread {
       priorStatus = foundStatus.get();
       if (priorStatus != null) {
         if (!priorStatus.isSuccess()) {
-          getLogger().warn(
+          LOG.warn(
               "Authentication failed to " + node.getSocketAddress());
         }
       }

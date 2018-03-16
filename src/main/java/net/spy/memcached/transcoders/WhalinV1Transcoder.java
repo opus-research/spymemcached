@@ -27,6 +27,9 @@ import java.util.Date;
 
 import net.spy.memcached.CachedData;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Handles old whalin (tested with v1.6) encoding: data type is in the first
  * byte of the value.
@@ -36,6 +39,8 @@ import net.spy.memcached.CachedData;
  */
 public class WhalinV1Transcoder extends BaseSerializingTranscoder implements
     Transcoder<Object> {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(WhalinV1Transcoder.class);
 
   public static final int SPECIAL_BYTE = 1;
   public static final int SPECIAL_BOOLEAN = 2;
@@ -91,13 +96,14 @@ public class WhalinV1Transcoder extends BaseSerializingTranscoder implements
     if (b.length > compressionThreshold) {
       byte[] compressed = compress(b);
       if (compressed.length < b.length) {
-        getLogger().info("Compressed %s from %d to %d", o.getClass().getName(),
-            b.length, compressed.length);
+        LOG.debug("Compressed " + o.getClass().getName() + " from "
+            + b.length + " to " + compressed.length);
         b = compressed;
         flags |= COMPRESSED;
       } else {
-        getLogger().info("Compression increased the size of %s from %d to %d",
-            o.getClass().getName(), b.length, compressed.length);
+        LOG.info("Compression increased the size of "
+            + o.getClass().getName() + " from " + b.length + " to "
+            + compressed.length);
       }
     }
     return new CachedData(flags, b, getMaxSize());
@@ -151,7 +157,7 @@ public class WhalinV1Transcoder extends BaseSerializingTranscoder implements
         rv = decodeCharacter(data);
         break;
       default:
-        getLogger().warn("Cannot handle data with flags %x", f);
+        LOG.warn("Cannot handle data with flags " + f);
       }
     }
     return rv;

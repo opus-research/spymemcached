@@ -26,11 +26,16 @@ import java.util.Date;
 
 import net.spy.memcached.CachedData;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Transcoder that provides compatibility with Greg Whalin's memcached client.
  */
 public class WhalinTranscoder extends BaseSerializingTranscoder implements
     Transcoder<Object> {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(WhalinTranscoder.class);
 
   static final int SPECIAL_BYTE = 1;
   static final int SPECIAL_BOOLEAN = 8192;
@@ -110,7 +115,7 @@ public class WhalinTranscoder extends BaseSerializingTranscoder implements
         rv = decodeCharacter(data);
         break;
       default:
-        getLogger().warn("Cannot handle data with flags %x", f);
+        LOG.warn("Cannot handle data with flags " + f);
       }
     }
     return rv;
@@ -166,13 +171,14 @@ public class WhalinTranscoder extends BaseSerializingTranscoder implements
     if (b.length > compressionThreshold) {
       byte[] compressed = compress(b);
       if (compressed.length < b.length) {
-        getLogger().debug("Compressed %s from %d to %d",
-          o.getClass().getName(), b.length, compressed.length);
+        LOG.debug("Compressed " + o.getClass().getName() + " from "
+            + b.length + " to " + compressed.length);
         b = compressed;
         flags |= COMPRESSED;
       } else {
-        getLogger().info("Compression increased the size of %s from %d to %d",
-            o.getClass().getName(), b.length, compressed.length);
+        LOG.info("Compression increased the size of "
+            + o.getClass().getName() + " from " + b.length + " to "
+            + compressed.length);
       }
     }
     return new CachedData(flags, b, getMaxSize());

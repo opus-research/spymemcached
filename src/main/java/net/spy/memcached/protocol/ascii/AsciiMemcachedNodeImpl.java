@@ -33,10 +33,15 @@ import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.protocol.ProxyCallback;
 import net.spy.memcached.protocol.TCPMemcachedNodeImpl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Memcached node for the ASCII protocol.
  */
 public final class AsciiMemcachedNodeImpl extends TCPMemcachedNodeImpl {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(AsciiMemcachedNodeImpl.class);
 
   public AsciiMemcachedNodeImpl(SocketAddress sa, SocketChannel c, int bufSize,
       BlockingQueue<Operation> rq, BlockingQueue<Operation> wq,
@@ -66,8 +71,8 @@ public final class AsciiMemcachedNodeImpl extends TCPMemcachedNodeImpl {
         optimizedOp.initialize();
         assert optimizedOp.getState() == OperationState.WRITE_QUEUED;
         ProxyCallback pcb = (ProxyCallback) og.getCallback();
-        getLogger().debug("Set up %s with %s keys and %s callbacks", this,
-            pcb.numKeys(), pcb.numCallbacks());
+        LOG.debug("Set up " + this + " with " + pcb.numKeys()
+            + " keys and " + pcb.numCallbacks() + " callbacks");
       }
     }
   }

@@ -36,17 +36,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.spy.memcached.MemcachedNode;
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.protocol.binary.TapAckOperationImpl;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a node with the memcached cluster, along with buffering and
  * operation queues.
  */
-public abstract class TCPMemcachedNodeImpl extends SpyObject implements
-    MemcachedNode {
+public abstract class TCPMemcachedNodeImpl  implements MemcachedNode {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(TCPMemcachedNodeImpl.class);
 
   private final SocketAddress socketAddress;
   private final ByteBuffer rbuf;
@@ -139,7 +142,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
       if (buf != null) {
         buf.reset();
       } else {
-        getLogger().info("No buffer for current write op, removing");
+        LOG.info("No buffer for current write op, removing");
         removeCurrentWriteOp();
       }
     }
@@ -148,14 +151,14 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     while (hasReadOp()) {
       op = removeCurrentReadOp();
       if (op != getCurrentWriteOp()) {
-        getLogger().warn("Discarding partially completed op: %s", op);
+        LOG.warn("Discarding partially completed op: " + op);
         op.cancel();
       }
     }
 
     while (shouldAuth && hasWriteOp()) {
       op = removeCurrentWriteOp();
-      getLogger().warn("Discarding partially completed op: %s", op);
+      LOG.warn("Discarding partially completed op: " + op);
       op.cancel();
     }
 
@@ -173,7 +176,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     // Now check the ops
     Operation nextOp = getCurrentWriteOp();
     while (nextOp != null && nextOp.isCancelled()) {
-      getLogger().info("Removing cancelled operation: %s", nextOp);
+      LOG.info("Removing cancelled operation: " + nextOp);
       removeCurrentWriteOp();
       nextOp = getCurrentWriteOp();
     }
@@ -200,7 +203,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           byte[] b = new byte[bytesToCopy];
           obuf.get(b);
           getWbuf().put(b);
-          getLogger().debug("After copying stuff from %s: %s", o, getWbuf());
+          LOG.debug("After copying stuff from " + o + ": " + getWbuf());
           if (!o.getBuffer().hasRemaining()) {
             o.writeComplete();
             transitionWriteItem();
@@ -221,7 +224,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
       assert toWrite == getWbuf().remaining() : "Expected " + toWrite
           + " remaining, got " + getWbuf().remaining();
     } else {
-      getLogger().debug("Buffer is full, skipping");
+      LOG.debug("Buffer is full, skipping");
     }
   }
 
@@ -231,11 +234,11 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     while (o != null && o.getState() == OperationState.WRITE_QUEUED) {
       synchronized(o) {
         if (o.isCancelled()) {
-          getLogger().debug("Not writing cancelled op.");
+          LOG.debug("Not writing cancelled op.");
           Operation cancelledOp = removeCurrentWriteOp();
           assert o == cancelledOp;
         } else if (o.isTimedOut(defaultOpTimeout)) {
-          getLogger().debug("Not writing timed out op.");
+          LOG.debug("Not writing timed out op.");
           Operation timedOutOp = removeCurrentWriteOp();
           assert o == timedOutOp;
         } else {
@@ -257,7 +260,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   public final void transitionWriteItem() {
     Operation op = removeCurrentWriteOp();
     assert op != null : "There is no write item to transition";
-    getLogger().debug("Finished writing %s", op);
+    LOG.debug("Finished writing " + op);
   }
 
   /*
@@ -336,10 +339,10 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     try {
       if (!authLatch.await(1, TimeUnit.SECONDS)) {
         op.cancel();
-        getLogger().warn("Operation canceled because authentication "
+        LOG.warn("Operation canceled because authentication "
                 + "or reconnection and authentication has "
                 + "taken more than one second to complete.");
-        getLogger().debug("Canceled operation %s", op.toString());
+        LOG.debug("Canceled operation " + op.toString());
         return;
       }
       if (!inputQueue.offer(op, opQueueMaxBlockTime, TimeUnit.MILLISECONDS)) {
@@ -546,7 +549,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     toWrite -= wrote;
     assert toWrite >= 0 : "toWrite went negative after writing " + wrote
         + " bytes for " + this;
-    getLogger().debug("Wrote %d bytes", wrote);
+    LOG.debug("Wrote " + wrote + " bytes");
     return wrote;
   }
 
@@ -578,10 +581,10 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     SelectionKey s = sk;
     if (s != null && s.isValid()) {
       int iops = getSelectionOps();
-      getLogger().debug("Setting interested opts to %d", iops);
+      LOG.debug("Setting interested opts to " + iops);
       s.interestOps(iops);
     } else {
-      getLogger().debug("Selection key is not valid.");
+      LOG.debug("Selection key is not valid.");
     }
   }
 

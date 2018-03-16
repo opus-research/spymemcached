@@ -35,10 +35,15 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * SASL authenticator.
  */
 public abstract class SASLBaseOperationImpl extends OperationImpl {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(SASLBaseOperationImpl.class);
 
   private static final int SASL_CONTINUE = 0x21;
 
@@ -78,7 +83,7 @@ public abstract class SASLBaseOperationImpl extends OperationImpl {
 
   @Override
   protected void decodePayload(byte[] pl) {
-    getLogger().debug("Auth response:  %s", new String(pl));
+    LOG.debug("Auth response: " + new String(pl));
   }
 
   @Override

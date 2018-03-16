@@ -25,14 +25,12 @@ package net.spy.memcached.protocol.couch;
 import java.util.Iterator;
 
 import net.spy.memcached.CouchbaseClient;
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.internal.HttpFuture;
 
 /**
  * A Paginator.
  */
-public class Paginator extends SpyObject
-  implements Iterator<ViewRow> {
+public class Paginator implements Iterator<ViewRow> {
 
   private static final int MIN_RESULTS = 15;
 

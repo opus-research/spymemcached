@@ -36,10 +36,15 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Base class for get and gets handlers.
  */
 abstract class BaseGetOpImpl extends OperationImpl {
+  private static final Logger LOG =
+    LoggerFactory.getLogger(BaseGetOpImpl.class);
 
   private static final OperationStatus END = new OperationStatus(true, "END");
   private static final OperationStatus NOT_FOUND = new OperationStatus(false,
@@ -85,7 +90,7 @@ abstract class BaseGetOpImpl extends OperationImpl {
   @Override
   public final void handleLine(String line) {
     if (line.equals("END")) {
-      getLogger().debug("Get complete!");
+      LOG.debug("Get complete!");
       if (hasValue) {
         getCallback().receivedStatus(END);
       } else {
@@ -94,7 +99,7 @@ abstract class BaseGetOpImpl extends OperationImpl {
       transitionState(OperationState.COMPLETE);
       data = null;
     } else if (line.startsWith("VALUE ")) {
-      getLogger().debug("Got line %s", line);
+      LOG.debug("Got line %s", line);
       String[] stuff = line.split(" ");
       assert stuff[0].equals("VALUE");
       currentKey = stuff[1];
@@ -105,7 +110,7 @@ abstract class BaseGetOpImpl extends OperationImpl {
       }
       readOffset = 0;
       hasValue = true;
-      getLogger().debug("Set read type to data");
+      LOG.debug("Set read type to data");
       setReadType(OperationReadType.DATA);
     } else {
       assert false : "Unknown line type: " + line;
@@ -120,13 +125,13 @@ abstract class BaseGetOpImpl extends OperationImpl {
     assert readOffset <= data.length : "readOffset is " + readOffset
         + " data.length is " + data.length;
 
-    getLogger().debug("readOffset: %d, length: %d", readOffset, data.length);
+    LOG.debug("readOffset: %d, length: %d", readOffset, data.length);
     // If we're not looking for termination, we're still looking for data
     if (lookingFor == '\0') {
       int toRead = data.length - readOffset;
       int available = b.remaining();
       toRead = Math.min(toRead, available);
-      getLogger().debug("Reading %d bytes", toRead);
+      LOG.debug("Reading %d bytes", toRead);
       b.get(data, readOffset, toRead);
       readOffset += toRead;
     }
@@ -177,7 +182,7 @@ abstract class BaseGetOpImpl extends OperationImpl {
         data = null;
         readOffset = 0;
         currentFlags = 0;
-        getLogger().debug("Setting read type back to line.");
+        LOG.debug("Setting read type back to line.");
         setReadType(OperationReadType.LINE);
       }
     }

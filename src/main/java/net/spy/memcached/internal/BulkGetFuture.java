@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,7 +48,9 @@ import net.spy.memcached.ops.OperationStatus;
  *
  * @param <T> types of objects returned from the GET
  */
-public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
+public class BulkGetFuture<T> extends AbstractListenableFuture<Map<String, T>, BulkGetFutureListener>
+  implements BulkFuture<Map<String, T>> {
+
   private final Map<String, Future<T>> rvMap;
   private final Collection<Operation> ops;
   private final CountDownLatch latch;
@@ -56,8 +59,8 @@ public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
   private boolean timeout = false;
 
   public BulkGetFuture(Map<String, Future<T>> m, Collection<Operation> getOps,
-      CountDownLatch l) {
-    super();
+      CountDownLatch l, ExecutorService service) {
+    super(service);
     rvMap = m;
     ops = getOps;
     latch = l;
@@ -75,6 +78,7 @@ public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
     }
     cancelled = true;
     status = new OperationStatus(false, "Cancelled");
+    notifyListeners();
     return rv;
   }
 
@@ -179,6 +183,7 @@ public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
 
   public void setStatus(OperationStatus s) {
     status = s;
+    notifyListeners();
   }
 
   public boolean isCancelled() {
@@ -197,4 +202,18 @@ public class BulkGetFuture<T> implements BulkFuture<Map<String, T>> {
   public boolean isTimeout() {
     return timeout;
   }
+
+  @Override
+  public Future<Map<String, T>> addListener(BulkGetFutureListener listener) {
+    super.addToListeners((GenericFutureListener) listener);
+    return this;
+  }
+
+  @Override
+  public Future<Map<String, T>> removeListener(BulkGetFutureListener listener) {
+    super.removeFromListeners((GenericFutureListener) listener);
+    return this;
+  }
+
+
 }

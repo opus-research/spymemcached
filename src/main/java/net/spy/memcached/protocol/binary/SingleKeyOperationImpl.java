@@ -76,10 +76,6 @@ abstract class SingleKeyOperationImpl extends OperationImpl implements
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString());
-    sb.append(" Key: ");
-    sb.append(key);
-    return sb.toString();
+    return super.toString() + " Key: " + key;
   }
 }

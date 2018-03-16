@@ -72,13 +72,10 @@ abstract class MultiKeyOperationImpl extends OperationImpl implements
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString());
-    sb.append(" Keys: ");
+    String s = super.toString() + " Keys: ";
     for (String key : getKeys()) {
-      sb.append(key);
-      sb.append(" ");
+      s += key + " ";
     }
-    return sb.toString();
+    return s;
   }
 }

@@ -114,6 +114,4 @@ public interface Operation {
 	 * since its creation in milliseconds.
 	 */
 	public boolean isTimedOut(long ttlMillis);
-
-	public boolean isTimedOutUnsent();
 }

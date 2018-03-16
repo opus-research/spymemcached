@@ -31,7 +31,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	private volatile MemcachedNode handlingNode = null;
 	private boolean timedout;
 	private long creationTime;
-	private boolean timedOutUnsent = false;
 
 	public BaseOperationImpl() {
 		super();
@@ -171,7 +170,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 		if (elapsed - creationTime > ttlNanos) {
 			assert (state != OperationState.READING || state != OperationState.COMPLETE);
 			this.transitionState(OperationState.TIMEDOUT);
-			timedOutUnsent = true;
 			timedout = true;
 		} else {
 			// timedout would be false, but we cannot allow you to untimeout an operation
@@ -182,9 +180,4 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 		}
 		return timedout;
         }
-
-	@Override
-	public boolean isTimedOutUnsent() {
-		return timedOutUnsent;
-	}
 }

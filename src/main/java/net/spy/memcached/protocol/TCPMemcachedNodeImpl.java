@@ -69,7 +69,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   private CountDownLatch authLatch;
   private ArrayList<Operation> reconnectBlocked;
   private long defaultOpTimeout;
-  private volatile long lastReadTimestamp = System.nanoTime();
+  private long lastReadTimestamp = System.currentTimeMillis();
   private MemcachedConnection connection;
 
   // operation Future.get timeout counter
@@ -637,14 +637,14 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    * @return milliseconds since last read.
    */
   public long lastReadDelta() {
-    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastReadTimestamp);
+    return System.currentTimeMillis() - lastReadTimestamp;
   }
 
   /**
    * Mark this node as having just completed a read.
    */
   public void completedRead() {
-    lastReadTimestamp = System.nanoTime();
+    lastReadTimestamp = System.currentTimeMillis();
   }
 
   @Override

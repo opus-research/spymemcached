@@ -38,13 +38,10 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 		System.out.println("Stats:  " + stats);
 		assertEquals(1, stats.size());
 		Map<String, String> oneStat=stats.values().iterator().next();
-		assertTrue(oneStat.containsKey("curr_items"));
+		assertTrue(oneStat.containsKey("total_items"));
 	}
 
 	public void testGetStatsSlabs() throws Exception {
-		if (isMembase()) {
-		    return;
-		}
 		// There needs to at least have been one value set or there may be
 		// no slabs to check.
 		client.set("slabinitializer", 0, "hi");
@@ -56,9 +53,6 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 	}
 
 	public void testGetStatsSizes() throws Exception {
-		if (isMembase()) {
-			return;
-		}
 		// There needs to at least have been one value set or there may
 		// be no sizes to check.  Note the protocol says
 		// flushed/expired items may come back in stats sizes and we
@@ -74,9 +68,6 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 	}
 
 	public void testGetStatsCacheDump() throws Exception {
-		if (isMembase()) {
-			return;
-		}
 		// There needs to at least have been one value set or there
 		// won't be anything to dump
 		client.set("dumpinitializer", 0, "hi");
@@ -649,9 +640,6 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 	}
 
 	public void testStupidlyLargeSetAndSizeOverride() throws Exception {
-		if (isMembase()) {
-		    return;
-		}
 		Random r=new Random();
 		SerializingTranscoder st=new SerializingTranscoder(Integer.MAX_VALUE);
 

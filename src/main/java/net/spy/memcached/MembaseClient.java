@@ -2,6 +2,8 @@ package net.spy.memcached;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.channels.CancelledKeyException;
+import java.nio.channels.ClosedSelectorException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -96,7 +98,8 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	 *         server has issues or is not compatible
 	 */
 	public MembaseClient(MembaseConnectionFactory cf) throws IOException, ConfigurationException {
-		super(cf, AddrUtil.getAddresses(cf.getVBucketConfig().getServers()));
+		super(cf, AddrUtil.getAddresses(cf.getVBucketConfig().getServers()), false);
+		start();
 	}
 
 	/**
@@ -206,6 +209,29 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	 */
 	public CASValue<Object> getAndLock(String key, int exp) {
 		return getAndLock(key, exp, transcoder);
+	}
+
+	/**
+	 * Infinitely loop processing IO.
+	 */
+	@Override
+	public void run() {
+		while(running) {
+            if (!reconfiguring) {
+                try {
+                    mconn.handleIO();
+                } catch (IOException e) {
+                    logRunException(e);
+                } catch (CancelledKeyException e) {
+                    logRunException(e);
+                } catch (ClosedSelectorException e) {
+                    logRunException(e);
+                } catch (IllegalStateException e) {
+                    logRunException(e);
+                }
+			}
+		}
+		getLogger().info("Shut down membase client");
 	}
 
 	@Override

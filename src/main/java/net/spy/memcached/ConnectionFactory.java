@@ -9,13 +9,14 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import net.spy.memcached.auth.AuthDescriptor;
+import net.spy.memcached.ops.Operation;
 import net.spy.memcached.transcoders.Transcoder;
 
 /**
  * Factory for creating instances of MemcachedConnection.
  * This is used to provide more fine-grained configuration of connections.
  */
-public interface ConnectionFactory<T> {
+public interface ConnectionFactory {
 
 	/**
 	 * Create a MemcachedConnection for the given SocketAddresses.
@@ -30,25 +31,25 @@ public interface ConnectionFactory<T> {
 	/**
 	 * Create a new memcached node.
 	 */
-	MemcachedNode<T> createMemcachedNode(SocketAddress sa,
+	MemcachedNode createMemcachedNode(SocketAddress sa,
 			SocketChannel c, int bufSize);
 
 	/**
 	 * Create a BlockingQueue for operations for a connection.
 	 */
-	BlockingQueue<T> createOperationQueue();
+	BlockingQueue<Operation> createOperationQueue();
 
 	/**
 	 * Create a BlockingQueue for the operations currently expecting to read
 	 * responses from memcached.
 	 */
-	BlockingQueue<T> createReadOperationQueue();
+	BlockingQueue<Operation> createReadOperationQueue();
 
 	/**
 	 * Create a BlockingQueue for the operations currently expecting to write
 	 * requests to memcached.
 	 */
-	BlockingQueue<T> createWriteOperationQueue();
+	BlockingQueue<Operation> createWriteOperationQueue();
 
 	/**
 	 * Get the maximum amount of time (in milliseconds) a client is willing
@@ -59,7 +60,7 @@ public interface ConnectionFactory<T> {
 	/**
 	 * Create a NodeLocator instance for the given list of nodes.
 	 */
-	NodeLocator<T> createLocator(List<MemcachedNode<T>> nodes);
+	NodeLocator createLocator(List<MemcachedNode> nodes);
 
 	/**
 	 * Get the operation factory for connections built by this connection

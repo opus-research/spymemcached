@@ -3,7 +3,6 @@ package net.spy.memcached;
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 
-import net.spy.memcached.ops.Operation;
 import net.spy.memcached.protocol.binary.BinaryMemcachedNodeImpl;
 import net.spy.memcached.protocol.binary.BinaryOperationFactory;
 
@@ -39,7 +38,7 @@ public class BinaryConnectionFactory extends DefaultConnectionFactory {
 	}
 
 	@Override
-	public MemcachedNode<Operation> createMemcachedNode(SocketAddress sa,
+	public MemcachedNode createMemcachedNode(SocketAddress sa,
 			SocketChannel c, int bufSize) {
 		boolean doAuth = false;
 		return new BinaryMemcachedNodeImpl(sa, c, bufSize,

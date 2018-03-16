@@ -23,11 +23,12 @@
 
 package net.spy.memcached.internal;
 
+import net.spy.memcached.compat.SpyObject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import net.spy.memcached.compat.SpyObject;
 
 /**
  * The {@link AbstractListenableFuture} implements common functionality shared
@@ -78,7 +79,7 @@ public abstract class AbstractListenableFuture
    * @param listener the listener to add.
    * @return the current future to allow chaining.
    */
-  protected Future<T> addToListeners(
+  protected synchronized Future<T> addToListeners(
     GenericCompletionListener<? extends Future<T>> listener) {
     if (listener == null) {
       throw new IllegalArgumentException("The listener can't be null.");
@@ -86,17 +87,9 @@ public abstract class AbstractListenableFuture
 
     if(isDone()) {
       notifyListener(executor(), this, listener);
-      return this;
+    } else {
+      listeners.add(listener);
     }
-
-    synchronized(this) {
-      if (!isDone()) {
-        listeners.add(listener);
-        return this;
-      }
-    }
-
-    notifyListener(executor(), this, listener);
     return this;
   }
 
@@ -152,7 +145,7 @@ public abstract class AbstractListenableFuture
    * @param listener the listener to remove.
    * @return the current future to allow for chaining.
    */
-  protected Future<T> removeFromListeners(
+  protected synchronized Future<T> removeFromListeners(
     GenericCompletionListener<? extends Future<T>> listener) {
     if (listener == null) {
       throw new IllegalArgumentException("The listener can't be null.");
@@ -160,14 +153,9 @@ public abstract class AbstractListenableFuture
 
     if(isDone()) {
       return this;
+    } else {
+      listeners.remove(listener);
     }
-
-    synchronized(this) {
-      if (!isDone()) {
-        listeners.remove(listener);
-      }
-    }
-
     return this;
   }
 }

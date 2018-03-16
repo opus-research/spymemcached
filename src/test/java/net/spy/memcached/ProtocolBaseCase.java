@@ -637,7 +637,7 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 		}
 	}
 
-	private void debugNodeInfo(Collection<MemcachedNode> nodes) {
+	protected void debugNodeInfo(Collection<MemcachedNode> nodes) {
 	    System.err.println("Debug nodes:");
 	    for (MemcachedNode node : nodes) {
 		    System.err.println(node);

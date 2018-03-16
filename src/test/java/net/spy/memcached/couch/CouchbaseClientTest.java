@@ -1,7 +1,5 @@
 package net.spy.memcached.couch;
 
-import static org.junit.Assert.assertTrue;
-
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -21,6 +19,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import net.spy.memcached.TestConfig;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
@@ -33,7 +32,6 @@ import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
 import net.spy.memcached.protocol.couch.ReducedOperationImpl;
 import net.spy.memcached.protocol.couch.RowError;
 import net.spy.memcached.protocol.couch.RowWithDocs;
-import net.spy.memcached.protocol.couch.Stale;
 import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
 import net.spy.memcached.protocol.couch.Query;
 import net.spy.memcached.protocol.couch.ViewResponseReduced;
@@ -44,7 +42,7 @@ import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
 
 public class CouchbaseClientTest {
 	protected TestingClient client = null;
-	private static final String SERVER_URI = "http://" + "10.1.6.108" //TestConfig.IPV4_ADDR
+	private static final String SERVER_URI = "http://" + TestConfig.IPV4_ADDR
 			+ ":8091/pools";
 	private static final Map<String, Object> items;
 	public static final String DESIGN_DOC_W_REDUCE = "doc_with_view";
@@ -93,7 +91,7 @@ public class CouchbaseClientTest {
 				+ VIEW_NAME_WO_REDUCE + "\":{\"map\":\"function (doc) {  "
 				+ "emit(doc._id, 1)}\"}}}";
 		for (Entry<String, Object> item : items.entrySet()) {
-			assert c.set(item.getKey(), 0, (String) item.getValue()).get().booleanValue();
+			c.set(item.getKey(), 0, (String) item.getValue()).get();
 		}
 		c.asyncHttpPut(docUri, view);
 		c.shutdown();
@@ -109,6 +107,10 @@ public class CouchbaseClientTest {
 	public void afterTest() throws Exception {
 		// Shut down, start up, flush, and shut down again. Error tests have
 		// unpredictable timing issues.
+		client.shutdown();
+		client = null;
+		initClient();
+		assert client.flush().get();
 		client.shutdown();
 		client = null;
 	}
@@ -130,7 +132,6 @@ public class CouchbaseClientTest {
 		rev = (new JSONObject(json)).getString("_rev");
 		c.asyncHttpDelete("/default/_design/" + TestingClient.MODE_PREFIX
 				+ DESIGN_DOC_WO_REDUCE + "?rev=" + rev).get();
-		assert c.flush().get().booleanValue();
 	}
 
 	private static String generateDoc(String type, String small, String large) {
@@ -139,23 +140,11 @@ public class CouchbaseClientTest {
 	}
 
 	@Test
-	public void testAssertions() {
-		boolean caught=false;
-		try {
-			assert false;
-		} catch(AssertionError e) {
-			caught=true;
-		}
-		assertTrue("Assertions are not enabled!", caught);
-	}
-
-	@Test
 	public void testQueryWithDocs() throws Exception {
 		Query query = new Query();
 		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
 		ViewFuture future = client.query(view, query);
 		ViewResponseWithDocs response = future.get();
-		assert future.getStatus().isSuccess() : future.getStatus();
 
 		Iterator<RowWithDocs> itr = response.iterator();
 		while (itr.hasNext()) {
@@ -174,7 +163,6 @@ public class CouchbaseClientTest {
 		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
 		HttpFuture<ViewResponseNoDocs> future = client.queryAndExcludeDocs(
 				view, query);
-		assert future.getStatus().isSuccess() : future.getStatus();
 		ViewResponseNoDocs response = future.get();
 
 		Iterator<RowNoDocs> itr = response.iterator();
@@ -185,7 +173,7 @@ public class CouchbaseClientTest {
 			}
 		}
 		assert response.size() == items.size() :
-				future.getStatus();
+				future.getStatus().getMessage();
 	}
 
 	@Test
@@ -201,136 +189,8 @@ public class CouchbaseClientTest {
 			RowReduced row = itr.next();
 			assert row.getKey() == null;
 			assert Integer.valueOf(row.getValue()) == items.size() :
-					future.getStatus();
+					future.getStatus().getMessage();
 		}
-	}
-
-	@Test
-	public void testQuerySetDescending() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setDescending(true));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetEndKeyDocID() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setEndkeyDocID("an_id"));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetGroup() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		HttpFuture<ViewResponseReduced> future = client.queryAndReduce(view,
-				query.setGroup(true));
-		ViewResponseReduced response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetGroupWithLevel() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		HttpFuture<ViewResponseReduced> future = client.queryAndReduce(view,
-				query.setGroup(true, 1));
-		ViewResponseReduced response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetInclusiveEnd() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setInclusiveEnd(true));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetKey() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setKey("a_key"));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetLimit() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setLimit(10));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetRange() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setRange("key0", "key2"));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetRangeStart() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setRangeStart("start"));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetRangeEnd() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setRangeEnd("end"));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetSkip() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setSkip(0));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetStale() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setStale(Stale.OK));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetStartkeyDocID() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setStartkeyDocID("key0"));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
-	}
-
-	@Test
-	public void testQuerySetUpdateSeq() throws Exception {
-		Query query = new Query();
-		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-		ViewFuture future = client.query(view, query.setUpdateSeq(true));
-		ViewResponseWithDocs response = future.get();
-		assert response != null : future.getStatus();
 	}
 
 	@Test

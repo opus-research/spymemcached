@@ -14,6 +14,7 @@ import org.codehaus.jettison.json.JSONObject;
 
 import net.spy.memcached.DefaultHashAlgorithm;
 import net.spy.memcached.HashAlgorithm;
+import net.spy.memcached.HashAlgorithmRegistry;
 
 public class DefaultConfigFactory implements ConfigFactory {
 
@@ -59,27 +60,6 @@ public class DefaultConfigFactory implements ConfigFactory {
         }
     }
 
-    private HashAlgorithm lookupHashAlgorithm(String algorithm) {
-        HashAlgorithm ha = DefaultHashAlgorithm.NATIVE_HASH;
-        if ("crc".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.CRC32_HASH;
-        } else if ("fnv1_32".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.FNV1_32_HASH;
-        } else if ("fnv1_64".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.FNV1_64_HASH;
-        } else if ("fnv1a_32".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.FNV1A_32_HASH;
-        } else if ("fnv1a_64".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.FNV1A_64_HASH;
-        } else if ("md5".equalsIgnoreCase(algorithm)) {
-            ha = DefaultHashAlgorithm.KETAMA_HASH;
-        } else {
-            throw new IllegalArgumentException("Unhandled algorithm type: "
-                    + algorithm);
-        }
-        return ha;
-    }
-
     private Config parseJSON(JSONObject jsonObject) throws JSONException {
 	// the incoming config could be cache or EP object types, JSON envelope picked apart
 	if (!jsonObject.has("vBucketServerMap" )) {
@@ -104,8 +84,13 @@ public class DefaultConfigFactory implements ConfigFactory {
 
 	/* ep is for ep-engine, a.k.a. membase */
     private Config parseEpJSON(JSONObject jsonObject) throws JSONException {
-
-        HashAlgorithm hashAlgorithm = lookupHashAlgorithm(jsonObject.getString("hashAlgorithm"));
+        String algorithm = jsonObject.getString("hashAlgorithm");
+        HashAlgorithm hashAlgorithm =
+	    HashAlgorithmRegistry.lookupHashAlgorithm(algorithm);
+	if (hashAlgorithm == null) {
+	    throw new IllegalArgumentException(
+		    "Unhandled hash algorithm type: " + algorithm);
+	}
         int replicasCount = jsonObject.getInt("numReplicas");
         if (replicasCount > VBucket.MAX_REPLICAS) {
             throw new ConfigParsingException("Expected number <= "

@@ -24,6 +24,7 @@
 package net.spy.memcached.auth;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -35,6 +36,7 @@ import net.spy.memcached.compat.SpyThread;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.SASLMechsOperation;
 
 /**
  * A thread that does SASL authentication.
@@ -55,61 +57,141 @@ public class AuthThread extends SpyThread {
     start();
   }
 
-  @Override
-  public void run() {
-    OperationStatus priorStatus = null;
-    final AtomicBoolean done = new AtomicBoolean();
+  /**
+   * Determine the best (strongest) authentication method supported by the
+   * client and the server.
+   *
+   * <p>As of now, MD5-CRAM is used if supported, otherwise the fallback
+   * method is PLAIN.</p>
+   *
+   * @param types a stringified list of supported mechs by the server.
+   * @return the determined auth type.
+   */
+  private AuthType determineAuthType(String types) {
+    if(types.contains("CRAM-MD5")) {
+      return AuthType.CRAM_MD5;
+    } else if(types.contains("PLAIN")) {
+      return AuthType.PLAIN;
+    } else {
+      getLogger().warn("Received unknown SASL auth mechanism: " + types);
+    }
+    return null;
+  }
 
-    while (!done.get()) {
-      final CountDownLatch latch = new CountDownLatch(1);
-      final AtomicReference<OperationStatus> foundStatus =
-          new AtomicReference<OperationStatus>();
-
-      final OperationCallback cb = new OperationCallback() {
-        public void receivedStatus(OperationStatus val) {
-          // If the status we found was null, we're done.
-          if (val.getMessage().length() == 0) {
-            done.set(true);
-            node.authComplete();
-            getLogger().info("Authenticated to " + node.getSocketAddress());
-          } else {
-            foundStatus.set(val);
-          }
+  private AuthType listSupportedSASLMechanisms(AtomicBoolean done) {
+    final CountDownLatch listMechsLatch = new CountDownLatch(1);
+    final AtomicReference<AuthType> authType = new AtomicReference<AuthType>();
+    Operation listMechsOp = opFact.saslMechs(new OperationCallback() {
+      @Override
+      public void receivedStatus(OperationStatus status) {
+        if(status.isSuccess()) {
+          authType.set(determineAuthType(status.getMessage()));
+          getLogger().debug("Received SASL supported mechs: "
+            + status.getMessage());
         }
+      }
 
-        public void complete() {
-          latch.countDown();
-        }
-      };
+      @Override
+      public void complete() {
+        listMechsLatch.countDown();
+      }
 
-      // Get the prior status to create the correct operation.
-      final Operation op = buildOperation(priorStatus, cb);
-      conn.insertOperation(node, op);
+    });
 
-      try {
-        latch.await();
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
+    conn.insertOperation(node, listMechsOp);
+
+    try {
+      listMechsLatch.await(10, TimeUnit.SECONDS);
+    } catch(InterruptedException ex) {
         // we can be interrupted if we were in the
         // process of auth'ing and the connection is
         // lost or dropped due to bad auth
         Thread.currentThread().interrupt();
-        if (op != null) {
-          op.cancel();
+        if (listMechsOp != null) {
+          listMechsOp.cancel();
         }
         done.set(true); // If we were interrupted, tear down.
-      }
+    }
 
-      // Get the new status to inspect it.
-      priorStatus = foundStatus.get();
-      if (priorStatus != null) {
-        if (!priorStatus.isSuccess()) {
-          getLogger().warn(
-              "Authentication failed to " + node.getSocketAddress());
+    return authType.get();
+  }
+
+  private void doPlainAuth(final AtomicBoolean done,
+    OperationStatus priorStatus) {
+    final CountDownLatch latch = new CountDownLatch(1);
+    final AtomicReference<OperationStatus> foundStatus =
+      new AtomicReference<OperationStatus>();
+
+    final OperationCallback cb = new OperationCallback() {
+
+      @Override
+      public void receivedStatus(OperationStatus val) {
+        // If the status we found was null, we're done.
+        if (val.getMessage().length() == 0) {
+          done.set(true);
+          node.authComplete();
+          getLogger().info("Authenticated to " + node.getSocketAddress());
+        } else {
+          foundStatus.set(val);
         }
       }
+
+      @Override
+      public void complete() {
+        latch.countDown();
+      }
+    };
+
+    // Get the prior status to create the correct operation.
+    final Operation op = buildOperation(priorStatus, cb);
+    conn.insertOperation(node, op);
+
+    try {
+      latch.await();
+      Thread.sleep(100);
+    } catch (InterruptedException e) {
+      // we can be interrupted if we were in the
+      // process of auth'ing and the connection is
+      // lost or dropped due to bad auth
+      Thread.currentThread().interrupt();
+      if (op != null) {
+        op.cancel();
+      }
+      done.set(true); // If we were interrupted, tear down.
     }
-    return;
+
+    // Get the new status to inspect it.
+    priorStatus = foundStatus.get();
+    if (priorStatus != null) {
+      if (!priorStatus.isSuccess()) {
+        getLogger().warn(
+            "Authentication failed to " + node.getSocketAddress());
+      }
+    }
+  }
+
+  private void doCramMD5Auth(AtomicBoolean done) {
+    System.out.println("now its time for cram md5");
+    done.set(true);
+  }
+
+  @Override
+  public void run() {
+    final AtomicBoolean done = new AtomicBoolean();
+
+    AuthType chosenMechanism = listSupportedSASLMechanisms(done);
+
+    while (!done.get()) {
+      if(chosenMechanism == AuthType.PLAIN) {
+        OperationStatus priorStatus = null;
+        doPlainAuth(done, priorStatus);
+      } else if(chosenMechanism == AuthType.CRAM_MD5) {
+        doCramMD5Auth(done);
+      } else {
+        throw new IllegalStateException("Unhandled SASL Auth mechanism found: "
+          + chosenMechanism);
+      }
+    }
   }
 
   private Operation buildOperation(OperationStatus st, OperationCallback cb) {

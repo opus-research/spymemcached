@@ -7,11 +7,11 @@ import net.spy.memcached.ops.Operation;
 /**
  * Factory for creating Operations to be broadcast.
  */
-public interface BroadcastOpFactory {
+public interface BroadcastOpFactory<T> {
 
 	/**
 	 * Construct a new operation for delivery to the given node.
 	 * Each operation should count the given latch down upon completion.
 	 */
-	Operation newOp(MemcachedNode n, CountDownLatch latch);
+	Operation newOp(MemcachedNode<T> n, CountDownLatch latch);
 }

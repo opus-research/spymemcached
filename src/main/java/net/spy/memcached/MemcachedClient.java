@@ -114,15 +114,16 @@ import net.spy.memcached.vbucket.config.ConfigType;
 public class MemcachedClient extends SpyThread
 	implements MemcachedClientIF, ConnectionObserver, Reconfigurable {
 
-	private volatile boolean running=true;
-	private volatile boolean shuttingDown=false;
+	protected volatile boolean running=true;
+	protected volatile boolean shuttingDown=false;
+	protected volatile boolean reconfiguring=false;
 
-	private final long operationTimeout;
+	protected final long operationTimeout;
 
-	private final MemcachedConnection mconn;
+	protected final MemcachedConnection mconn;
 	final OperationFactory opFact;
 	
-	private ConnectionFactory connectionFactory;
+	protected ConnectionFactory connectionFactory;
 
 	final Transcoder<Object> transcoder;
 
@@ -130,10 +131,9 @@ public class MemcachedClient extends SpyThread
 
 	final AuthDescriptor authDescriptor;
 	
-	private final Bucket bucket;
+	protected final Bucket bucket;
 
 	private final AuthThreadMonitor authMonitor = new AuthThreadMonitor();
-	private volatile boolean reconfiguring = false;
 	private ConfigurationProvider configurationProvider;
 
 	/**
@@ -2005,7 +2005,7 @@ public class MemcachedClient extends SpyThread
 		return rv.keySet();
 	}
 
-	private void logRunException(Exception e) {
+	protected void logRunException(Exception e) {
 		if(shuttingDown) {
 			// There are a couple types of errors that occur during the
 			// shutdown sequence that are considered OK.  Log at debug.

@@ -59,14 +59,11 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 		// use flush when testing, so we check that there's at least
 		// one.
 		client.set("sizeinitializer", 0, "hi");
-		Map<SocketAddress, Map<String, String>> cachedump = client.getStats("cachedump 1 0 0");
-		System.err.println("Cachedump: " + cachedump);
 		Map<SocketAddress, Map<String, String>> stats = client.getStats("sizes");
 		System.out.println("Stats sizes:  " + stats);
 		assertEquals(1, stats.size());
 		Map<String, String> oneStat=stats.values().iterator().next();
 		String noItemsSmall = oneStat.get("96");
-		System.err.println("Statswelookinat: " + noItemsSmall);
 		assertTrue(Integer.parseInt(noItemsSmall) >= 1);
 	}
 

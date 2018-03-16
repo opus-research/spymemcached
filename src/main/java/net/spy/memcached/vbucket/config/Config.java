@@ -34,6 +34,4 @@ public interface Config {
 
     List<VBucket> getVbuckets();
 
-    ConfigType getConfigType();
-
 }

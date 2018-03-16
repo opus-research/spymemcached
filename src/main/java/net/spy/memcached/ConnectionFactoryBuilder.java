@@ -306,7 +306,7 @@ public class ConnectionFactoryBuilder {
 				return hashAlg == null ? super.getHashAlg() : hashAlg;
 			}
 
-			@Override
+
 			public Collection<ConnectionObserver> getInitialObservers() {
 				return initialObservers;
 			}
@@ -411,7 +411,7 @@ public class ConnectionFactoryBuilder {
 				switch(getLocator()) {
 					case CONSISTENT:
 						return new KetamaNodeLocator(nodes, getHashAlg());
-		            case VBUCKET:
+					case VBUCKET:
 		                return new VBucketNodeLocator(nodes, getVBucketConfig());
 					default: throw new IllegalStateException(
 							"Unhandled locator type: " + locator);

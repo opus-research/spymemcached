@@ -10,10 +10,9 @@ import java.util.Arrays;
 public final class CachedData {
 
 	/**
-	 * The maximum size that should be considered storing in a server.
+	 * Maximum data size allowed by memcached.
 	 */
-	/* though memcached no longer has a maximum size, rather than remove this entirely just bump it up for now */
-	public static final int MAX_SIZE = 20*1024*1024;
+	public static final int MAX_SIZE = 1024*1024;
 
 	private final int flags;
 	private final byte[] data;

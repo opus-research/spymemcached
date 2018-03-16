@@ -7,15 +7,15 @@ import net.spy.memcached.ops.OperationCallback;
 class ConcatenationOperationImpl extends SingleKeyOperationImpl
 	implements ConcatenationOperation {
 
-	private static final byte APPEND=0x0e;
-	private static final byte PREPEND=0x0f;
+	private static final int APPEND=0x0e;
+	private static final int PREPEND=0x0f;
 
 	private final long cas;
 	private final ConcatenationType catType;
 	private final byte[] data;
 
-	private static byte cmdMap(ConcatenationType t) {
-		byte rv=(byte) 0xFF;
+	private static int cmdMap(ConcatenationType t) {
+		int rv=-1;
 		switch(t) {
 			case append: rv=APPEND; break;
 			case prepend: rv=PREPEND; break;
@@ -50,4 +50,8 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl
 		return catType;
 	}
 
+	@Override
+	public String toString() {
+		return super.toString() + " Cas: " + cas + " Data Length: " + data.length;
+	}
 }

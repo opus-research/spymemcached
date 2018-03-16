@@ -8,13 +8,13 @@ import net.spy.memcached.ops.StoreType;
 class StoreOperationImpl extends SingleKeyOperationImpl
 	implements StoreOperation, CASOperation {
 
-	private static final byte SET=0x01;
-	private static final byte ADD=0x02;
-	private static final byte REPLACE=0x03;
+	private static final int SET=0x01;
+	private static final int ADD=0x02;
+	private static final int REPLACE=0x03;
 
-	static final byte SETQ=0x11;
-	static final byte ADDQ=0x12;
-	static final byte REPLACEQ=0x13;
+	static final int SETQ=0x11;
+	static final int ADDQ=0x12;
+	static final int REPLACEQ=0x13;
 
 	// 4-byte flags, 4-byte expiration
 	static final int EXTRA_LEN = 8;
@@ -25,8 +25,8 @@ class StoreOperationImpl extends SingleKeyOperationImpl
 	private final long cas;
 	private final byte[] data;
 
-	private static byte cmdMap(StoreType t) {
-		byte rv=(byte) 0xFF;
+	private static int cmdMap(StoreType t) {
+		int rv=-1;
 		switch(t) {
 			case set: rv=SET; break;
 			case add: rv=ADD; break;
@@ -52,10 +52,6 @@ class StoreOperationImpl extends SingleKeyOperationImpl
 		prepareBuffer(key, cas, data, flags, exp);
 	}
 
-	public byte[] getBytes() {
-		return data;
-	}
-
 	public long getCasValue() {
 		return cas;
 	}
@@ -76,4 +72,9 @@ class StoreOperationImpl extends SingleKeyOperationImpl
 		return storeType;
 	}
 
+	@Override
+	public String toString() {
+		return super.toString() + " Cas: " + cas + " Exp: " + exp + " Flags: "
+			+ flags + " Data Length: " + data.length;
+	}
 }

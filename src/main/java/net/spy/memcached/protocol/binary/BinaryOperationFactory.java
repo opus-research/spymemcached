@@ -12,7 +12,6 @@ import net.spy.memcached.ops.ConcatenationOperation;
 import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
 import net.spy.memcached.ops.FlushOperation;
-import net.spy.memcached.ops.GATOperation;
 import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
@@ -45,10 +44,6 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 
 	public FlushOperation flush(int delay, OperationCallback cb) {
 		return new FlushOperationImpl(cb);
-	}
-
-	public GATOperation gat(String key, int expiration, GATOperation.Callback cb) {
-		return new GetOperationImpl(key, expiration, cb);
 	}
 
 	public GetOperation get(String key, Callback callback) {

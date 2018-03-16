@@ -3,7 +3,6 @@ package net.spy.memcached.protocol.binary;
 import java.util.Collection;
 import java.util.Collections;
 
-import net.spy.memcached.ops.GATOperation;
 import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
@@ -11,11 +10,10 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
 
 class GetOperationImpl extends OperationImpl
-	implements GetOperation, GetsOperation, GetlOperation, GATOperation {
+	implements GetOperation, GetsOperation, GetlOperation {
 
 	static final int GET_CMD=0;
 	static final int GETL_CMD=0x94;
-	static final int GAT_CMD=0x1d;
 
 	/**
 	 * Length of the extra header stuff for a GET response.
@@ -24,42 +22,33 @@ class GetOperationImpl extends OperationImpl
 
 	private final String key;
 	private final int exp;
-	private final int cmd;
+	private final boolean hasExp;
 
 	public GetOperationImpl(String k, GetOperation.Callback cb) {
 		super(GET_CMD, generateOpaque(), cb);
 		key=k;
 		exp=0;
-		cmd=GET_CMD;
+		hasExp=false;
 	}
 
 	public GetOperationImpl(String k, GetsOperation.Callback cb) {
 		super(GET_CMD, generateOpaque(), cb);
 		key=k;
 		exp=0;
-		cmd=GET_CMD;
+		hasExp=false;
 	}
 
 	public GetOperationImpl(String k, int e, GetlOperation.Callback cb) {
 		super(GETL_CMD, generateOpaque(), cb);
 		key=k;
 		exp=e;
-		cmd=GETL_CMD;
-	}
-	
-	public GetOperationImpl(String k, int e, GATOperation.Callback cb) {
-		super(GAT_CMD, generateOpaque(), cb);
-		key=k;
-		exp=e;
-		cmd=GAT_CMD;
+		hasExp=true;
 	}
 
 	@Override
 	public void initialize() {
-		if (cmd == GETL_CMD) {
+		if (hasExp) {
 			prepareBuffer(key, 0, EMPTY_BYTES, 0, exp);
-		} else if (cmd == GAT_CMD) {
-			prepareBuffer(key, 0, EMPTY_BYTES, exp);
 		} else {
 			prepareBuffer(key, 0, EMPTY_BYTES);
 		}
@@ -84,9 +73,6 @@ class GetOperationImpl extends OperationImpl
 			System.arraycopy(data, key.length(), value, 0, data.length-key.length());
 			GetlOperation.Callback gcb=(GetlOperation.Callback)cb;
 			gcb.gotData(key, flags, responseCas, value);
-		} else if (cb instanceof GATOperation.Callback) {
-			GATOperation.Callback gcb=(GATOperation.Callback)cb;
-			gcb.gotData(key, flags, data);
 		} else {
 			throw new ClassCastException("Couldn't convert " + cb + "to a relevent op");
 		}

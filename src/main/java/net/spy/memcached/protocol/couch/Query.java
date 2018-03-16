@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.spy.memcached.util.StringUtils;
+
 /**
  * A Query.
  */
@@ -201,30 +203,27 @@ public class Query {
   @Override
   public String toString() {
     boolean first = true;
-    StringBuilder sb = new StringBuilder();
+    StringBuffer result = new StringBuffer();
     for (Entry<String, Object> arg : args.entrySet()) {
       if (first) {
-        sb.append("?");
+        result.append("?");
         first = false;
       } else {
-        sb.append("&");
+        result.append("&");
       }
-      sb.append(getArg(arg.getKey(), arg.getValue()));
+      result.append(getArg(arg.getKey(), arg.getValue()));
     }
-    return sb.toString();
+    return result.toString();
   }
 
   private String getArg(String key, Object value) {
     // Special case
     if (key.equals(STARTKEYDOCID)) {
       return key + "=" + value;
-    }
-    if (value instanceof Boolean) {
-      return key + "=" + ((Boolean) value).toString();
-    } else if (value instanceof Integer) {
-      return key + "=" + ((Integer) value).toString();
     } else if (value instanceof Stale) {
       return key + "=" + ((Stale) value).toString();
+    } else if (StringUtils.isJsonObject(value.toString())) {
+      return key + "=" + value.toString();
     } else {
       return key + "=\"" + value + "\"";
     }

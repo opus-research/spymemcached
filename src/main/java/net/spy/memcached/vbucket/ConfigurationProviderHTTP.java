@@ -167,7 +167,7 @@ public class ConfigurationProviderHTTP extends SpyObject implements
           pool.replaceBuckets(bucketsForPool);
 
         }
-        // did we found our bucket?
+                // did we find our bucket?
         boolean bucketFound = false;
         for (Pool pool : pools.values()) {
           if (pool.hasBucket(bucketToFind)) {
@@ -188,9 +188,11 @@ public class ConfigurationProviderHTTP extends SpyObject implements
       } catch (ParseException e) {
         getLogger().warn("Provided URI " + baseUri
           + " has an unparsable response...skipping", e);
+        continue;
       } catch (IOException e) {
         getLogger().warn("Connection problems with URI " + baseUri
-            + " ...skipping", e);
+          + " ...skipping", e);
+        continue;
       }
       throw new ConfigurationException("Configuration for bucket "
           + bucketToFind + " was not found.");
@@ -348,8 +350,12 @@ public class ConfigurationProviderHTTP extends SpyObject implements
       clearText.append(password);
     }
     String headerResult;
-    headerResult = "Basic "
+    headerResult ="Basic "
       + Base64.encodeBase64String(clearText.toString().getBytes("UTF-8"));
+
+    if (headerResult.endsWith("\r\n")) {
+      headerResult = headerResult.substring(0, headerResult.length() - 2);
+    }
     return headerResult;
   }
 }

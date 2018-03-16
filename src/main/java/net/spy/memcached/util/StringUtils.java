@@ -20,44 +20,38 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.tapmessage;
+package net.spy.memcached.util;
+
+import java.util.Collection;
 
 /**
- * The Magic enum contains a list all of the different magic that can be passed
- * in a tap message in the flag field.
+ * Some String utilities.
  */
-public enum TapMagic {
-  /**
-   * Defines a tap binary request packet.
-   */
-  PROTOCOL_BINARY_REQ((byte) 0x80),
+public final class StringUtils {
 
-  /**
-   * Defines a tap binary response packet.
-   */
-  PROTOCOL_BINARY_RES((byte) 0x81);
-
-  /**
-   * The magic value.
-   */
-  public byte magic;
-
-  /**
-   * Defines the magic value.
-   *
-   * @param magic - The new magic value
-   */
-  TapMagic(byte magic) {
-    this.magic = magic;
+  private StringUtils() {
+    // Empty
   }
 
-  public static TapMagic getMagicByByte(byte b) {
-    if (b == PROTOCOL_BINARY_REQ.magic) {
-      return TapMagic.PROTOCOL_BINARY_REQ;
-    } else if (b == PROTOCOL_BINARY_RES.magic) {
-      return TapMagic.PROTOCOL_BINARY_RES;
-    } else {
-      throw new IllegalArgumentException("Bad magic value");
+  public static String join(Collection<String> keys, String delimiter) {
+    StringBuilder sb = new StringBuilder();
+    for (String key : keys) {
+      sb.append(key);
+      sb.append(delimiter);
+    }
+    return sb.toString();
+  }
+
+  public static boolean isJsonObject(String s) {
+    if (s.startsWith("{") || s.startsWith("[") || s.equals("true")
+        || s.equals("false") || s.equals("null")) {
+      return true;
+    }
+    try {
+      new Integer(s);
+      return true;
+    } catch (NumberFormatException e) {
+      return false;
     }
   }
 }

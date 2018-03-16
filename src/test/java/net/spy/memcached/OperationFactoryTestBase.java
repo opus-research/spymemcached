@@ -96,14 +96,14 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
     assertEquals(727582, op2.getCasValue());
     assertEquals(8174, op2.getFlags());
     assertEquals(7175, op2.getExpiration());
-    assertBytes(op2.getBytes());
+    assertBytes(op2.getData());
     assertCallback(op2);
   }
 
   public void testMutatorOperationIncrCloning() {
     int exp = 823862;
     long def = 28775;
-    long by = 7735;
+    int by = 7735;
     MutatorOperation op = ofact.mutate(Mutator.incr, TEST_KEY, by, def, exp,
         genericCallback);
 
@@ -119,7 +119,7 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
   public void testMutatorOperationDecrCloning() {
     int exp = 823862;
     long def = 28775;
-    long by = 7735;
+    int by = 7735;
     MutatorOperation op = ofact.mutate(Mutator.decr, TEST_KEY, by, def, exp,
         genericCallback);
 

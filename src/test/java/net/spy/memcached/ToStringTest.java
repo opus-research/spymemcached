@@ -20,44 +20,28 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.tapmessage;
+package net.spy.memcached;
+
+import junit.framework.TestCase;
 
 /**
- * The Magic enum contains a list all of the different magic that can be passed
- * in a tap message in the flag field.
+ * These tests test to make sure that we don't get null pointer
+ * exceptions when calling toString methods on classes that have
+ * custom toString() functions.
  */
-public enum TapMagic {
-  /**
-   * Defines a tap binary request packet.
-   */
-  PROTOCOL_BINARY_REQ((byte) 0x80),
+public class ToStringTest extends TestCase {
 
-  /**
-   * Defines a tap binary response packet.
-   */
-  PROTOCOL_BINARY_RES((byte) 0x81);
-
-  /**
-   * The magic value.
-   */
-  public byte magic;
-
-  /**
-   * Defines the magic value.
-   *
-   * @param magic - The new magic value
-   */
-  TapMagic(byte magic) {
-    this.magic = magic;
+  public void testDefaultConnectionFactory() {
+    (new DefaultConnectionFactory()).toString();
+    (new DefaultConnectionFactory(10, 1000)).toString();
+    (new DefaultConnectionFactory(100, 100,
+        DefaultHashAlgorithm.KETAMA_HASH)).toString();
   }
 
-  public static TapMagic getMagicByByte(byte b) {
-    if (b == PROTOCOL_BINARY_REQ.magic) {
-      return TapMagic.PROTOCOL_BINARY_REQ;
-    } else if (b == PROTOCOL_BINARY_RES.magic) {
-      return TapMagic.PROTOCOL_BINARY_RES;
-    } else {
-      throw new IllegalArgumentException("Bad magic value");
-    }
+  public void testBinaryConnectionFactory() {
+    (new BinaryConnectionFactory()).toString();
+    (new BinaryConnectionFactory(10, 1000)).toString();
+    (new BinaryConnectionFactory(100, 1000,
+        DefaultHashAlgorithm.KETAMA_HASH)).toString();
   }
 }

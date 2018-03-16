@@ -35,6 +35,7 @@ import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.util.StringUtils;
 
 /**
  * Base class for get and gets handlers.
@@ -44,6 +45,8 @@ abstract class BaseGetOpImpl extends OperationImpl {
   private static final OperationStatus END = new OperationStatus(true, "END");
   private static final OperationStatus NOT_FOUND = new OperationStatus(false,
       "NOT_FOUND");
+  private static final OperationStatus LOCK_ERROR = new OperationStatus(false,
+      "LOCK_ERROR");
   private static final byte[] RN_BYTES = "\r\n".getBytes();
   private final String cmd;
   private final Collection<String> keys;
@@ -107,6 +110,9 @@ abstract class BaseGetOpImpl extends OperationImpl {
       hasValue = true;
       getLogger().debug("Set read type to data");
       setReadType(OperationReadType.DATA);
+    } else if (line.equals("LOCK_ERROR")) {
+      getCallback().receivedStatus(LOCK_ERROR);
+      transitionState(OperationState.COMPLETE);
     } else {
       assert false : "Unknown line type: " + line;
     }
@@ -218,13 +224,7 @@ abstract class BaseGetOpImpl extends OperationImpl {
 
   @Override
   public String toString() {
-    String s = "Cmd: " + cmd + " Keys: ";
-    for (String key : keys) {
-      s += key + " ";
-    }
-    if (hasExp) {
-      s += "Exp: " + exp + " ";
-    }
-    return s;
+    return "Cmd: " + cmd + " Keys: " + StringUtils.join(keys, " ") + "Exp: "
+      + exp;
   }
 }

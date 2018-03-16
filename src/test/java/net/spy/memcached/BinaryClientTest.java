@@ -66,24 +66,13 @@ public class BinaryClientTest extends ProtocolBaseCase {
 	public void testGATTimeout() throws Exception {
 		if (isMembase()) {
 			assertNull(client.get("gatkey"));
-			assert client.set("gatkey", 1, "gatvalue").get().booleanValue();
-			assert client.getAndTouch("gatkey", 2).getValue().equals("gatvalue");
-			Thread.sleep(1300);
+			assert client.set("gatkey", 2, "gatvalue").get().booleanValue();
+			Thread.sleep(1000);
+			assert client.getAndTouch("gatkey", 3).equals("gatvalue");
+			Thread.sleep(2000);
 			assert client.get("gatkey").equals("gatvalue");
-			Thread.sleep(2000);
+			Thread.sleep(1100);
 			assertNull(client.getAndTouch("gatkey", 3));
-		}
-	}
-
-	public void testTouchTimeout() throws Exception {
-		if (isMembase()) {
-			assertNull(client.get("touchkey"));
-			assert client.set("touchkey", 1, "touchvalue").get().booleanValue();
-			assert client.touch("touchkey", 2).get().booleanValue();
-			Thread.sleep(1300);
-			assert client.get("touchkey").equals("touchvalue");
-			Thread.sleep(2000);
-			assertFalse(client.touch("touchkey", 3).get().booleanValue());
 		}
 	}
 }

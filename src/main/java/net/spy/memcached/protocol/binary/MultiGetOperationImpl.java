@@ -47,6 +47,7 @@ class MultiGetOperationImpl extends MultiKeyOperationImpl implements
   private final Map<String, Integer> rkeys = new HashMap<String, Integer>();
 
   private final int terminalOpaque = generateOpaque();
+  private boolean needsRetry;
 
   public MultiGetOperationImpl(Collection<String> k, OperationCallback cb) {
     super(DUMMY_OPCODE, -1, cb);
@@ -114,10 +115,18 @@ class MultiGetOperationImpl extends MultiKeyOperationImpl implements
 
   @Override
   protected void finishedPayload(byte[] pl) throws IOException {
+    getStatusForErrorCode(errorCode, pl);
+
     if (responseOpaque == terminalOpaque) {
-      getCallback().receivedStatus(STATUS_OK);
-      transitionState(OperationState.COMPLETE);
-    } else if (errorCode != 0) {
+      if (needsRetry) {
+        transitionState(OperationState.RETRY);
+      } else {
+        getCallback().receivedStatus(STATUS_OK);
+        transitionState(OperationState.COMPLETE);
+      }
+    } else if (errorCode == ERR_NOT_MY_VBUCKET) {
+      needsRetry = true;
+    } else if (errorCode != SUCCESS) {
       getLogger().warn("Error on key %s:  %s (%d)", keys.get(responseOpaque),
           new String(pl), errorCode);
     } else {

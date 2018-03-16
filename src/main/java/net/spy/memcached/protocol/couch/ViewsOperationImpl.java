@@ -40,15 +40,14 @@ import org.codehaus.jettison.json.JSONObject;
 /**
  * A ViewsOperationImpl.
  */
-public class ViewsFetcherOperationImpl extends HttpOperationImpl
-    implements ViewsFetcherOperation {
+public class ViewsOperationImpl extends HttpOperationImpl implements
+    ViewsOperation {
 
   private final String bucketName;
   private final String designDocName;
 
-
-  public ViewsFetcherOperationImpl(HttpRequest r, String bucketName,
-      String designDocName, ViewsFetcherCallback viewsCallback) {
+  public ViewsOperationImpl(HttpRequest r, String bucketName,
+      String designDocName, ViewsCallback viewsCallback) {
     super(r, viewsCallback);
     this.bucketName = bucketName;
     this.designDocName = designDocName;
@@ -62,7 +61,7 @@ public class ViewsFetcherOperationImpl extends HttpOperationImpl
       if (errorcode == HttpURLConnection.HTTP_OK) {
         List<View> views = parseDesignDocumentForViews(bucketName,
           designDocName, json);
-        ((ViewsFetcherCallback) callback).gotData(views);
+        ((ViewsCallback) callback).gotData(views);
         callback.receivedStatus(new OperationStatus(true, "OK"));
       } else {
         callback.receivedStatus(new OperationStatus(false,

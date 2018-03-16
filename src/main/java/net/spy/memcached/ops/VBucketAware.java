@@ -4,8 +4,12 @@ import net.spy.memcached.MemcachedNode;
 
 import java.util.Collection;
 
+/**
+ * Operations that depend on a VBucket number being sent to the server
+ * are required to implement this interface.
+ */
 public interface VBucketAware {
-    boolean setVBucket(String key, short vbucket);
+    void setVBucket(String key, short vbucket);
     short getVBucket(String key);
     Collection<MemcachedNode> getNotMyVbucketNodes();
     void addNotMyVbucketNode(MemcachedNode node);

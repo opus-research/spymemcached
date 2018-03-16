@@ -29,13 +29,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.internal.BulkFuture;
 import net.spy.memcached.internal.OperationFuture;
-import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
 
 /**
@@ -242,12 +240,4 @@ public interface MemcachedClientIF {
    * @return the union of all SASL mechanisms supported by the servers.
    */
   Set<String> listSaslMechanisms();
-
-  long getOperationTimeout();
-
-  MemcachedConnection getConnection();
-
-  TranscodeService getTranscoderService();
-
-  ExecutorService getExecutorService();
 }

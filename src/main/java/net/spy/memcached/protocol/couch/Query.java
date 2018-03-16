@@ -26,8 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import net.spy.memcached.util.StringUtils;
-
 /**
  * A Query.
  */
@@ -220,10 +218,13 @@ public class Query {
     // Special case
     if (key.equals(STARTKEYDOCID)) {
       return key + "=" + value;
+    }
+    if (value instanceof Boolean) {
+      return key + "=" + ((Boolean) value).toString();
+    } else if (value instanceof Integer) {
+      return key + "=" + ((Integer) value).toString();
     } else if (value instanceof Stale) {
       return key + "=" + ((Stale) value).toString();
-    } else if (StringUtils.isJsonObject(value.toString())) {
-        return key + "=" + value.toString();
     } else {
       return key + "=\"" + value + "\"";
     }

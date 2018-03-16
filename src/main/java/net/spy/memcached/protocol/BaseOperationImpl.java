@@ -32,7 +32,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	private boolean timedout;
 	private long creationTime;
 	private boolean timedOutUnsent = false;
-	protected int vbucket;
 
 	public BaseOperationImpl() {
 		super();
@@ -151,10 +150,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 
 	public void setHandlingNode(MemcachedNode to) {
 		handlingNode = to;
-	}
-
-	public void setVBucket(int vbucket) {
-		this.vbucket = vbucket;
 	}
 
         @Override

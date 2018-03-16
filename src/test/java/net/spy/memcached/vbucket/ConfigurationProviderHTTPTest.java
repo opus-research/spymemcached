@@ -28,7 +28,6 @@ public class ConfigurationProviderHTTPTest extends TestCase {
     }
 
     public void testSubscribe() throws Exception {
-
         configProvider.subscribe(DEFAULT_BUCKET_NAME, reconfigurable);
     }
 

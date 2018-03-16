@@ -37,7 +37,8 @@ import net.spy.memcached.protocol.ascii.ExtensibleOperationImpl;
 public class AsciiClientTest extends ProtocolBaseCase {
 
   public void testBadOperation() throws Exception {
-    client.addOp("x", new ExtensibleOperationImpl(new OperationCallback() {
+    client.mconn.addOperation("x",
+        new ExtensibleOperationImpl(new OperationCallback() {
       public void complete() {
         System.err.println("Complete.");
       }

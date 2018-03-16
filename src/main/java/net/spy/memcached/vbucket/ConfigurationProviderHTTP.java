@@ -73,6 +73,8 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
      * @throws ConfigurationException
      */
     private void readPools(final String bucketToFind) throws ConfigurationException {
+	// the intent with this method is to encapsulate all of the walking of URIs
+	// and populating an internal object model of the configuration to one place
         for (URI baseUri : baseList) {
             try {
                 // get and parse the response from the current base uri

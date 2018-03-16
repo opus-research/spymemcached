@@ -9,7 +9,7 @@ import org.apache.http.HttpResponse;
 public interface HttpOperation {
 
 	public HttpRequest getRequest();
-	
+
 	OperationCallback getCallback();
 
 	boolean isCancelled();

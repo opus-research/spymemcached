@@ -21,7 +21,7 @@ public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
 		for (RowWithDocs row : rows) {
 			map.put(row.getId(), row.getDoc());
 		}
-		
+
 	}
 
 	@Override

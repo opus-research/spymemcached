@@ -46,9 +46,4 @@ final class FlushOperationImpl extends OperationImpl
 		}
 		setBuffer(b);
 	}
-
-	@Override
-	public String toString() {
-		return "Cmd: flush_all Delay: " + delay;
-	}
 }

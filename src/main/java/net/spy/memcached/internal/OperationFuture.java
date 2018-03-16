@@ -74,7 +74,8 @@ public class OperationFuture<T> implements Future<T> {
 		if(isCancelled()) {
 			throw new ExecutionException(new RuntimeException("Cancelled"));
 		}
-                if(op.isTimedOut()) {
+
+                if(op != null && op.isTimedOut()) {
                         throw new ExecutionException(new CheckedOperationTimeoutException("Operation timed out.", op));
                 }
 

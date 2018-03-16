@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached.protocol.ascii;
 
 import net.spy.memcached.ops.GetlOperation;
@@ -7,10 +13,9 @@ import net.spy.memcached.ops.GetlOperation;
  */
 class GetlOperationImpl extends BaseGetOpImpl implements GetlOperation {
 
-	private static final String CMD="getl";
+  private static final String CMD = "getl";
 
-	public GetlOperationImpl(String key, int exp, GetlOperation.Callback c) {
-		super(CMD, exp, c, key);
-	}
+  public GetlOperationImpl(String key, int exp, GetlOperation.Callback c) {
+    super(CMD, exp, c, key);
+  }
 }
-

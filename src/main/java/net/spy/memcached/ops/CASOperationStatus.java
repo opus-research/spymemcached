@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached.ops;
 
 import net.spy.memcached.CASResponse;
@@ -7,18 +13,17 @@ import net.spy.memcached.CASResponse;
  */
 public class CASOperationStatus extends OperationStatus {
 
-	private final CASResponse casResponse;
+  private final CASResponse casResponse;
 
-	public CASOperationStatus(boolean success, String msg, CASResponse cres) {
-		super(success, msg);
-		casResponse=cres;
-	}
+  public CASOperationStatus(boolean success, String msg, CASResponse cres) {
+    super(success, msg);
+    casResponse = cres;
+  }
 
-	/**
-	 * Get the CAS response indicated here.
-	 */
-	public CASResponse getCASResponse() {
-		return casResponse;
-	}
-
+  /**
+   * Get the CAS response indicated here.
+   */
+  public CASResponse getCASResponse() {
+    return casResponse;
+  }
 }

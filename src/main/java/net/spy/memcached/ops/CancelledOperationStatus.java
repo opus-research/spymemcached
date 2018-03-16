@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached.ops;
 
 /**
@@ -5,8 +11,7 @@ package net.spy.memcached.ops;
  */
 public class CancelledOperationStatus extends OperationStatus {
 
-	public CancelledOperationStatus() {
-		super(false, "cancelled");
-	}
-
+  public CancelledOperationStatus() {
+    super(false, "cancelled");
+  }
 }

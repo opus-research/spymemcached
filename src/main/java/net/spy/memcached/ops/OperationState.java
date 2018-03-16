@@ -15,9 +15,5 @@ public enum OperationState {
 	/**
 	 * State indicating this operation is complete.
 	 */
-    COMPLETE,
-    /**
-     * State indicating this operation must be resended
-     */
-    RETRY
+	COMPLETE
 }

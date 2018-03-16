@@ -28,7 +28,6 @@ public abstract class BaseOperationImpl extends SpyObject {
 	private OperationException exception = null;
 	protected OperationCallback callback = null;
 	private volatile MemcachedNode handlingNode = null;
-    protected int vbucket;
 
 	public BaseOperationImpl() {
 		super();
@@ -143,8 +142,5 @@ public abstract class BaseOperationImpl extends SpyObject {
 	public void setHandlingNode(MemcachedNode to) {
 		handlingNode = to;
 	}
-    public void setVBucket(int vbucket) {
-        this.vbucket = vbucket;
-    }
 
 }

@@ -277,7 +277,7 @@ public class DefaultConnectionFactory extends SpyObject implements
         Runtime.getRuntime().availableProcessors(),
         60L,
         TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>()
+        new SynchronousQueue<Runnable>()
       );
     }
 

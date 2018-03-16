@@ -22,7 +22,8 @@
   SOFTWARE.
 -->
 <ivy-module version="1.0">
-  <info organisation="net.spy.memcached" module="${name}">
+  <!--changed org. to spy and added revision -->
+  <info organisation="spy" module="${name}" revision="${version}">
     <license name="Apache 2.0"/>
     <ivyauthor name="Couchbase" url="http://github.com/dustin/java-memcached-client" />
     <description>

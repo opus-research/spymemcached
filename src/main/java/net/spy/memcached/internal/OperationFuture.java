@@ -23,7 +23,7 @@ public class OperationFuture<T> implements Future<T> {
 
 	private final CountDownLatch latch;
 	private final AtomicReference<T> objRef;
-	private OperationStatus status;
+	protected OperationStatus status;
 	private final long timeout;
 	private Operation op;
 	private final String key;
@@ -54,6 +54,7 @@ public class OperationFuture<T> implements Future<T> {
 		try {
 			return get(timeout, TimeUnit.MILLISECONDS);
 		} catch (TimeoutException e) {
+			status = new OperationStatus(false, "Timed out");
 			throw new RuntimeException(
 				"Timed out waiting for operation", e);
 		}
@@ -67,6 +68,7 @@ public class OperationFuture<T> implements Future<T> {
 			if (op != null) { // op can be null on a flush
 				op.timeOut();
 			}
+			status = new OperationStatus(false, "Timed out");
 			throw new CheckedOperationTimeoutException(
 					"Timed out waiting for operation", op);
 		} else {
@@ -74,12 +76,14 @@ public class OperationFuture<T> implements Future<T> {
 		    MemcachedConnection.opSucceeded(op);
 		}
 		if(op != null && op.hasErrored()) {
+			status = new OperationStatus(false, op.getException().getMessage());
 			throw new ExecutionException(op.getException());
 		}
 		if(isCancelled()) {
 			throw new ExecutionException(new RuntimeException("Cancelled"));
 		}
                 if(op != null && op.isTimedOut()) {
+                		status = new OperationStatus(false, "Timed out");
                         throw new ExecutionException(new CheckedOperationTimeoutException("Operation timed out.", op));
                 }
 
@@ -95,9 +99,10 @@ public class OperationFuture<T> implements Future<T> {
 			try {
 				get();
 			} catch (InterruptedException e) {
-				status = new OperationStatus(false, "Timed Out");
+				status = new OperationStatus(false, "Interrupted");
+				Thread.currentThread().isInterrupted();
 			} catch (ExecutionException e) {
-				status = new OperationStatus(false, "Timed Out");
+
 			}
 		}
 		return status;

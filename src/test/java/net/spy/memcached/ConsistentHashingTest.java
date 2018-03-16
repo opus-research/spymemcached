@@ -113,14 +113,14 @@ public class ConsistentHashingTest extends TestCase {
     String port = ":11211 ";
     int last = (int) ((now % 100) + 3);
 
-    StringBuilder prefix = new StringBuilder();
+    StringBuffer prefix = new StringBuffer();
     prefix.append(first);
     prefix.append(".");
     prefix.append(second);
     prefix.append(".1.");
 
     // Don't protect the possible range too much, as we are our own client.
-    StringBuilder buf = new StringBuilder();
+    StringBuffer buf = new StringBuffer();
     for (int ix = 0; ix < maxSize - 1; ix++) {
       buf.append(prefix);
       buf.append(last + ix);

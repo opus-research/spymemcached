@@ -50,7 +50,6 @@ public class MembaseConnectionFactory extends BinaryConnectionFactory {
 	private final AuthDescriptor ad;
 	private final ConfigurationProvider configurationProvider;
 	private final Config vbConfig;
-	private final String bucketName;
 
 	public MembaseConnectionFactory(final List<URI> baseList,
 			final String bucketName, final String usr, final String pwd) throws IOException {
@@ -60,7 +59,6 @@ public class MembaseConnectionFactory extends BinaryConnectionFactory {
 				throw new IllegalArgumentException("The base URI must be absolute");
 			}
 		}
-		this.bucketName = bucketName;
 		this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
 		Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
 		Config config = bucket.getConfig();
@@ -102,10 +100,6 @@ public class MembaseConnectionFactory extends BinaryConnectionFactory {
 
 	public Config getVBucketConfig() {
 		return vbConfig;
-	}
-
-	public String getBucket() {
-		return  bucketName;
 	}
 
 	public ConfigurationProvider getConfigurationProvider() {

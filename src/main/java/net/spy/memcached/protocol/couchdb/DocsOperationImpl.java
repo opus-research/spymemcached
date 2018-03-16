@@ -1,4 +1,4 @@
-package net.spy.memcached.protocol.couch;
+package net.spy.memcached.protocol.couchdb;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -14,10 +14,10 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-public class ReducedOperationImpl extends HttpOperationImpl implements
-		ReducedOperation {
+public class DocsOperationImpl extends HttpOperationImpl implements
+		DocsOperation {
 
-	public ReducedOperationImpl(HttpRequest r, ReducedCallback cb) {
+	public DocsOperationImpl(HttpRequest r, DocsCallback cb) {
 		super(r, cb);
 	}
 
@@ -27,9 +27,9 @@ public class ReducedOperationImpl extends HttpOperationImpl implements
 		int errorcode = response.getStatusLine().getStatusCode();
 		try {
 			OperationStatus status = parseViewForStatus(json, errorcode);
-			ViewResponseReduced vr = parseReducedViewResult(json);
+			ViewResponseWithDocs vr = parseDocsViewResult(json);
 
-			((ReducedCallback) callback).gotData(vr);
+			((DocsCallback) callback).gotData(vr);
 			callback.receivedStatus(status);
 		} catch (ParseException e) {
 			exception = new OperationException(OperationErrorType.GENERAL,
@@ -38,35 +38,25 @@ public class ReducedOperationImpl extends HttpOperationImpl implements
 		callback.complete();
 	}
 
-	private ViewResponseReduced parseReducedViewResult(String json)
+	private ViewResponseWithDocs parseDocsViewResult(String json)
 			throws ParseException {
-		final Collection<RowReduced> rows = new LinkedList<RowReduced>();
-		final Collection<RowError> errors = new LinkedList<RowError>();
+		final Collection<RowWithDocs> rows = new LinkedList<RowWithDocs>();
 		if (json != null) {
 			try {
 				JSONObject base = new JSONObject(json);
 				if (base.has("rows")) {
 					JSONArray ids = base.getJSONArray("rows");
 					for (int i = 0; i < ids.length(); i++) {
-						JSONObject elem = ids.getJSONObject(i);
-						String key = elem.getString("key");
-						String value = elem.getString("value");
-						rows.add(new RowReduced(key, value));
-					}
-				}
-				if (base.has("errors")) {
-					JSONArray ids = base.getJSONArray("errors");
-					for (int i = 0; i < ids.length(); i++) {
-						JSONObject elem = ids.getJSONObject(i);
-						String from = elem.getString("from");
-						String reason = elem.getString("reason");
-						errors.add(new RowError(from, reason));
+						String id = ids.getJSONObject(i).getString("id");
+						String key = ids.getJSONObject(i).getString("key");
+						String value = ids.getJSONObject(i).getString("value");
+						rows.add(new RowWithDocs(id, key, value, null));
 					}
 				}
 			} catch (JSONException e) {
 				throw new ParseException("Cannot read json: " + json, 0);
 			}
 		}
-		return new ViewResponseReduced(rows, errors);
+		return new ViewResponseWithDocs(rows);
 	}
 }

@@ -7,8 +7,6 @@ package net.spy.memcached;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +15,7 @@ import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.couch.AsyncConnectionManager;
 import net.spy.memcached.couch.AsyncConnectionRequest;
 import net.spy.memcached.couch.RequestHandle;
-import net.spy.memcached.protocol.couch.HttpOperation;
+import net.spy.memcached.protocol.couchdb.HttpOperation;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -102,12 +100,6 @@ public class CouchbaseNode extends SpyObject {
 		}
 	}
 
-	public Collection<HttpOperation> destroyWriteQueue() {
-		Collection<HttpOperation> rv=new ArrayList<HttpOperation>();
-		writeQ.drainTo(rv);
-		return rv;
-	}
-
 	public boolean hasWriteOps() {
 		return !writeQ.isEmpty();
 	}
@@ -123,10 +115,6 @@ public class CouchbaseNode extends SpyObject {
 			throw new IllegalStateException("Interrupted while waiting to add "
 					+ op);
 		}
-	}
-
-	public InetSocketAddress getSocketAddress() {
-		return addr;
 	}
 
 	public void shutdown() throws IOException {

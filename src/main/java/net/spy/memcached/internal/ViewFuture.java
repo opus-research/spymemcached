@@ -14,9 +14,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.spy.memcached.OperationTimeoutException;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.protocol.couch.HttpOperation;
-import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
-import net.spy.memcached.protocol.couch.RowWithDocs;
+import net.spy.memcached.protocol.couchdb.HttpOperation;
+import net.spy.memcached.protocol.couchdb.ViewResponseWithDocs;
+import net.spy.memcached.protocol.couchdb.RowWithDocs;
 
 public class ViewFuture extends SpyObject implements
 		Future<ViewResponseWithDocs> {
@@ -92,7 +92,7 @@ public class ViewFuture extends SpyObject implements
 					docMap.get(r.getId())));
 		}
 
-		return new ViewResponseWithDocs(rows, view.getErrors());
+		return new ViewResponseWithDocs(rows);
 	}
 
 	public OperationStatus getStatus() {

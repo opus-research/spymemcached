@@ -18,28 +18,27 @@ import org.apache.http.message.BasicHttpRequest;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.protocol.couch.DocsOperation.DocsCallback;
-import net.spy.memcached.protocol.couch.DocsOperationImpl;
-import net.spy.memcached.protocol.couch.HttpOperation;
-import net.spy.memcached.protocol.couch.NoDocsOperation;
-import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
-import net.spy.memcached.protocol.couch.Query;
-import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
-import net.spy.memcached.protocol.couch.ReducedOperationImpl;
-import net.spy.memcached.protocol.couch.RowWithDocs;
-import net.spy.memcached.protocol.couch.View;
-import net.spy.memcached.protocol.couch.ViewOperation.ViewCallback;
-import net.spy.memcached.protocol.couch.ViewOperationImpl;
-import net.spy.memcached.protocol.couch.ViewsOperation.ViewsCallback;
-import net.spy.memcached.protocol.couch.ViewsOperationImpl;
-import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
-import net.spy.memcached.protocol.couch.ViewResponseReduced;
-import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
+import net.spy.memcached.protocol.couchdb.DocsOperation.DocsCallback;
+import net.spy.memcached.protocol.couchdb.DocsOperationImpl;
+import net.spy.memcached.protocol.couchdb.HttpOperation;
+import net.spy.memcached.protocol.couchdb.NoDocsOperation;
+import net.spy.memcached.protocol.couchdb.NoDocsOperationImpl;
+import net.spy.memcached.protocol.couchdb.Query;
+import net.spy.memcached.protocol.couchdb.ReducedOperation.ReducedCallback;
+import net.spy.memcached.protocol.couchdb.ReducedOperationImpl;
+import net.spy.memcached.protocol.couchdb.RowWithDocs;
+import net.spy.memcached.protocol.couchdb.View;
+import net.spy.memcached.protocol.couchdb.ViewOperation.ViewCallback;
+import net.spy.memcached.protocol.couchdb.ViewOperationImpl;
+import net.spy.memcached.protocol.couchdb.ViewsOperation.ViewsCallback;
+import net.spy.memcached.protocol.couchdb.ViewsOperationImpl;
+import net.spy.memcached.protocol.couchdb.ViewResponseNoDocs;
+import net.spy.memcached.protocol.couchdb.ViewResponseReduced;
+import net.spy.memcached.protocol.couchdb.ViewResponseWithDocs;
 
 
 
 import net.spy.memcached.vbucket.ConfigurationException;
-import net.spy.memcached.vbucket.config.Bucket;
 
 public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF {
 
@@ -53,7 +52,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 
 	public CouchbaseClient(List<URI> baseList, String bucketName, String usr, String pwd)
 			throws IOException, ConfigurationException {
-		super(new CouchbaseConnectionFactory(baseList, bucketName, usr, pwd), false);
+		super(new CouchbaseConnectionFactory(baseList, bucketName, usr, pwd));
 		this.bucketName = bucketName;
 		CouchbaseConnectionFactory cf = (CouchbaseConnectionFactory)connFactory;
 		List<InetSocketAddress> addrs = AddrUtil.getAddresses(cf.getVBucketConfig().getServers());
@@ -63,7 +62,6 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 		while (!conv.isEmpty()) { addrs.add(new InetSocketAddress(conv.remove(0).getHostName(), 5984)); }
 
 		cconn = cf.createCouchDBConnection(addrs);
-		cf.getConfigurationProvider().subscribe(cf.getBucket(), this);
 	}
 
 	/**
@@ -298,23 +296,6 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 	public void addOp(final HttpOperation op) {
 		cconn.checkState();
 		cconn.addOp(op);
-	}
-
-	/**
-	 * This function is called when there is a topology change in the
-	 * cluster. This function is intended for internal use only.
-	 */
-	@Override
-	public void reconfigure(Bucket bucket) {
-		reconfiguring = true;
-		try {
-			mconn.reconfigure(bucket);
-			cconn.reconfigure(bucket);
-		} catch (IllegalArgumentException ex) {
-			getLogger().warn("Failed to reconfigure client, staying with previous configuration.", ex);
-		} finally {
-			reconfiguring = false;
-		}
 	}
 
 	/**

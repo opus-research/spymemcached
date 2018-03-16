@@ -2030,9 +2030,9 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   /**
    * Asynchronous decrement.
    *
-   * @param key key to decrement
-   * @param by the amount to decrement the value by
-   * @return a future with the decremented value, or -1 if the decrement failed.
+   * @param key key to increment
+   * @param by the amount to increment the value by
+   * @return a future with the decremented value, or -1 if the increment failed.
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
@@ -2044,143 +2044,15 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   /**
    * Asynchronous decrement.
    *
-   * @param key key to decrement
-   * @param by the amount to decrement the value by
-   * @return a future with the decremented value, or -1 if the decrement failed.
+   * @param key key to increment
+   * @param by the amount to increment the value by
+   * @return a future with the decremented value, or -1 if the increment failed.
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
   @Override
   public OperationFuture<Long> asyncDecr(String key, int by) {
     return asyncMutate(Mutator.decr, key, by, 0, -1);
-  }
-
-  /**
-   * Asychronous increment.
-   *
-   * @param key key to increment
-   * @param by the amount to increment the value by
-   * @param def the default value (if the counter does not exist)
-   * @param exp the expiration of this object
-   * @return a future with the incremented value, or -1 if the increment failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  @Override
-  public OperationFuture<Long> asyncIncr(String key, long by, long def,
-    int exp) {
-    return asyncMutate(Mutator.incr, key, by, def, exp);
-  }
-
-  /**
-   * Asychronous increment.
-   *
-   * @param key key to increment
-   * @param by the amount to increment the value by
-   * @param def the default value (if the counter does not exist)
-   * @param exp the expiration of this object
-   * @return a future with the incremented value, or -1 if the increment failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  @Override
-  public OperationFuture<Long> asyncIncr(String key, int by, long def,
-    int exp) {
-    return asyncMutate(Mutator.incr, key, by, def, exp);
-  }
-
-  /**
-   * Asynchronous decrement.
-   *
-   * @param key key to decrement
-   * @param by the amount to decrement the value by
-   * @param def the default value (if the counter does not exist)
-   * @param exp the expiration of this object
-   * @return a future with the decremented value, or -1 if the decrement failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  @Override
-  public OperationFuture<Long> asyncDecr(String key, long by, long def,
-    int exp) {
-    return asyncMutate(Mutator.decr, key, by, def, exp);
-  }
-
-  /**
-   * Asynchronous decrement.
-   *
-   * @param key key to decrement
-   * @param by the amount to decrement the value by
-   * @param def the default value (if the counter does not exist)
-   * @param exp the expiration of this object
-   * @return a future with the decremented value, or -1 if the decrement failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  @Override
-  public OperationFuture<Long> asyncDecr(String key, int by, long def,
-    int exp) {
-    return asyncMutate(Mutator.decr, key, by, def, exp);
-  }
-
-  /**
-   * Asychronous increment.
-   *
-   * @param key key to increment
-   * @param by the amount to increment the value by
-   * @param def the default value (if the counter does not exist)
-   * @return a future with the incremented value, or -1 if the increment failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  @Override
-  public OperationFuture<Long> asyncIncr(String key, long by, long def) {
-    return asyncMutate(Mutator.incr, key, by, def, -1);
-  }
-
-  /**
-   * Asychronous increment.
-   *
-   * @param key key to increment
-   * @param by the amount to increment the value by
-   * @param def the default value (if the counter does not exist)
-   * @return a future with the incremented value, or -1 if the increment failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  @Override
-  public OperationFuture<Long> asyncIncr(String key, int by, long def) {
-    return asyncMutate(Mutator.incr, key, by, def, -1);
-  }
-
-  /**
-   * Asynchronous decrement.
-   *
-   * @param key key to decrement
-   * @param by the amount to decrement the value by
-   * @param def the default value (if the counter does not exist)
-   * @return a future with the decremented value, or -1 if the decrement failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  @Override
-  public OperationFuture<Long> asyncDecr(String key, long by, long def) {
-    return asyncMutate(Mutator.decr, key, by, def, -1);
-  }
-
-  /**
-   * Asynchronous decrement.
-   *
-   * @param key key to decrement
-   * @param by the amount to decrement the value by
-   * @param def the default value (if the counter does not exist)
-   * @return a future with the decremented value, or -1 if the decrement failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  @Override
-  public OperationFuture<Long> asyncDecr(String key, int by, long def) {
-    return asyncMutate(Mutator.decr, key, by, def, -1);
   }
 
   /**

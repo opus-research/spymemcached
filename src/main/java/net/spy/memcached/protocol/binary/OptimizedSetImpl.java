@@ -161,7 +161,10 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
       OperationCallback cb = callbacks.remove(responseOpaque);
       assert cb != null : "No callback for " + responseOpaque;
       assert errorCode != 0 : "Got no error on a quiet mutation.";
-      super.finishedPayload(pl);
+      OperationStatus status = getStatusForErrorCode(errorCode, pl);
+      assert status != null : "Got no status for a quiet mutation error";
+      cb.receivedStatus(status);
+      cb.complete();
     }
     resetInput();
   }

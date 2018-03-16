@@ -35,6 +35,7 @@ import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.util.StringUtils;
 
 /**
@@ -44,7 +45,7 @@ abstract class BaseGetOpImpl extends OperationImpl {
 
   private static final OperationStatus END = new OperationStatus(true, "END");
   private static final OperationStatus NOT_FOUND = new OperationStatus(false,
-      "NOT_FOUND");
+      "NOT_FOUND", StatusCode.ERR_NOT_FOUND);
   private static final OperationStatus LOCK_ERROR = new OperationStatus(false,
       "LOCK_ERROR");
   private static final byte[] RN_BYTES = "\r\n".getBytes();

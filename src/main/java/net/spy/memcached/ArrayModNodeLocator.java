@@ -1,5 +1,7 @@
 package net.spy.memcached;
 
+import net.spy.memcached.vbucket.config.Config;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -11,7 +13,7 @@ import java.util.List;
  */
 public final class ArrayModNodeLocator implements NodeLocator {
 
-	final MemcachedNode[] nodes;
+	private MemcachedNode[] nodes;
 
 	private final HashAlgorithm hashAlg;
 
@@ -54,7 +56,12 @@ public final class ArrayModNodeLocator implements NodeLocator {
 		return new ArrayModNodeLocator(n, hashAlg);
 	}
 
-	private int getServerForKey(String key) {
+    @Override
+    public void updateLocator(List<MemcachedNode> nodes, Config conf) {
+        this.nodes=nodes.toArray(new MemcachedNode[nodes.size()]);
+    }
+
+    private int getServerForKey(String key) {
 		int rv=(int)(hashAlg.hash(key) % nodes.length);
 		assert rv >= 0 : "Returned negative key for key " + key;
 		assert rv < nodes.length

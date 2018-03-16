@@ -1,8 +1,6 @@
 package net.spy.memcached.vbucket;
 
-import java.io.UnsupportedEncodingException;
 import junit.framework.TestCase;
-import net.spy.memcached.TestConfig;
 import net.spy.memcached.vbucket.config.Bucket;
 
 import java.util.List;
@@ -19,7 +17,7 @@ public class ConfigurationProviderHTTPTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        List<URI> baseList = Arrays.asList(new URI("http://" + TestConfig.IPV4_ADDR + ":8091/pools"));
+        List<URI> baseList = Arrays.asList(new URI("http://localhost:8091/pools"));
         configProvider = new ConfigurationProviderHTTP(baseList, restUsr, restPwd);
         assertNotNull(configProvider);
     }
@@ -45,14 +43,8 @@ public class ConfigurationProviderHTTPTest extends TestCase {
         assertEquals("default", configProvider.getAnonymousAuthBucket());
     }
 
-    public void testBuildAuthHeader() throws UnsupportedEncodingException {
+    public void testBuildAuthHeader() {
 	ConfigurationProviderHTTP.buildAuthHeader("foo", "bar");
-    }
 
-    public void testBuildAuthHeaderUTF8() throws UnsupportedEncodingException {
-	String result  = ConfigurationProviderHTTP.buildAuthHeader("blahblah", "bla@@h");
-	// string inspired by https://github.com/trondn/libcouchbase/issues/3
-	System.err.println("Authorization header for matt:this@here is " + result);
-	assertEquals("Basic YmxhaGJsYWg6YmxhQEBo", result);
     }
 }

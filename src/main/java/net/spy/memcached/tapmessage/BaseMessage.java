@@ -24,6 +24,8 @@ package net.spy.memcached.tapmessage;
 
 import java.nio.ByteBuffer;
 
+import net.spy.memcached.compat.SpyObject;
+
 /**
  * The HeaderMessage implements the header of a tap message. This class cannot
  * be instantiated. Tap stream messages are created with the RequestMessage and
@@ -31,7 +33,7 @@ import java.nio.ByteBuffer;
  * their own tap messages should use the CustomTapStream class since it provides
  * flexibility to create all valid tap messages.
  */
-public class BaseMessage {
+public class BaseMessage extends SpyObject {
   /**
    * The index of the magic field in a tap header.
    */

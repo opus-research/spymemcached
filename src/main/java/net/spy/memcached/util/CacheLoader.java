@@ -29,12 +29,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.MemcachedClientIF;
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.internal.ImmediateFuture;
 
 /**
  * CacheLoader provides efficient mechanisms for storing lots of data.
  */
-public class CacheLoader {
+public class CacheLoader extends SpyObject {
 
   private final ExecutorService executorService;
   private final StorageListener storageListener;

@@ -32,16 +32,11 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Operation to delete an item from the cache.
  */
 final class DeleteOperationImpl extends OperationImpl implements
     DeleteOperation {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(DeleteOperationImpl.class);
 
   private static final int OVERHEAD = 32;
 
@@ -59,7 +54,7 @@ final class DeleteOperationImpl extends OperationImpl implements
 
   @Override
   public void handleLine(String line) {
-    LOG.debug("Delete of %s returned %s", key, line);
+    getLogger().debug("Delete of %s returned %s", key, line);
     getCallback().receivedStatus(matchStatus(line, DELETED, NOT_FOUND));
     transitionState(OperationState.COMPLETE);
   }
@@ -75,5 +70,10 @@ final class DeleteOperationImpl extends OperationImpl implements
 
   public Collection<String> getKeys() {
     return Collections.singleton(key);
+  }
+
+  @Override
+  public String toString() {
+    return "Cmd: delete Key: " + key;
   }
 }

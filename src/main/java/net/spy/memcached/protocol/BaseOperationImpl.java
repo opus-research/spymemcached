@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import net.spy.memcached.MemcachedNode;
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.CancelledOperationStatus;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
@@ -36,22 +37,20 @@ import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.spy.memcached.ops.TimedOutOperationStatus;
 
 /**
  * Base class for protocol-specific operation implementations.
  */
-public abstract class BaseOperationImpl implements Operation {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(BaseOperationImpl.class);
+public abstract class BaseOperationImpl extends SpyObject implements Operation {
 
   /**
    * Status object for canceled operations.
    */
   public static final OperationStatus CANCELLED =
       new CancelledOperationStatus();
+  public static final OperationStatus TIMED_OUT=
+      new TimedOutOperationStatus();
   private OperationState state = OperationState.WRITE_QUEUED;
   private ByteBuffer cmd = null;
   private boolean cancelled = false;
@@ -98,6 +97,7 @@ public abstract class BaseOperationImpl implements Operation {
   public final synchronized void cancel() {
     cancelled = true;
     wasCancelled();
+    callback.receivedStatus(CANCELLED);
     callback.complete();
   }
 
@@ -105,7 +105,7 @@ public abstract class BaseOperationImpl implements Operation {
    * This is called on each subclass whenever an operation was cancelled.
    */
   protected void wasCancelled() {
-    LOG.debug("was cancelled.");
+    getLogger().debug("was cancelled.");
   }
 
   public final synchronized OperationState getState() {
@@ -129,7 +129,7 @@ public abstract class BaseOperationImpl implements Operation {
    * Transition the state of this operation to the given state.
    */
   protected final synchronized void transitionState(OperationState newState) {
-    LOG.debug("Transitioned state from %s to %s", state, newState);
+    getLogger().debug("Transitioned state from %s to %s", state, newState);
     state = newState;
     // Discard our buffer when we no longer need it.
     if(state != OperationState.WRITE_QUEUED
@@ -155,7 +155,7 @@ public abstract class BaseOperationImpl implements Operation {
 
   protected void handleError(OperationErrorType eType, String line)
     throws IOException {
-    LOG.error("Error:  %s", line);
+    getLogger().error("Error:  %s", line);
     switch (eType) {
     case GENERAL:
       exception = new OperationException();
@@ -169,6 +169,8 @@ public abstract class BaseOperationImpl implements Operation {
     default:
       assert false;
     }
+    callback.receivedStatus(new OperationStatus(false,
+        exception.getMessage()));
     transitionState(OperationState.COMPLETE);
     throw exception;
   }
@@ -188,6 +190,7 @@ public abstract class BaseOperationImpl implements Operation {
   @Override
   public synchronized void timeOut() {
     timedout = true;
+    callback.receivedStatus(TIMED_OUT);
     callback.complete();
   }
 
@@ -203,6 +206,7 @@ public abstract class BaseOperationImpl implements Operation {
     if (elapsed - creationTime > ttlNanos) {
       timedOutUnsent = true;
       timedout = true;
+      callback.receivedStatus(TIMED_OUT);
       callback.complete();
     } else {
       // timedout would be false, but we cannot allow you to untimeout an

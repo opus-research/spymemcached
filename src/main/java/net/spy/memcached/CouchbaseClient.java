@@ -59,16 +59,12 @@ import net.spy.memcached.vbucket.config.Bucket;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpVersion;
 import org.apache.http.message.BasicHttpRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A client for Couchbase Server.
  */
 public class CouchbaseClient extends MembaseClient
   implements CouchbaseClientIF {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(CouchbaseClient.class);
 
   private static final String MODE_PRODUCTION = "production";
   private static final String MODE_DEVELOPMENT = "development";
@@ -142,7 +138,7 @@ public class CouchbaseClient extends MembaseClient
       addrs.add(new InetSocketAddress(conv.remove(0).getHostName(), 5984));
     }
 
-    LOG.info(MODE_ERROR);
+    getLogger().info(MODE_ERROR);
     cconn = cf.createCouchDBConnection(addrs);
     cf.getConfigurationProvider().subscribe(cf.getBucket(), this);
   }
@@ -464,8 +460,9 @@ public class CouchbaseClient extends MembaseClient
       mconn.reconfigure(bucket);
       cconn.reconfigure(bucket);
     } catch (IllegalArgumentException ex) {
-      LOG.warn("Failed to reconfigure client, staying with previous "
-        + "configuration.", ex);
+      getLogger().warn(
+          "Failed to reconfigure client, staying with previous configuration.",
+          ex);
     } finally {
       reconfiguring = false;
     }
@@ -491,7 +488,7 @@ public class CouchbaseClient extends MembaseClient
     try {
       return super.shutdown(duration, units) && cconn.shutdown();
     } catch (IOException e) {
-      LOG.error("Error shutting down CouchbaseClient");
+      getLogger().error("Error shutting down CouchbaseClient");
       return false;
     }
   }

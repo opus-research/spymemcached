@@ -29,6 +29,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
+import net.spy.memcached.compat.SpyObject;
+
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.impl.nio.DefaultClientIOEventDispatch;
@@ -43,15 +45,11 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.SessionRequest;
 import org.apache.http.nio.reactor.SessionRequestCallback;
 import org.apache.http.params.HttpParams;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An asynchronous HTTP connection manager.
  */
-public class AsyncConnectionManager {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(AsyncConnectionManager.class);
+public class AsyncConnectionManager extends SpyObject {
 
   private final HttpHost target;
   private final int maxConnections;
@@ -137,7 +135,7 @@ public class AsyncConnectionManager {
       while (!this.availableConns.isEmpty()) {
         NHttpClientConnection conn = this.availableConns.remove();
         if (conn.isOpen()) {
-          LOG.debug("Re-using persistent connection");
+          getLogger().debug("Re-using persistent connection");
           request.setConnection(conn);
           break;
         } else {
@@ -165,7 +163,7 @@ public class AsyncConnectionManager {
           conn.setSocketTimeout(0);
           AsyncConnectionRequest request = this.pendingRequests.poll();
           if (request != null) {
-            LOG.debug("Re-using persistent connection");
+            getLogger().debug("Re-using persistent connection");
             request.setConnection(conn);
           } else {
             this.availableConns.add(conn);
@@ -188,7 +186,7 @@ public class AsyncConnectionManager {
           new InetSocketAddress(this.target.getHostName(),
           this.target.getPort());
       ConnRequestCallback callback = new ConnRequestCallback(request);
-      LOG.info("Opening new CouchDB connection");
+      getLogger().info("Opening new CouchDB connection");
       this.ioreactor.connect(address, null, request, callback);
     }
   }
@@ -247,9 +245,8 @@ public class AsyncConnectionManager {
     }
   }
 
-  static class ConnRequestCallback implements SessionRequestCallback {
-    private static final Logger LOG =
-      LoggerFactory.getLogger(ConnRequestCallback.class);
+  static class ConnRequestCallback extends SpyObject implements
+      SessionRequestCallback {
 
     private final AsyncConnectionRequest connRequest;
 
@@ -259,18 +256,18 @@ public class AsyncConnectionManager {
     }
 
     public void completed(SessionRequest request) {
-      LOG.info(request.getRemoteAddress()
+      getLogger().info(request.getRemoteAddress()
           + " - Session request successful");
     }
 
     public void cancelled(SessionRequest request) {
-      LOG.info(request.getRemoteAddress()
+      getLogger().info(request.getRemoteAddress()
           + " - Session request cancelled");
       connRequest.cancel();
     }
 
     public void failed(SessionRequest request) {
-      LOG.error(request.getRemoteAddress()
+      getLogger().error(request.getRemoteAddress()
           + " - Session request failed");
       IOException ex = request.getException();
       if (ex != null) {
@@ -280,7 +277,7 @@ public class AsyncConnectionManager {
     }
 
     public void timeout(SessionRequest request) {
-      LOG.info(request.getRemoteAddress()
+      getLogger().info(request.getRemoteAddress()
           + " - Session request timed out");
       connRequest.cancel();
     }

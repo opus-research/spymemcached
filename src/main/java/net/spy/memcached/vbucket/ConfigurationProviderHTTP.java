@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.spy.memcached.AddrUtil;
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.vbucket.config.Bucket;
 import net.spy.memcached.vbucket.config.Config;
 import net.spy.memcached.vbucket.config.ConfigurationParser;
@@ -50,16 +51,12 @@ import net.spy.memcached.vbucket.config.ConfigurationParserJSON;
 import net.spy.memcached.vbucket.config.Pool;
 
 import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A configuration provider.
  */
-public class ConfigurationProviderHTTP implements ConfigurationProvider {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(ConfigurationProviderHTTP.class);
-
+public class ConfigurationProviderHTTP extends SpyObject implements
+    ConfigurationProvider {
   /**
    * Configuration management class that provides methods for retrieving vbucket
    * configuration and receiving configuration updates.
@@ -145,7 +142,7 @@ public class ConfigurationProviderHTTP implements ConfigurationProvider {
         URLConnection baseConnection = urlConnBuilder(null, baseUri);
         String base = readToString(baseConnection);
         if ("".equals(base)) {
-          LOG.warn("Provided URI " + baseUri + " has an empty"
+          getLogger().warn("Provided URI " + baseUri + " has an empty"
             + " response... skipping");
           continue;
         }
@@ -153,7 +150,7 @@ public class ConfigurationProviderHTTP implements ConfigurationProvider {
 
         // check for the default pool name
         if (!pools.containsKey(DEFAULT_POOL_NAME)) {
-          LOG.warn("Provided URI " + baseUri + " has no default pool"
+          getLogger().warn("Provided URI " + baseUri + " has no default pool"
             + "... skipping");
           continue;
         }
@@ -189,10 +186,10 @@ public class ConfigurationProviderHTTP implements ConfigurationProvider {
           return;
         }
       } catch (ParseException e) {
-        LOG.warn("Provided URI " + baseUri
+        getLogger().warn("Provided URI " + baseUri
           + " has an unparsable response...skipping", e);
       } catch (IOException e) {
-        LOG.warn("Connection problems with URI " + baseUri
+        getLogger().warn("Connection problems with URI " + baseUri
             + " ...skipping", e);
       }
       throw new ConfigurationException("Configuration for bucket "

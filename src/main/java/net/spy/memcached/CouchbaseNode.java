@@ -31,6 +31,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.couch.AsyncConnectionManager;
 import net.spy.memcached.couch.AsyncConnectionRequest;
 import net.spy.memcached.couch.RequestHandle;
@@ -48,8 +49,6 @@ import org.apache.http.nio.protocol.NHttpRequestExecutionHandler;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.http.protocol.HttpContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Establishes a connection to a single Couchbase node.
@@ -57,9 +56,7 @@ import org.slf4j.LoggerFactory;
  * Based upon http://hc.apache.org/httpcomponents-core-ga/httpcore-nio/
  * examples/org/apache/http/examples/nio/NHttpClientConnManagement.java
  */
-public class CouchbaseNode {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(CouchbaseNode.class);
+public class CouchbaseNode extends SpyObject {
 
   private final InetSocketAddress addr;
   private final AsyncConnectionManager connMgr;
@@ -84,12 +81,12 @@ public class CouchbaseNode {
         try {
           connMgr.execute();
         } catch (InterruptedIOException ex) {
-          LOG.error("I/O reactor Interrupted");
+          getLogger().error("I/O reactor Interrupted");
         } catch (IOException e) {
-          LOG.error("I/O error: " + e.getMessage());
+          getLogger().error("I/O error: " + e.getMessage());
           e.printStackTrace();
         }
-        LOG.info("Couchbase I/O reactor terminated");
+        getLogger().info("Couchbase I/O reactor terminated");
       }
     });
     t.start();
@@ -103,15 +100,16 @@ public class CouchbaseNode {
         try {
           connRequest.waitFor();
         } catch (InterruptedException e) {
-          LOG.warn("Interrupted while trying to get a connection."
-            + " Cancelling op");
+          getLogger().warn(
+              "Interrupted while trying to get a connection."
+                  + " Cancelling op");
           op.cancel();
           return;
         }
 
         NHttpClientConnection conn = connRequest.getConnection();
         if (conn == null) {
-          LOG.error("Failed to obtain connection. Cancelling op");
+          getLogger().error("Failed to obtain connection. Cancelling op");
           op.cancel();
         } else {
           HttpContext context = conn.getContext();
@@ -208,30 +206,28 @@ public class CouchbaseNode {
     }
   }
 
-  static class EventLogger implements EventListener {
-    private static final Logger LOG =
-      LoggerFactory.getLogger(EventLogger.class);
+  static class EventLogger extends SpyObject implements EventListener {
 
     public void connectionOpen(final NHttpConnection conn) {
-      LOG.debug("Connection open: " + conn);
+      getLogger().debug("Connection open: " + conn);
     }
 
     public void connectionTimeout(final NHttpConnection conn) {
-      LOG.error("Connection timed out: " + conn);
+      getLogger().error("Connection timed out: " + conn);
     }
 
     public void connectionClosed(final NHttpConnection conn) {
-      LOG.debug("Connection closed: " + conn);
+      getLogger().debug("Connection closed: " + conn);
     }
 
     public void fatalIOException(final IOException ex,
         final NHttpConnection conn) {
-      LOG.error("I/O error: " + ex.getMessage());
+      getLogger().error("I/O error: " + ex.getMessage());
     }
 
     public void fatalProtocolException(final HttpException ex,
         final NHttpConnection conn) {
-      LOG.error("HTTP error: " + ex.getMessage());
+      getLogger().error("HTTP error: " + ex.getMessage());
     }
   }
 }

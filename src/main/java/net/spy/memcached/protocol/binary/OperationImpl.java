@@ -38,15 +38,10 @@ import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.BaseOperationImpl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Base class for binary operations.
  */
 abstract class OperationImpl extends BaseOperationImpl implements Operation {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(OperationImpl.class);
 
   protected static final byte REQ_MAGIC = (byte) 0x80;
   protected static final byte RES_MAGIC = (byte) 0x81;
@@ -128,7 +123,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
       int toRead = MIN_RECV_PACKET - headerOffset;
       int available = b.remaining();
       toRead = Math.min(toRead, available);
-      LOG.debug("Reading " + toRead + " header bytes");
+      getLogger().debug("Reading %d header bytes", toRead);
       b.get(header, headerOffset, toRead);
       headerOffset += toRead;
 
@@ -157,7 +152,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
       int toRead = payload.length - payloadOffset;
       int available = b.remaining();
       toRead = Math.min(toRead, available);
-      LOG.debug("Reading " + toRead + " payload bytes");
+      getLogger().debug("Reading %d payload bytes", toRead);
       b.get(payload, payloadOffset, toRead);
       payloadOffset += toRead;
 
@@ -167,9 +162,10 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
       }
     } else {
       // Haven't read enough to make up a payload. Must read more.
-      LOG.debug("Only read " + headerOffset + " of the " + MIN_RECV_PACKET
-          + " needed to fill a header");
+      getLogger().debug("Only read %d of the %d needed to fill a header",
+          headerOffset, MIN_RECV_PACKET);
     }
+
   }
 
   protected void finishedPayload(byte[] pl) throws IOException {
@@ -243,8 +239,8 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
    */
   protected boolean opaqueIsValid() {
     if (responseOpaque != opaque) {
-      LOG.warn("Expected opaque:  " + responseOpaque + ", got opaque:  "
-          + opaque);
+      getLogger().warn("Expected opaque:  %d, got opaque:  %d\n",
+          responseOpaque, opaque);
     }
     return responseOpaque == opaque;
   }
@@ -351,5 +347,10 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
       rv = SEQ_NUMBER.incrementAndGet();
     }
     return rv;
+  }
+
+  @Override
+  public String toString() {
+    return "Cmd: " + cmd + " Opaque: " + opaque;
   }
 }

@@ -23,16 +23,13 @@
 package net.spy.memcached.transcoders;
 
 import net.spy.memcached.CachedData;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.spy.memcached.compat.SpyObject;
 
 /**
  * Transcoder that serializes and unserializes longs.
  */
-public final class LongTranscoder implements Transcoder<Long> {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(LongTranscoder.class);
+public final class LongTranscoder extends SpyObject
+  implements Transcoder<Long> {
 
   private static final int FLAGS = SerializingTranscoder.SPECIAL_LONG;
 
@@ -50,7 +47,7 @@ public final class LongTranscoder implements Transcoder<Long> {
     if (FLAGS == d.getFlags()) {
       return tu.decodeLong(d.getData());
     } else {
-      LOG.error(
+      getLogger().error(
           "Unexpected flags for long:  " + d.getFlags() + " wanted " + FLAGS);
       return null;
     }

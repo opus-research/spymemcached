@@ -35,19 +35,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.NodeLocator;
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.vbucket.config.Config;
 import net.spy.memcached.vbucket.config.ConfigDifference;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the {@link NodeLocator} interface that contains vbucket
  * hashing methods.
  */
-public class VBucketNodeLocator implements NodeLocator {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(VBucketNodeLocator.class);
+public class VBucketNodeLocator extends SpyObject implements NodeLocator {
 
   private final AtomicReference<TotalConfig> fullConfig;
 
@@ -77,20 +73,20 @@ public class VBucketNodeLocator implements NodeLocator {
     // choose appropriate MemcachedNode according to config data
     MemcachedNode pNode = nodesMap.get(server);
     if (pNode == null) {
-      LOG.error("The node locator does not have a primary for key " + k
-        + ".  Wanted vbucket " + vbucket + " which should be on server "
-        + server + ".");
-      LOG.error("List of nodes has " + nodesMap.size() + " entries:");
+      getLogger().error("The node locator does not have a primary for key"
+        + " %s.  Wanted vbucket %s which should be on server %s.", k,
+        vbucket, server);
+      getLogger().error("List of nodes has %s entries:", nodesMap.size());
       Set<String> keySet = nodesMap.keySet();
       Iterator<String> iterator = keySet.iterator();
       while (iterator.hasNext()) {
         String anode = iterator.next();
-        LOG.error("MemcachedNode for " + anode + " is "
-          + nodesMap.get(anode));
+        getLogger().error("MemcachedNode for %s is %s", anode,
+          nodesMap.get(anode));
       }
       Collection<MemcachedNode> nodes = nodesMap.values();
       for (MemcachedNode node : nodes) {
-        LOG.error(node.toString());
+        getLogger().error(node);
       }
     }
     assert (pNode != null);
@@ -129,11 +125,11 @@ public class VBucketNodeLocator implements NodeLocator {
     Config current = fullConfig.get().getConfig();
     ConfigDifference compareTo = current.compareTo(newconf);
     if (compareTo.isSequenceChanged() || compareTo.getVbucketsChanges() > 0) {
-      LOG.debug("Updating configuration, received updated configuration"
+      getLogger().debug("Updating configuration, received updated configuration"
         + " with significant changes.");
       fullConfig.set(new TotalConfig(newconf, fillNodesEntries(nodes)));
     } else {
-      LOG.debug("Received updated configuration with insignificant "
+      getLogger().debug("Received updated configuration with insignificant "
         + "changes.");
     }
   }
@@ -153,15 +149,15 @@ public class VBucketNodeLocator implements NodeLocator {
       Collection<MemcachedNode> nodes) {
     HashMap<String, MemcachedNode> vbnodesMap =
         new HashMap<String, MemcachedNode>();
-    LOG.debug("Updating nodesMap in VBucketNodeLocator.");
+    getLogger().debug("Updating nodesMap in VBucketNodeLocator.");
     for (MemcachedNode node : nodes) {
       InetSocketAddress addr = (InetSocketAddress) node.getSocketAddress();
       String address = addr.getAddress().getHostName() + ":" + addr.getPort();
       String hostname = addr.getAddress().getHostAddress() + ":"
         + addr.getPort();
-      LOG.debug("Adding node with hostname " + hostname + " and address "
-          + address + ".");
-      LOG.debug("Node added is " + node + ".");
+      getLogger().debug("Adding node with hostname %s and address %s.",
+          hostname, address);
+      getLogger().debug("Node added is %s.", node);
       vbnodesMap.put(address, node);
       vbnodesMap.put(hostname, node);
     }

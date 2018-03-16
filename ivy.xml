@@ -37,6 +37,8 @@ SOFTWARE.
   </configurations>
 
   <dependencies>
+    <dependency org="log4j" name="log4j" rev="${log4j.version}"
+        conf="common->master" />
     <dependency org="jmock" name="jmock" rev="${jmock.version}"
         conf="common->master" />
     <dependency org="junit" name="junit" rev="${junit.version}"
@@ -58,8 +60,6 @@ SOFTWARE.
     <dependency org="cglib" name="cglib" rev="${cglib.version}"
         conf="common->master" />
     <dependency org="asm" name="asm" rev="${asm.version}"
-        conf="common->master" />
-    <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"
         conf="common->master" />
     <dependency org="org.apache.httpcomponents" name="httpcore"
         rev="${httpcore.version}" conf="common->master"/>

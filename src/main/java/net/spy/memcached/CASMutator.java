@@ -22,6 +22,7 @@
 
 package net.spy.memcached;
 
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.transcoders.Transcoder;
 
 /**
@@ -52,7 +53,7 @@ import net.spy.memcached.transcoders.Transcoder;
  * long currentValue=mutator.cas(someKey, 0L, 0, mutation);
  * </pre>
  */
-public class CASMutator<T> {
+public class CASMutator<T> extends SpyObject {
 
   private static final int MAX_TRIES = 8192;
 

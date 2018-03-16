@@ -26,16 +26,11 @@ import java.util.Date;
 
 import net.spy.memcached.CachedData;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Transcoder that serializes and compresses objects.
  */
 public class SerializingTranscoder extends BaseSerializingTranscoder implements
     Transcoder<Object> {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(SerializingTranscoder.class);
 
   // General flags
   static final int SERIALIZED = 1;
@@ -117,7 +112,7 @@ public class SerializingTranscoder extends BaseSerializingTranscoder implements
         rv = data;
         break;
       default:
-        LOG.warn("Undecodeable with flags " + flags);
+        getLogger().warn("Undecodeable with flags %x", flags);
       }
     } else {
       rv = decodeString(data);
@@ -167,14 +162,13 @@ public class SerializingTranscoder extends BaseSerializingTranscoder implements
     if (b.length > compressionThreshold) {
       byte[] compressed = compress(b);
       if (compressed.length < b.length) {
-        LOG.debug("Compressed " + o.getClass().getName() + " from "
-            + b.length + " to " + compressed.length);
+        getLogger().debug("Compressed %s from %d to %d",
+            o.getClass().getName(), b.length, compressed.length);
         b = compressed;
         flags |= COMPRESSED;
       } else {
-        LOG.info("Compression increased the size of "
-            + o.getClass().getName() + " from " + b.length + " to "
-            + compressed.length);
+        getLogger().info("Compression increased the size of %s from %d to %d",
+            o.getClass().getName(), b.length, compressed.length);
       }
     }
     return new CachedData(flags, b, getMaxSize());

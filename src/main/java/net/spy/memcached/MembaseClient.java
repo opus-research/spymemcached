@@ -38,16 +38,11 @@ import net.spy.memcached.transcoders.Transcoder;
 import net.spy.memcached.vbucket.Reconfigurable;
 import net.spy.memcached.vbucket.config.Bucket;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * A client for Membase Server.
  */
 public class MembaseClient extends MemcachedClient implements MembaseClientIF,
     Reconfigurable {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(MembaseClient.class);
 
   protected volatile boolean reconfiguring = false;
 
@@ -166,7 +161,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF,
     try {
       mconn.reconfigure(bucket);
     } catch (IllegalArgumentException ex) {
-      LOG.warn(
+      getLogger().warn(
           "Failed to reconfigure client, staying with previous configuration.",
           ex);
     } finally {
@@ -273,6 +268,17 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF,
    */
   public CASValue<Object> getAndLock(String key, int exp) {
     return getAndLock(key, exp, transcoder);
+  }
+
+  /**
+   * Gets the number of vBuckets that are contained in the cluster. This
+   * function is for internal use only and should rarely be since there
+   * are few use cases in which it is necessary.
+   */
+  @Override
+  public int getNumVBuckets() {
+    return ((MembaseConnectionFactory)connFactory).getVBucketConfig()
+      .getVbucketsCount();
   }
 
   @Override

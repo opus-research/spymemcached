@@ -36,6 +36,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.auth.AuthDescriptor;
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.protocol.ascii.AsciiMemcachedNodeImpl;
 import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
@@ -55,7 +56,7 @@ import net.spy.memcached.transcoders.Transcoder;
  *
  * </p>
  */
-public class DefaultConnectionFactory implements
+public class DefaultConnectionFactory extends SpyObject implements
     ConnectionFactory {
 
   /**
@@ -342,5 +343,23 @@ public class DefaultConnectionFactory implements
    */
   public int getTimeoutExceptionThreshold() {
     return DEFAULT_MAX_TIMEOUTEXCEPTION_THRESHOLD;
+  }
+
+  protected String getName() {
+    return "DefaultConnectionFactory";
+  }
+
+  @Override
+  public String toString() {
+    return "Failure Mode: " + getFailureMode().name() + ", Hash Algorithm: "
+      + ((DefaultHashAlgorithm)getHashAlg()).name() + " Max Reconnect Delay: "
+      + getMaxReconnectDelay() + ", Max Op Timeout: " + getOperationTimeout()
+      + ", Op Queue Length: " + getOpQueueLen() + ", Op Max Queue Block Time"
+      + getOpQueueMaxBlockTime() + ", Max Timeout Exception Threshold: "
+      + getTimeoutExceptionThreshold() + ", Read Buffer Size: "
+      + getReadBufSize() + ", Transcoder: " + getDefaultTranscoder()
+      + ", Operation Factory: " + getOperationFactory() + " isDaemon: "
+      + isDaemon() + ", Optimized: " + shouldOptimize() + ", Using Nagle: "
+      + useNagleAlgorithm() + ", ConnectionFactory: " + getName();
   }
 }

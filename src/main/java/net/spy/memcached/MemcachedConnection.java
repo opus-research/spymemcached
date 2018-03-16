@@ -48,6 +48,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 
+import net.spy.memcached.compat.SpyThread;
+import net.spy.memcached.compat.log.LoggerFactory;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationException;
@@ -59,16 +61,11 @@ import net.spy.memcached.vbucket.Reconfigurable;
 import net.spy.memcached.vbucket.VBucketNodeLocator;
 import net.spy.memcached.vbucket.config.Bucket;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Connection to a cluster of memcached servers.
  */
-public final class MemcachedConnection extends Thread implements
+public final class MemcachedConnection extends SpyThread implements
     Reconfigurable {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(MemcachedConnection.class);
 
   // The number of empty selects we'll allow before assuming we may have
   // missed one and should check the current selectors. This generally
@@ -153,10 +150,10 @@ public final class MemcachedConnection extends Thread implements
       // connect, but it considerably slowed down start time.
       try {
         if (ch.connect(sa)) {
-          LOG.info("Connected to " + qa + " immediately");
+          getLogger().info("Connected to %s immediately", qa);
           connected(qa);
         } else {
-          LOG.info("Added " + qa + " to connect queue");
+          getLogger().info("Added %s to connect queue", qa);
           ops = SelectionKey.OP_CONNECT;
         }
         qa.setSk(ch.register(selector, ops, qa));
@@ -164,7 +161,7 @@ public final class MemcachedConnection extends Thread implements
             || qa.getSk().interestOps() == SelectionKey.OP_CONNECT
             : "Not connected, and not wanting to connect";
       } catch (SocketException e) {
-        LOG.warn("Socket error on initial connect", e);
+        getLogger().warn("Socket error on initial connect", e);
         queueReconnect(qa);
       }
       connections.add(qa);
@@ -227,7 +224,7 @@ public final class MemcachedConnection extends Thread implements
       // schedule shutdown for the oddNodes
       nodesToShutdown.addAll(oddNodes);
     } catch (IOException e) {
-      LOG.error("Connection reconfiguration failed", e);
+      getLogger().error("Connection reconfiguration failed", e);
     } finally {
       reconfiguring = false;
     }
@@ -257,7 +254,7 @@ public final class MemcachedConnection extends Thread implements
         }
       }
     }
-    LOG.debug("Checked the selectors.");
+    getLogger().debug("Checked the selectors.");
     return true;
   }
 
@@ -272,7 +269,7 @@ public final class MemcachedConnection extends Thread implements
     // Deal with all of the stuff that's been added, but may not be marked
     // writable.
     handleInputQueue();
-    LOG.debug("Done dealing with queue.");
+    getLogger().debug("Done dealing with queue.");
 
     long delay = 0;
     if (!reconnectQueue.isEmpty()) {
@@ -280,20 +277,20 @@ public final class MemcachedConnection extends Thread implements
       long then = reconnectQueue.firstKey();
       delay = Math.max(then - now, 1);
     }
-    LOG.debug("Selecting with delay of " + delay + "ms");
+    getLogger().debug("Selecting with delay of %sms", delay);
     assert selectorsMakeSense() : "Selectors don't make sense.";
     int selected = selector.select(delay);
     Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
     if (selectedKeys.isEmpty() && !shutDown) {
-      LOG.debug("No selectors ready, interrupted: "
+      getLogger().debug("No selectors ready, interrupted: "
           + Thread.interrupted());
       if (++emptySelects > DOUBLE_CHECK_EMPTY) {
         for (SelectionKey sk : selector.keys()) {
-          LOG.info(sk + " has " + sk.readyOps() + ", interested in "
-            + sk.interestOps());
+          getLogger().info("%s has %s, interested in %s", sk, sk.readyOps(),
+              sk.interestOps());
           if (sk.readyOps() != 0) {
-            LOG.info(sk + " has a ready op, handling IO");
+            getLogger().info("%s has a ready op, handling IO", sk);
             handleIO(sk);
           } else {
             lostConnection((MemcachedNode) sk.attachment());
@@ -302,8 +299,8 @@ public final class MemcachedConnection extends Thread implements
         assert emptySelects < EXCESSIVE_EMPTY : "Too many empty selects";
       }
     } else {
-      LOG.debug("Selected " + selected + ", selected " + selectedKeys.size()
-          + " keys");
+      getLogger().debug("Selected %d, selected %d keys", selected,
+          selectedKeys.size());
       emptySelects = 0;
 
       for (SelectionKey sk : selectedKeys) {
@@ -316,7 +313,7 @@ public final class MemcachedConnection extends Thread implements
     for (SelectionKey sk : selector.keys()) {
       MemcachedNode mn = (MemcachedNode) sk.attachment();
       if (mn.getContinuousTimeout() > timeoutExceptionThreshold) {
-        LOG.warn(sk + " exceeded continuous timeout threshold");
+        getLogger().warn("%s exceeded continuous timeout threshold", sk);
         lostConnection(mn);
       }
     }
@@ -337,10 +334,10 @@ public final class MemcachedConnection extends Thread implements
           qa.getChannel().close();
           qa.setSk(null);
           if (qa.getBytesRemainingToWrite() > 0) {
-            LOG.warn("Shut down with " + qa.getBytesRemainingToWrite()
-              +" bytes remaining to write");
+            getLogger().warn("Shut down with %d bytes remaining to write",
+                qa.getBytesRemainingToWrite());
           }
-          LOG.debug("Shut down channel " + qa.getChannel());
+          getLogger().debug("Shut down channel %s", qa.getChannel());
         }
         redistributeOperations(notCompletedOperations);
       }
@@ -350,7 +347,7 @@ public final class MemcachedConnection extends Thread implements
   // Handle any requests that have been made against the client.
   private void handleInputQueue() {
     if (!addedQueue.isEmpty()) {
-      LOG.debug("Handling queue");
+      getLogger().debug("Handling queue");
       // If there's stuff in the added queue. Try to process it.
       Collection<MemcachedNode> toAdd = new HashSet<MemcachedNode>();
       // Transfer the queue into a hashset. There are very likely more
@@ -367,7 +364,7 @@ public final class MemcachedConnection extends Thread implements
         if (qa.isActive()) {
           if (qa.getCurrentWriteOp() != null) {
             readyForIO = true;
-            LOG.debug("Handling queued write " + qa);
+            getLogger().debug("Handling queued write %s", qa);
           }
         } else {
           toAdd.add(qa);
@@ -379,7 +376,7 @@ public final class MemcachedConnection extends Thread implements
               handleWrites(qa.getSk(), qa);
             }
           } catch (IOException e) {
-            LOG.warn("Exception handling write", e);
+            getLogger().warn("Exception handling write", e);
             lostConnection(qa);
           }
         }
@@ -428,11 +425,11 @@ public final class MemcachedConnection extends Thread implements
   private void handleIO(SelectionKey sk) {
     MemcachedNode qa = (MemcachedNode) sk.attachment();
     try {
-      LOG.debug("Handling IO for:  " + sk + " (r=" + sk.isReadable()
-        + ", w=" + sk.isWritable() + ", c=" + sk.isConnectable() + ", op="
-        + sk.attachment() + ")");
+      getLogger().debug("Handling IO for:  %s (r=%s, w=%s, c=%s, op=%s)", sk,
+              sk.isReadable(), sk.isWritable(), sk.isConnectable(),
+              sk.attachment());
       if (sk.isConnectable()) {
-        LOG.info("Connection state changed for " + sk);
+        getLogger().info("Connection state changed for %s", sk);
         final SocketChannel channel = qa.getChannel();
         if (channel.finishConnect()) {
           connected(qa);
@@ -454,20 +451,20 @@ public final class MemcachedConnection extends Thread implements
     } catch (ClosedChannelException e) {
       // Note, not all channel closes end up here
       if (!shutDown) {
-        LOG.info("Closed channel and not shutting down. Queueing"
-            + " reconnect on " + qa, e);
+        getLogger().info("Closed channel and not shutting down. Queueing"
+            + " reconnect on %s", qa, e);
         lostConnection(qa);
       }
     } catch (ConnectException e) {
       // Failures to establish a connection should attempt a reconnect
       // without signaling the observers.
-      LOG.info("Reconnecting due to failure to connect to " + qa, e);
+      getLogger().info("Reconnecting due to failure to connect to %s", qa, e);
       queueReconnect(qa);
     } catch (OperationException e) {
       qa.setupForAuth(); // noop if !shouldAuth
-      LOG.info("Reconnection due to exception handling a memcached "
-          + "operation on " + qa + ". This may be due to an authentication "
-          + "failure.", e);
+      getLogger().info("Reconnection due to exception handling a memcached "
+          + "operation on %s. This may be due to an authentication failure.",
+          qa, e);
       lostConnection(qa);
     } catch (Exception e) {
       // Any particular error processing an item should simply
@@ -476,7 +473,7 @@ public final class MemcachedConnection extends Thread implements
       // One cause is just network oddness or servers
       // restarting, which lead here with IOException
       qa.setupForAuth(); // noop if !shouldAuth
-      LOG.info("Reconnecting due to exception on " + qa, e);
+      getLogger().info("Reconnecting due to exception on %s", qa, e);
       lostConnection(qa);
     }
     qa.fixupOps();
@@ -509,8 +506,8 @@ public final class MemcachedConnection extends Thread implements
         // If were doing tap then we won't throw an exception
         currentOp.getCallback().complete();
         ((TapOperation) currentOp).streamClosed(OperationState.COMPLETE);
-        LOG.debug("Completed read op: " + currentOp + " and giving the next"
-          + " " + rbuf.remaining() + " bytes");
+        getLogger().debug("Completed read op: %s and giving the next %d bytes",
+            currentOp, rbuf.remaining());
         Operation op = qa.removeCurrentReadOp();
         assert op == currentOp : "Expected to pop " + currentOp + " got " + op;
         queueReconnect(qa);
@@ -522,7 +519,7 @@ public final class MemcachedConnection extends Thread implements
       }
     }
     while (read > 0) {
-      LOG.debug("Read " + read + " bytes");
+      getLogger().debug("Read %d bytes", read);
       rbuf.flip();
       while (rbuf.remaining() > 0) {
         if (currentOp == null) {
@@ -531,14 +528,14 @@ public final class MemcachedConnection extends Thread implements
         synchronized(currentOp) {
           currentOp.readFromBuffer(rbuf);
           if (currentOp.getState() == OperationState.COMPLETE) {
-            LOG.debug("Completed read op: " + currentOp + " and giving the"
-              + " next " + rbuf.remaining() + " bytes");
+            getLogger().debug("Completed read op: %s and giving the next %d "
+                + "bytes", currentOp, rbuf.remaining());
             Operation op = qa.removeCurrentReadOp();
             assert op == currentOp : "Expected to pop " + currentOp + " got "
                 + op;
           } else if (currentOp.getState() == OperationState.RETRY) {
-            LOG.warn("Reschedule read op due to NOT_MY_VBUCKET error: "
-                + currentOp);
+            getLogger().warn("Reschedule read op due to NOT_MY_VBUCKET error: "
+                + "%s ", currentOp);
             ((VBucketAware) currentOp).addNotMyVbucketNode(
                 currentOp.getHandlingNode());
             Operation op = qa.removeCurrentReadOp();
@@ -572,8 +569,8 @@ public final class MemcachedConnection extends Thread implements
 
   private void queueReconnect(MemcachedNode qa) {
     if (!shutDown) {
-      LOG.warn("Closing, and reopening " + qa + ", attempt "
-        + qa.getReconnectCount() + ".");
+      getLogger().warn("Closing, and reopening %s, attempt %d.", qa,
+          qa.getReconnectCount());
       if (qa.getSk() != null) {
         qa.getSk().cancel();
         assert !qa.getSk().isValid() : "Cancelled selection key is valid";
@@ -583,10 +580,10 @@ public final class MemcachedConnection extends Thread implements
         if (qa.getChannel() != null && qa.getChannel().socket() != null) {
           qa.getChannel().socket().close();
         } else {
-          LOG.info("The channel or socket was null for " + qa);
+          getLogger().info("The channel or socket was null for %s", qa);
         }
       } catch (IOException e) {
-        LOG.warn("IOException trying to close a socket", e);
+        getLogger().warn("IOException trying to close a socket", e);
       }
       qa.setChannel(null);
 
@@ -655,12 +652,12 @@ public final class MemcachedConnection extends Thread implements
       try {
         if (!seen.containsKey(qa)) {
           seen.put(qa, Boolean.TRUE);
-          LOG.info("Reconnecting " + qa);
+          getLogger().info("Reconnecting %s", qa);
           ch = SocketChannel.open();
           ch.configureBlocking(false);
           int ops = 0;
           if (ch.connect(qa.getSocketAddress())) {
-            LOG.info("Immediately reconnected to " + qa);
+            getLogger().info("Immediately reconnected to %s", qa);
             assert ch.isConnected();
           } else {
             ops = SelectionKey.OP_CONNECT;
@@ -668,13 +665,13 @@ public final class MemcachedConnection extends Thread implements
           qa.registerChannel(ch, ch.register(selector, ops, qa));
           assert qa.getChannel() == ch : "Channel was lost.";
         } else {
-          LOG.debug("Skipping duplicate reconnect request for " + qa);
+          getLogger().debug("Skipping duplicate reconnect request for %s", qa);
         }
       } catch (SocketException e) {
-        LOG.warn("Error on reconnect", e);
+        getLogger().warn("Error on reconnect", e);
         rereQueue.add(qa);
       } catch (Exception e) {
-        LOG.error("Exception on reconnect, lost node " + qa, e);
+        getLogger().error("Exception on reconnect, lost node %s", qa, e);
       } finally {
         // it's possible that above code will leak file descriptors under
         // abnormal
@@ -684,7 +681,7 @@ public final class MemcachedConnection extends Thread implements
           try {
             ch.close();
           } catch (IOException x) {
-            LOG.error("Exception closing channel: " + qa, x);
+            getLogger().error("Exception closing channel: %s", qa, x);
           }
         }
       }
@@ -728,8 +725,9 @@ public final class MemcachedConnection extends Thread implements
       // and wait for it to come back online.
       if (placeIn == null) {
         placeIn = primary;
-        LOG.warn("Could not redistribute to another node, retrying primary "
-          + "node for " + key + ".");
+        this.getLogger().warn(
+            "Could not redistribute "
+                + "to another node, retrying primary node for %s.", key);
       }
     }
 
@@ -766,7 +764,7 @@ public final class MemcachedConnection extends Thread implements
     addedQueue.offer(node);
     Selector s = selector.wakeup();
     assert s == selector : "Wakeup returned the wrong selector.";
-    LOG.debug("Added " + o + " to " + node);
+    getLogger().debug("Added %s to %s", o, node);
   }
 
   private void addOperation(final MemcachedNode node, final Operation o) {
@@ -776,7 +774,7 @@ public final class MemcachedConnection extends Thread implements
     addedQueue.offer(node);
     Selector s = selector.wakeup();
     assert s == selector : "Wakeup returned the wrong selector.";
-    LOG.debug("Added " + o + " to " + node);
+    getLogger().debug("Added %s to %s", o, node);
   }
 
   public void addOperations(final Map<MemcachedNode, Operation> ops) {
@@ -842,15 +840,15 @@ public final class MemcachedConnection extends Thread implements
         qa.getChannel().close();
         qa.setSk(null);
         if (qa.getBytesRemainingToWrite() > 0) {
-          LOG.warn("Shut down with " + qa.getBytesRemainingToWrite()
-            + " bytes remaining to write");
+          getLogger().warn("Shut down with %d bytes remaining to write",
+              qa.getBytesRemainingToWrite());
         }
-        LOG.debug("Shut down channel " + qa.getChannel());
+        getLogger().debug("Shut down channel %s", qa.getChannel());
       }
     }
     running = false;
     selector.close();
-    LOG.debug("Shut down selector " + selector);
+    getLogger().debug("Shut down selector %s", selector);
   }
 
   @Override
@@ -933,16 +931,16 @@ public final class MemcachedConnection extends Thread implements
         }
       }
     }
-    LOG.info("Shut down memcached client");
+    getLogger().info("Shut down memcached client");
   }
 
   private void logRunException(Exception e) {
     if (shutDown) {
       // There are a couple types of errors that occur during the
       // shutdown sequence that are considered OK. Log at debug.
-      LOG.debug("Exception occurred during shutdown", e);
+      getLogger().debug("Exception occurred during shutdown", e);
     } else {
-      LOG.warn("Problem handling memcached IO", e);
+      getLogger().warn("Problem handling memcached IO", e);
     }
   }
 }

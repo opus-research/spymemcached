@@ -22,17 +22,11 @@
 
 package net.spy.memcached.tapmessage;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * A tap request message that is used to start tap streams, perform sasl
  * authentication, and maintain the health of tap streams.
  */
 public class RequestMessage extends BaseMessage {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(RequestMessage.class);
-
   private static final int NUM_VBUCKETS = 1024;
   private static final int FLAGS_FIELD_LENGTH = 4;
   private static final int BACKFILL_DATE_FIELD_LENGTH = 8;
@@ -111,7 +105,7 @@ public class RequestMessage extends BaseMessage {
         Util.valueToFieldOffest(vblist, (i * VBUCKET_LIST_FIELD_LENGTH),
             VBUCKET_LIST_FIELD_LENGTH, (long) vbs[i - 1]);
       } else {
-        LOG.error("vBucket ignored " + vbs[i - 1]
+        getLogger().error("vBucket ignored " + vbs[i - 1]
             + "is not a valid vBucket number");
       }
     }

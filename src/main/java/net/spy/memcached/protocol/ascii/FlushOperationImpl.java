@@ -29,15 +29,10 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Memcached flush_all operation.
  */
 final class FlushOperationImpl extends OperationImpl implements FlushOperation {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(FlushOperationImpl.class);
 
   private static final byte[] FLUSH = "flush_all\r\n".getBytes();
 
@@ -52,7 +47,7 @@ final class FlushOperationImpl extends OperationImpl implements FlushOperation {
 
   @Override
   public void handleLine(String line) {
-    LOG.debug("Flush completed successfully");
+    getLogger().debug("Flush completed successfully");
     getCallback().receivedStatus(matchStatus(line, OK));
     transitionState(OperationState.COMPLETE);
   }
@@ -68,5 +63,10 @@ final class FlushOperationImpl extends OperationImpl implements FlushOperation {
       b.flip();
     }
     setBuffer(b);
+  }
+
+  @Override
+  public String toString() {
+    return "Cmd: flush_all Delay: " + delay;
   }
 }

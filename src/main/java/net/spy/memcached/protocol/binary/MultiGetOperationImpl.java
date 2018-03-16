@@ -35,15 +35,10 @@ import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static net.spy.memcached.protocol.binary.GetOperationImpl.EXTRA_HDR_LEN;
 
 class MultiGetOperationImpl extends MultiKeyOperationImpl implements
     GetOperation {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(MultiGetOperationImpl.class);
 
   private static final int CMD_GETQ = 0x09;
 
@@ -121,8 +116,8 @@ class MultiGetOperationImpl extends MultiKeyOperationImpl implements
       getCallback().receivedStatus(STATUS_OK);
       transitionState(OperationState.COMPLETE);
     } else if (errorCode != 0) {
-      LOG.warn("Error on key " + keys.get(responseOpaque) + ":  "
-          + new String(pl) + " (" + errorCode + ")");
+      getLogger().warn("Error on key %s:  %s (%d)", keys.get(responseOpaque),
+          new String(pl), errorCode);
     } else {
       final int flags = decodeInt(pl, 0);
       final byte[] data = new byte[pl.length - EXTRA_HDR_LEN];

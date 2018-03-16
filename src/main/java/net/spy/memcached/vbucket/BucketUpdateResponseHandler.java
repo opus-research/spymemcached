@@ -24,6 +24,8 @@ package net.spy.memcached.vbucket;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.ChannelEvent;
@@ -36,16 +38,12 @@ import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A BucketUpdateResponseHandler.
  */
 @ChannelPipelineCoverage("one")
 public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(BucketUpdateResponseHandler.class);
 
   private volatile boolean readingChunks;
   private String lastResponse;
@@ -53,6 +51,8 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
   private CountDownLatch latch;
   private StringBuilder partialResponse;
   private BucketMonitor monitor;
+  private static final Logger LOGGER =
+      Logger.getLogger(BucketUpdateResponseHandler.class.getName());
 
   @Override
   public void messageReceived(final ChannelHandlerContext context,
@@ -80,8 +80,8 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
             monitor.invalidate();
           }
         } else {
-          LOG.debug(curChunk);
-          LOG.debug("Chunk length is: " + curChunk.length());
+          finerLog(curChunk);
+          finerLog("Chunk length is: " + curChunk.length());
           partialResponse.append(curChunk);
           channelFuture.setSuccess();
         }
@@ -94,27 +94,27 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
   }
 
   private void logResponse(HttpResponse response) {
-    LOG.debug("STATUS: " + response.getStatus());
-    LOG.debug("VERSION: " + response.getProtocolVersion());
+    finerLog("STATUS: " + response.getStatus());
+    finerLog("VERSION: " + response.getProtocolVersion());
 
     if (!response.getHeaderNames().isEmpty()) {
       for (String name : response.getHeaderNames()) {
         for (String value : response.getHeaders(name)) {
-          LOG.debug("HEADER: " + name + " = " + value);
+          finerLog("HEADER: " + name + " = " + value);
         }
       }
-      LOG.debug(System.getProperty("line.separator"));
+      finerLog(System.getProperty("line.separator"));
     }
 
     if (response.getStatus().getCode() == 200 && response.isChunked()) {
       readingChunks = true;
-      LOG.debug("CHUNKED CONTENT {");
+      finerLog("CHUNKED CONTENT {");
     } else {
       ChannelBuffer content = response.getContent();
       if (content.readable()) {
-        LOG.debug("CONTENT {");
-        LOG.debug(content.toString("UTF-8"));
-        LOG.debug("} END OF CONTENT");
+        finerLog("CONTENT {");
+        finerLog(content.toString("UTF-8"));
+        finerLog("} END OF CONTENT");
       }
     }
   }
@@ -145,7 +145,7 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
     try {
       getLatch().await();
     } catch (InterruptedException ex) {
-      LOG.debug("Getting received future has been interrupted.");
+      finerLog("Getting received future has been interrupted.");
     }
     return receivedFuture;
   }
@@ -167,11 +167,15 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
     return latch;
   }
 
+  private void finerLog(String message) {
+    LOGGER.log(Level.FINER, message);
+  }
+
   @Override
   public void handleUpstream(ChannelHandlerContext context, ChannelEvent event)
     throws Exception {
     if (event instanceof ChannelStateEvent) {
-      LOG.debug("Channel state changed: " + event);
+      LOGGER.log(Level.FINEST, "Channel state changed: " + event + "\n\n");
     }
     super.handleUpstream(context, event);
   }
@@ -189,7 +193,7 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)
     throws Exception {
-    LOG.info("Exception occurred: ");
+    LOGGER.log(Level.INFO, "Exception occurred: ");
     if (monitor != null) {
       monitor.invalidate();
     }

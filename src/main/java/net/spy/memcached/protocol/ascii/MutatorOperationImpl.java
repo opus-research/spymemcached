@@ -33,16 +33,11 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Operation for mutating integers inside of memcached.
  */
 final class MutatorOperationImpl extends OperationImpl implements
     MutatorOperation {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(MutatorOperationImpl.class);
 
   public static final int OVERHEAD = 32;
 
@@ -63,7 +58,7 @@ final class MutatorOperationImpl extends OperationImpl implements
 
   @Override
   public void handleLine(String line) {
-    LOG.debug("Result:  %s", line);
+    getLogger().debug("Result:  %s", line);
     OperationStatus found = null;
     if (line.equals("NOT_FOUND")) {
       found = NOT_FOUND;
@@ -107,5 +102,10 @@ final class MutatorOperationImpl extends OperationImpl implements
 
   public Mutator getType() {
     return mutator;
+  }
+
+  @Override
+  public String toString() {
+    return "Cmd: " + mutator.name() + " Key: " + key + " Amount: " + amount;
   }
 }

@@ -47,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.auth.AuthThreadMonitor;
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.internal.BulkFuture;
 import net.spy.memcached.internal.BulkGetFuture;
 import net.spy.memcached.internal.GetFuture;
@@ -66,11 +67,9 @@ import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreType;
+import net.spy.memcached.ops.TimedOutOperationStatus;
 import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Client to a memcached server.
@@ -122,9 +121,8 @@ import org.slf4j.LoggerFactory;
  *      }
  * </pre>
  */
-public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(MemcachedClient.class);
+public class MemcachedClient extends SpyObject implements MemcachedClientIF,
+    ConnectionObserver {
 
   protected volatile boolean shuttingDown = false;
 
@@ -525,7 +523,9 @@ public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
               if (val instanceof CASOperationStatus) {
                 rv.set(((CASOperationStatus) val).getCASResponse(), val);
               } else if (val instanceof CancelledOperationStatus) {
-                LOG.debug("CAS operation cancelled");
+                getLogger().debug("CAS operation cancelled");
+              } else if (val instanceof TimedOutOperationStatus) {
+                getLogger().debug("CAS operation timed out");
               } else {
                 throw new RuntimeException("Unhandled state: " + val);
               }
@@ -1117,9 +1117,6 @@ public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
       @SuppressWarnings("synthetic-access")
       public void receivedStatus(OperationStatus status) {
         rv.setStatus(status);
-        if (!status.isSuccess()) {
-          LOG.warn("Unsuccessful get:  %s", status);
-        }
       }
 
       public void gotData(String k, int flags, byte[] data) {
@@ -1401,7 +1398,7 @@ public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
           @SuppressWarnings("synthetic-access")
           public void receivedStatus(OperationStatus status) {
             if (!status.isSuccess()) {
-              LOG.warn("Unsuccessful stat fetch: %s", status);
+              getLogger().warn("Unsuccessful stat fetch: %s", status);
             }
           }
 
@@ -1442,7 +1439,7 @@ public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
     } catch (InterruptedException e) {
       throw new RuntimeException("Interrupted", e);
     }
-    LOG.debug("Mutation returned %s", rv);
+    getLogger().debug("Mutation returned %s", rv);
     return rv.get();
   }
 
@@ -1806,7 +1803,7 @@ public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
   public boolean shutdown(long timeout, TimeUnit unit) {
     // Guard against double shutdowns (bug 8).
     if (shuttingDown) {
-      LOG.info("Suppressing duplicate attempt to shut down");
+      getLogger().info("Suppressing duplicate attempt to shut down");
       return false;
     }
     shuttingDown = true;
@@ -1827,7 +1824,7 @@ public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
         mconn.setName(baseName + " - SHUTTING DOWN (informed client)");
         tcService.shutdown();
       } catch (IOException e) {
-        LOG.warn("exception while shutting down", e);
+        getLogger().warn("exception while shutting down", e);
       }
     }
     return rv;
@@ -1920,5 +1917,10 @@ public class MemcachedClient implements MemcachedClientIF, ConnectionObserver {
 
   public void connectionLost(SocketAddress sa) {
     // Don't care.
+  }
+
+  @Override
+  public String toString() {
+    return connFactory.toString();
   }
 }

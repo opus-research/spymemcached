@@ -34,17 +34,13 @@ import java.util.zip.GZIPOutputStream;
 
 import net.spy.memcached.CachedData;
 import net.spy.memcached.compat.CloseUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.spy.memcached.compat.SpyObject;
 
 /**
  * Base class for any transcoders that may want to work with serialized or
  * compressed data.
  */
-public abstract class BaseSerializingTranscoder {
-  private static final Logger LOG =
-    LoggerFactory.getLogger(BaseSerializingTranscoder.class);
+public abstract class BaseSerializingTranscoder extends SpyObject {
 
   /**
    * Default compression threshold value.
@@ -135,10 +131,10 @@ public abstract class BaseSerializingTranscoder {
         bis.close();
       }
     } catch (IOException e) {
-      LOG.warn("Caught IOException decoding %d bytes of data",
+      getLogger().warn("Caught IOException decoding %d bytes of data",
           in == null ? 0 : in.length, e);
     } catch (ClassNotFoundException e) {
-      LOG.warn("Caught CNFE decoding %d bytes of data",
+      getLogger().warn("Caught CNFE decoding %d bytes of data",
           in == null ? 0 : in.length, e);
     } finally {
       CloseUtil.close(is);
@@ -166,7 +162,7 @@ public abstract class BaseSerializingTranscoder {
       CloseUtil.close(bos);
     }
     byte[] rv = bos.toByteArray();
-    LOG.debug("Compressed " + in.length + " bytes to " + rv.length);
+    getLogger().debug("Compressed %d bytes to %d", in.length, rv.length);
     return rv;
   }
 
@@ -190,7 +186,7 @@ public abstract class BaseSerializingTranscoder {
           bos.write(buf, 0, r);
         }
       } catch (IOException e) {
-        LOG.warn("Failed to decompress data", e);
+        getLogger().warn("Failed to decompress data", e);
         bos = null;
       } finally {
         CloseUtil.close(gis);

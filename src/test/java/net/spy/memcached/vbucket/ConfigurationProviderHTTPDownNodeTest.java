@@ -19,9 +19,7 @@ public class ConfigurationProviderHTTPDownNodeTest extends TestCase {
         super.setUp();
 	List<URI> baseList = new ArrayList<URI>();
 	baseList.add(new URI("http://bogus:8091/pools"));
-	baseList.add(new URI("http://bogustoo:8091/pools"));
 	baseList.add(new URI("http://" + TestConfig.IPV4_ADDR + ":8091/pools"));
-	baseList.add(new URI("http://morebogus:8091/pools"));
         configProvider = new ConfigurationProviderHTTP(baseList, restUsr, restPwd);
         assertNotNull(configProvider);
     }

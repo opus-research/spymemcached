@@ -33,7 +33,7 @@ public class BinaryIPV6ClientTest extends BinaryClientTest {
   @Override
   protected void initClient(ConnectionFactory cf) throws Exception {
     client = new MemcachedClient(cf, AddrUtil.getAddresses(TestConfig.IPV6_ADDR
-        + ":" + TestConfig.PORT_NUMBER));
+        + ":11211"));
   }
 
   @Override

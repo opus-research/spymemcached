@@ -54,7 +54,6 @@ public class TapBackfillOperationImpl extends TapOperationImpl implements
     message.setOpcode(TapOpcode.REQUEST);
     message.setFlags(TapRequestFlag.BACKFILL);
     message.setFlags(TapRequestFlag.SUPPORT_ACK);
-    message.setFlags(TapRequestFlag.FIX_BYTEORDER);
     if (id != null) {
       message.setName(id);
     } else {

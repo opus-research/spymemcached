@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2012 Couchbase, Inc.
+ * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,20 +38,19 @@ import javax.naming.ConfigurationException;
 
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
+import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.tapmessage.RequestMessage;
 import net.spy.memcached.tapmessage.ResponseMessage;
-import net.spy.memcached.tapmessage.TapAck;
 import net.spy.memcached.tapmessage.TapOpcode;
-import net.spy.memcached.tapmessage.TapStream;
 
 /**
  * A tap client for memcached.
  */
 public class TapClient {
   protected BlockingQueue<Object> rqueue;
-  protected final HashMap<TapStream, TapConnectionProvider> omap;
+  protected HashMap<Operation, TapConnectionProvider> omap;
   protected long messagesRead;
   private List<InetSocketAddress> addrs;
 
@@ -79,7 +78,7 @@ public class TapClient {
    */
   public TapClient(List<InetSocketAddress> addrs) {
     this.rqueue = new LinkedBlockingQueue<Object>();
-    this.omap = new HashMap<TapStream, TapConnectionProvider>();
+    this.omap = new HashMap<Operation, TapConnectionProvider>();
     this.addrs = addrs;
     this.messagesRead = 0;
   }
@@ -91,7 +90,7 @@ public class TapClient {
    *         empty for more than one second.
    */
   public ResponseMessage getNextMessage() {
-    return getNextMessage(10, TimeUnit.SECONDS);
+    return getNextMessage(1, TimeUnit.SECONDS);
   }
 
   /**
@@ -111,7 +110,7 @@ public class TapClient {
         return (ResponseMessage) m;
       } else if (m instanceof TapAck) {
         TapAck ack = (TapAck) m;
-        tapAck(ack.getConn(), ack.getNode(), ack.getOpcode(), ack.getOpaque(),
+        tapAck(ack.getConn(), ack.getOpcode(), ack.getOpaque(),
             ack.getCallback());
         return null;
       } else {
@@ -135,12 +134,13 @@ public class TapClient {
       return true;
     } else {
       synchronized (omap) {
-        Iterator<TapStream> itr = omap.keySet().iterator();
+        Iterator<Operation> itr = omap.keySet().iterator();
         while (itr.hasNext()) {
-          TapStream ts = itr.next();
-          if (ts.isCompleted() || ts.isCancelled() || ts.hasErrored()) {
-            omap.get(ts).shutdown();
-            omap.remove(ts);
+          Operation op = itr.next();
+          if (op.getState().equals(OperationState.COMPLETE) || op.isCancelled()
+              || op.hasErrored()) {
+            omap.get(op).shutdown();
+            omap.remove(op);
           }
         }
         if (omap.size() > 0) {
@@ -163,37 +163,33 @@ public class TapClient {
    *           memcached cluster.
    * @throws IOException if there are errors connecting to the cluster.
    */
-  public TapStream tapCustom(final String id, final RequestMessage message)
+  public Operation tapCustom(String id, RequestMessage message)
     throws ConfigurationException, IOException {
     final TapConnectionProvider conn = new TapConnectionProvider(addrs);
-    final TapStream ts = new TapStream();
-    conn.broadcastOp(new BroadcastOpFactory() {
-      public Operation newOp(final MemcachedNode n,
-          final CountDownLatch latch) {
-        Operation op =  conn.getOpFactory().tapCustom(id, message,
-            new TapOperation.Callback() {
-            public void receivedStatus(OperationStatus status) {
-            }
-            public void gotData(ResponseMessage tapMessage) {
-              rqueue.add(tapMessage);
-              messagesRead++;
-            }
-            public void gotAck(MemcachedNode node, TapOpcode opcode,
-                int opaque) {
-              rqueue.add(new TapAck(conn, node, opcode, opaque, this));
-            }
-            public void complete() {
-              latch.countDown();
-            }
-          });
-        ts.addOp((TapOperation)op);
-        return op;
-      }
-    });
+    final CountDownLatch latch = new CountDownLatch(1);
+    final Operation op = conn.getOpFactory().tapCustom(id, message,
+        new TapOperation.Callback() {
+          public void receivedStatus(OperationStatus status) {
+          }
+
+          public void gotData(ResponseMessage tapMessage) {
+            rqueue.add(tapMessage);
+            messagesRead++;
+          }
+
+          public void gotAck(TapOpcode opcode, int opaque) {
+            rqueue.add(new TapAck(conn, opcode, opaque, this));
+          }
+
+          public void complete() {
+            latch.countDown();
+          }
+        });
     synchronized (omap) {
-      omap.put(ts, conn);
+      omap.put(op, conn);
     }
-    return ts;
+    conn.addOp(op);
+    return op;
   }
 
   /**
@@ -207,43 +203,36 @@ public class TapClient {
    *           memcached cluster.
    * @throws IOException If there are errors connecting to the cluster.
    */
-  public TapStream tapDump(final String id) throws IOException,
+  public Operation tapDump(final String id) throws IOException,
       ConfigurationException {
     final TapConnectionProvider conn = new TapConnectionProvider(addrs);
-    final TapStream ts = new TapStream();
-    conn.broadcastOp(new BroadcastOpFactory() {
-      public Operation newOp(final MemcachedNode n,
-          final CountDownLatch latch) {
-        Operation op =  conn.getOpFactory().tapDump(id,
-            new TapOperation.Callback() {
-            public void receivedStatus(OperationStatus status) {
-            }
-            public void gotData(ResponseMessage tapMessage) {
-              rqueue.add(tapMessage);
-              messagesRead++;
-            }
-            public void gotAck(MemcachedNode node, TapOpcode opcode,
-                int opaque) {
-              rqueue.add(new TapAck(conn, node, opcode, opaque, this));
-            }
-            public void complete() {
-              latch.countDown();
-            }
-          });
-        ts.addOp((TapOperation)op);
-        return op;
-      }
-    });
+    final CountDownLatch latch = new CountDownLatch(1);
+    final Operation op = conn.getOpFactory().tapDump(id,
+        new TapOperation.Callback() {
+        public void receivedStatus(OperationStatus status) {
+        }
+        public void gotData(ResponseMessage tapMessage) {
+          rqueue.add(tapMessage);
+          messagesRead++;
+        }
+        public void gotAck(TapOpcode opcode, int opaque) {
+          rqueue.add(new TapAck(conn, opcode, opaque, this));
+        }
+        public void complete() {
+          latch.countDown();
+        }
+      });
     synchronized (omap) {
-      omap.put(ts, conn);
+      omap.put(op, conn);
     }
-    return ts;
+    conn.addOp(op);
+    return op;
   }
 
-  private void tapAck(TapConnectionProvider conn, MemcachedNode node,
-      TapOpcode opcode, int opaque, OperationCallback cb) {
+  private void tapAck(TapConnectionProvider conn, TapOpcode opcode, int opaque,
+      OperationCallback cb) {
     final Operation op = conn.getOpFactory().tapAck(opcode, opaque, cb);
-    conn.addTapAckOp(node, op);
+    conn.addOp(op);
   }
 
   /**
@@ -251,7 +240,7 @@ public class TapClient {
    */
   public void shutdown() {
     synchronized (omap) {
-      for (Map.Entry<TapStream, TapConnectionProvider> me : omap.entrySet()) {
+      for (Map.Entry<Operation, TapConnectionProvider> me : omap.entrySet()) {
         me.getValue().shutdown();
       }
     }
@@ -265,6 +254,37 @@ public class TapClient {
    */
   public long getMessagesRead() {
     return messagesRead;
+  }
+
+  class TapAck {
+    private TapConnectionProvider conn;
+    private TapOpcode opcode;
+    private int opaque;
+    private OperationCallback cb;
+
+    public TapAck(TapConnectionProvider conn, TapOpcode opcode, int opaque,
+        OperationCallback cb) {
+      this.conn = conn;
+      this.opcode = opcode;
+      this.opaque = opaque;
+      this.cb = cb;
+    }
+
+    public TapConnectionProvider getConn() {
+      return conn;
+    }
+
+    public TapOpcode getOpcode() {
+      return opcode;
+    }
+
+    public int getOpaque() {
+      return opaque;
+    }
+
+    public OperationCallback getCallback() {
+      return cb;
+    }
   }
 }
 

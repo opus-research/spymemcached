@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
+ * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,46 +20,27 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.protocol;
-
-import net.spy.memcached.ops.GetOperation;
-import net.spy.memcached.ops.OperationStatus;
+package net.spy.memcached.ops;
 
 /**
- * Wrapper callback for use in optimized gets.
+ * Replica get operation.
  */
-public class GetCallbackWrapper implements GetOperation.Callback {
+public interface ReplicaGetsOperation extends KeyedOperation {
 
-  private static final OperationStatus END = new OperationStatus(true, "END");
-
-  private boolean completed = false;
-  private int remainingKeys = 0;
-  private GetOperation.Callback cb = null;
-
-  public GetCallbackWrapper(int k, GetOperation.Callback c) {
-    super();
-    remainingKeys = k;
-    cb = c;
+  /**
+   * Operation callback for the replica get request.
+   */
+  interface Callback extends OperationCallback {
+    /**
+     * Callback for each result from a replica get.
+     *
+     * @param key the key that was retrieved
+     * @param flags the flags for this value
+     * @param cas the cas value
+     * @param data the data stored under this key
+     */
+    void gotData(String key, int flags, long cas, byte[] data);
   }
 
-  public void gotData(String key, int flags, byte[] data) {
-    assert !completed : "Got data for a completed wrapped op";
-    cb.gotData(key, flags, data);
-    if (--remainingKeys == 0) {
-      // Fake a status line
-      receivedStatus(END);
-    }
-  }
-
-  public void receivedStatus(OperationStatus status) {
-    if (!completed) {
-      cb.receivedStatus(status);
-    }
-  }
-
-  public void complete() {
-    assert !completed;
-    cb.complete();
-    completed = true;
-  }
+  int getReplicaIndex();
 }

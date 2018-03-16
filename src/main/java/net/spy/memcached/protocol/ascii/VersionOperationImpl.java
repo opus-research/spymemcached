@@ -28,7 +28,6 @@ import net.spy.memcached.ops.NoopOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.ops.VersionOperation;
 
 /**
@@ -46,8 +45,8 @@ final class VersionOperationImpl extends OperationImpl implements
   @Override
   public void handleLine(String line) {
     assert line.startsWith("VERSION ");
-    getCallback().receivedStatus(new OperationStatus(true,
-      line.substring("VERSION ".length()), StatusCode.SUCCESS));
+    getCallback().receivedStatus(
+        new OperationStatus(true, line.substring("VERSION ".length())));
     transitionState(OperationState.COMPLETE);
   }
 

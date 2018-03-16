@@ -1,6 +1,8 @@
 package net.spy.memcached.internal;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -12,33 +14,27 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.spy.memcached.OperationTimeoutException;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.protocol.couchdb.HttpOperation;
 import net.spy.memcached.protocol.couchdb.ViewResponseWithDocs;
-import net.spy.memcached.protocol.couchdb.HttpOperationImpl;
 import net.spy.memcached.protocol.couchdb.RowWithDocs;
 
 public class ViewFuture extends SpyObject implements
 		Future<ViewResponseWithDocs> {
 	private final AtomicReference<ViewResponseWithDocs> viewRef;
-	private final AtomicReference<BulkFuture<Map<String, Object>>> objRef;
+	private final AtomicReference<BulkFuture<Map<String, Object>>> multigetRef;
 	private OperationStatus status;
 	private final CountDownLatch latch;
 
 	private final long timeout;
-	private HttpOperationImpl op;
-
-	private volatile boolean completed;
+	private HttpOperation op;
 
 	public ViewFuture(CountDownLatch latch, long timeout) {
 		super();
 		this.viewRef = new AtomicReference<ViewResponseWithDocs>(null);
-		this.objRef = new AtomicReference<BulkFuture<Map<String, Object>>>(null);
+		this.multigetRef = new AtomicReference<BulkFuture<Map<String, Object>>>(null);
 		this.latch = latch;
 		this.timeout = timeout;
 		this.status = null;
-	}
-
-	public boolean isCompleted() {
-		return this.completed;
 	}
 
 	public boolean cancel(boolean c) {
@@ -84,23 +80,19 @@ public class ViewFuture extends SpyObject implements
 			throw new ExecutionException(new OperationTimeoutException(
 					"Operation timed out."));
 		}
-		if (objRef.get() == null
-				|| !(viewRef.get() instanceof ViewResponseWithDocs)) {
-			return viewRef.get();
-		}
 
-		Map<String, Object> docMap = objRef.get().get();
-		ViewResponseWithDocs view = (ViewResponseWithDocs) viewRef.get();
-		ViewResponseWithDocs newView = new ViewResponseWithDocs();
+		Map<String, Object> docMap = multigetRef.get().get();
+		final ViewResponseWithDocs view = (ViewResponseWithDocs) viewRef.get();
+		Collection<RowWithDocs> rows = new LinkedList<RowWithDocs>();
 		Iterator<RowWithDocs> itr = view.iterator();
 
 		while (itr.hasNext()) {
 			RowWithDocs r = itr.next();
-			newView.add(new RowWithDocs(r.getId(), r.getKey(), r.getValue(),
+			rows.add(new RowWithDocs(r.getId(), r.getKey(), r.getValue(),
 					docMap.get(r.getId())));
 		}
 
-		return (ViewResponseWithDocs) newView;
+		return new ViewResponseWithDocs(rows);
 	}
 
 	public OperationStatus getStatus() {
@@ -129,14 +121,14 @@ public class ViewFuture extends SpyObject implements
 		return latch.getCount() == 0 || op.isCancelled() || op.hasErrored();
 	}
 
-	public void setOperation(HttpOperationImpl to) {
+	public void setOperation(HttpOperation to) {
 		this.op = to;
 	}
 
 	public void set(ViewResponseWithDocs viewResponse,
 			BulkFuture<Map<String, Object>> op, OperationStatus s) {
 		viewRef.set(viewResponse);
-		objRef.set(op);
+		multigetRef.set(op);
 		status = s;
 	}
 }

@@ -16,7 +16,6 @@ import net.spy.memcached.couch.AsyncConnectionManager;
 import net.spy.memcached.couch.AsyncConnectionRequest;
 import net.spy.memcached.couch.RequestHandle;
 import net.spy.memcached.protocol.couchdb.HttpOperation;
-import net.spy.memcached.protocol.couchdb.HttpOperationImpl;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -150,7 +149,7 @@ public class CouchbaseNode extends SpyObject {
 		}
 
 		public HttpRequest submitRequest(final HttpContext context) {
-			HttpOperationImpl op = (HttpOperationImpl) context.getAttribute("operation");
+			HttpOperation op = (HttpOperation) context.getAttribute("operation");
 			if (op == null) {
 				return null;
 			}
@@ -160,7 +159,7 @@ public class CouchbaseNode extends SpyObject {
 		public void handleResponse(final HttpResponse response,
 				final HttpContext context) {
 			RequestHandle handle = (RequestHandle) context.removeAttribute("request-handle");
-			HttpOperationImpl op = (HttpOperationImpl) context.removeAttribute("operation");
+			HttpOperation op = (HttpOperation) context.removeAttribute("operation");
 			if (handle != null) {
 				handle.completed();
 				op.handleResponse(response);

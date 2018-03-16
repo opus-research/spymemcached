@@ -93,7 +93,7 @@ public abstract class HttpOperationImpl implements HttpOperation {
 			try {
 				JSONObject base = new JSONObject(json);
 				if (base.has("error")) {
-					String error = "Error Code: " + errorcode + " Error: " 
+					String error = "Error Code: " + errorcode + " Error: "
 						+ base.getString("error");
 					if (base.has("reason")) {
 						error += " Reason: " + base.getString("reason");

@@ -1,6 +1,8 @@
 package net.spy.memcached.protocol.couchdb;
 
 import java.text.ParseException;
+import java.util.Collection;
+import java.util.LinkedList;
 
 import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
@@ -38,7 +40,7 @@ public class NoDocsOperationImpl extends HttpOperationImpl implements
 
 	private ViewResponseNoDocs parseNoDocsViewResult(String json)
 			throws ParseException {
-		ViewResponseNoDocs vr = new ViewResponseNoDocs();
+		final Collection<RowNoDocs> rows = new LinkedList<RowNoDocs>();
 		if (json != null) {
 			try {
 				JSONObject base = new JSONObject(json);
@@ -48,13 +50,13 @@ public class NoDocsOperationImpl extends HttpOperationImpl implements
 						String id = ids.getJSONObject(i).getString("id");
 						String key = ids.getJSONObject(i).getString("key");
 						String value = ids.getJSONObject(i).getString("value");
-						vr.add(new RowNoDocs(id, key, value));
+						rows.add(new RowNoDocs(id, key, value));
 					}
 				}
 			} catch (JSONException e) {
 				throw new ParseException("Cannot read json: " + json, 0);
 			}
 		}
-		return vr;
+		return new ViewResponseNoDocs(rows);
 	}
 }

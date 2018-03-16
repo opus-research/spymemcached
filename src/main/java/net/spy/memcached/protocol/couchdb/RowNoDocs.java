@@ -5,6 +5,7 @@ public class RowNoDocs extends RowReduced {
 
 	public RowNoDocs(String id, String key, String value) {
 		super(key, value);
+		// The id can be the string "null" so convert it to null
 		if (id != null && id.equals("null")) {
 			this.id = null;
 		} else {

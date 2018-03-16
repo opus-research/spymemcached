@@ -7,21 +7,21 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
 		Map<String, Object> {
 
-	Collection<RowWithDocs> rows;
 	Map<String, Object> map;
+	Collection<RowWithDocs> rows;
 
-	public ViewResponseWithDocs() {
-		rows = new LinkedList<RowWithDocs>();
+	public ViewResponseWithDocs(final Collection<RowWithDocs> r) {
 		map = new HashMap<String, Object>();
-	}
-
-	public void add(RowWithDocs r) {
-		rows.add(r);
-		map.put(r.getId(), r.getDoc());
+		rows = r;
+		for (RowWithDocs row : rows) {
+			map.put(row.getId(), row.getDoc());
+		}
+		
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
 
 	@Override
 	public Set<String> keySet() {
-		Set<String> set = new HashSet<String>();
+		Set<String> set = new TreeSet<String>();
 		for (RowWithDocs r : rows) {
 			set.add(r.getId());
 		}

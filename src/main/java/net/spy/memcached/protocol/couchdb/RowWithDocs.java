@@ -5,6 +5,7 @@ public class RowWithDocs extends RowNoDocs {
 
 	public RowWithDocs(String id, String key, String value, Object doc) {
 		super(id, key, value);
+		// The doc can be the string "null" so convert it to null
 		if (doc != null && doc.equals("null")) {
 			this.doc = null;
 		} else {

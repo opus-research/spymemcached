@@ -59,10 +59,6 @@ define "spymemcached" do
 
   test.options[:java_args] = "-ea"
   test.include "*Test"
-  if SERVER_TYPE == 'memcached' then
-    test.exclude '*VBucketMemcachedClientTest', '*BucketMonitorTest',
-              '*ConfigurationProviderHTTPTest'
-  end
   test.using :fork=>:each, :properties=>{ 'server.address_v4'=>TEST_SERVER_V4,
 					'server.address_v6'=>TEST_SERVER_V6,
 					'server.type'=>SERVER_TYPE }

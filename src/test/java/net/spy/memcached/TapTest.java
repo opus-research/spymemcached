@@ -28,13 +28,13 @@ public class TapTest extends ClientBaseCase {
 		if (TestConfig.isMembase()) {
 			TapClient tc = new TapClient(AddrUtil.getAddresses("127.0.0.1:11210"));
 			tc.tapBackfill(null, 5, TimeUnit.SECONDS);
-
+	
 			HashMap<String, Boolean> items = new HashMap<String, Boolean>();
 			for (int i = 0; i < 25; i++) {
 				client.set("key" + i, 0, "value" + i);
 				items.put("key" + i + ",value" + i, new Boolean(false));
 			}
-
+	
 			while(tc.hasMoreMessages()) {
 				ResponseMessage m;
 				if ((m = tc.getNextMessage()) != null) {
@@ -55,7 +55,7 @@ public class TapTest extends ClientBaseCase {
 		if (TestConfig.isMembase()) {
 			TapClient client = new TapClient(Arrays.asList(new URI("http://localhost:8091/pools")),
 						"abucket", "abucket", "apassword");
-
+	
 			try {
 				client.tapBackfill(null, 5, TimeUnit.SECONDS);
 			} catch (RuntimeException e) {

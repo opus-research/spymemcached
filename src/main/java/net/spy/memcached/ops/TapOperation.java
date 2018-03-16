@@ -7,7 +7,7 @@ import net.spy.memcached.tapmessage.ResponseMessage;
 /**
  * Tap operation.
  */
-public interface TapOperation extends Operation {
+public interface TapOperation extends KeyedOperation {
 
 	/**
 	 * Operation callback for the tap dump request.

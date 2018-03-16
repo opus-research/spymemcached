@@ -74,9 +74,4 @@ public class BinaryConnectionFactory extends DefaultConnectionFactory {
   public OperationFactory getOperationFactory() {
     return new BinaryOperationFactory();
   }
-
-  @Override
-  protected String getName() {
-    return "BinaryConnectionFactory";
-  }
 }

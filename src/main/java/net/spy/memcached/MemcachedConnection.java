@@ -1364,8 +1364,9 @@ public class MemcachedConnection extends SpyThread {
   }
 
   /**
-   * return connection shutDown status.
+   * Returns whether the connection is shut down or not.
    *
+   * @return true if the connection is shut down, false otherwise.
    */
   public boolean isShutDown() {
     return shutDown;

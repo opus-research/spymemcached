@@ -25,7 +25,6 @@ package net.spy.memcached.protocol.binary;
 import junit.framework.TestCase;
 
 import static net.spy.memcached.protocol.binary.OperationImpl.decodeInt;
-import static net.spy.memcached.protocol.binary.OperationImpl.decodeLong;
 import static net.spy.memcached.protocol.binary.OperationImpl.decodeUnsignedInt;
 
 /**
@@ -51,13 +50,6 @@ public class OperatonTest extends TestCase {
         decodeUnsignedInt(new byte[] { 0, (byte) 0x81, 0, 0 }, 0));
     assertEquals(129L * 256L * 256L * 256L,
         decodeUnsignedInt(new byte[] { (byte) 0x81, 0, 0, 0 }, 0));
-  }
-
-  public void testLongDecode() {
-    assertEquals(4294967296L,
-        decodeLong(new byte[]{0, 0, 0, 1, 0, 0, 0, 0}, 0));
-    assertEquals(1L,
-        decodeLong(new byte[]{0, 0, 0, 0, 0, 0, 0, 1}, 0));
   }
 
   public void testOperationStatusString() {

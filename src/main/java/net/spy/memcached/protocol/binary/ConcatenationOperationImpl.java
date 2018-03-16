@@ -37,8 +37,8 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl implements
   private final ConcatenationType catType;
   private final byte[] data;
 
-  private static byte cmdMap(ConcatenationType t) {
-    byte rv;
+  private static int cmdMap(ConcatenationType t) {
+    int rv;
     switch (t) {
     case append:
       rv = APPEND;
@@ -47,10 +47,10 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl implements
       rv = PREPEND;
       break;
     default:
-      rv = DUMMY_OPCODE;
+      rv = -1;
     }
     // Check fall-through.
-    assert rv != DUMMY_OPCODE : "Unhandled store type:  " + t;
+    assert rv != -1 : "Unhandled store type:  " + t;
     return rv;
   }
 
@@ -81,6 +81,12 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   public String toString() {
-    return super.toString() + " Cas: " + cas + " Data Length: " + data.length;
+    StringBuilder sb = new StringBuilder();
+    sb.append(super.toString());
+    sb.append(" Cas: ");
+    sb.append(cas);
+    sb.append(" Data: ");
+    sb.append(new String(data));
+    return sb.toString();
   }
 }

@@ -31,7 +31,7 @@ import net.spy.memcached.ops.GetlOperation;
 public class GetlOperationImpl extends SingleKeyOperationImpl implements
     GetlOperation {
 
-  static final byte GETL_CMD = (byte) 0x94;
+  static final int GETL_CMD = 0x94;
 
   /**
    * Length of the extra header stuff for a GET response.
@@ -62,6 +62,9 @@ public class GetlOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   public String toString() {
-    return super.toString() + " Exp: " + exp;
+    StringBuilder sb = new StringBuilder();
+    sb.append(" Exp: ");
+    sb.append(exp);
+    return sb.toString();
   }
 }

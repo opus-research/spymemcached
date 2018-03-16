@@ -30,22 +30,22 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.tapmessage.BaseMessage;
 import net.spy.memcached.tapmessage.ResponseMessage;
-import net.spy.memcached.tapmessage.TapFlag;
 import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.tapmessage.Util;
 
 /**
  * Abstract implementation of a tap operation.
  */
 public abstract class TapOperationImpl extends OperationImpl implements
     TapOperation {
-  private static final byte TAP_FLAG_ACK = 0x1;
+  private static final int TAP_FLAG_ACK = 0x1;
 
   private int bytesProcessed;
   private int bodylen;
   private byte[] header;
   private byte[] message;
 
-  static final byte CMD = 0;
+  static final int CMD = 0;
 
   protected TapOperationImpl(OperationCallback cb) {
     super(CMD, generateOpaque(), cb);
@@ -63,7 +63,8 @@ public abstract class TapOperationImpl extends OperationImpl implements
         bytesProcessed++;
       } else {
         if (message == null) {
-          bodylen = decodeInt(header, 8);
+          bodylen = (int) Util.fieldToValue(header,
+            BaseMessage.TOTAL_BODY_INDEX, BaseMessage.TOTAL_BODY_FIELD_LENGTH);
           message = new byte[BaseMessage.HEADER_LENGTH + bodylen];
           System.arraycopy(header, 0, message, 0, BaseMessage.HEADER_LENGTH);
         }
@@ -74,14 +75,13 @@ public abstract class TapOperationImpl extends OperationImpl implements
         }
         if (bytesProcessed >= message.length) {
           ResponseMessage response = new ResponseMessage(message);
-          for (TapFlag flag : response.getFlags()) {
-            if (flag.flag == TAP_FLAG_ACK) {
+
+          if (response.getOpcode() != TapOpcode.OPAQUE
+              && response.getOpcode() != TapOpcode.NOOP) {
+            if (response.getFlags() == TAP_FLAG_ACK) {
               ((Callback) getCallback()).gotAck(response.getOpcode(),
-                response.getOpaque());
+                  response.getOpaque());
             }
-          }
-          if (response.getOpcode() != TapOpcode.OPAQUE && response.getOpcode()
-            != TapOpcode.NOOP) {
             ((Callback) getCallback()).gotData(response);
           }
           message = null;

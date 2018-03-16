@@ -67,7 +67,6 @@ import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.TimedOutOperationStatus;
 import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
 
@@ -524,8 +523,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
                 rv.set(((CASOperationStatus) val).getCASResponse(), val);
               } else if (val instanceof CancelledOperationStatus) {
                 getLogger().debug("CAS operation cancelled");
-              } else if (val instanceof TimedOutOperationStatus) {
-                getLogger().debug("CAS operation timed out");
               } else {
                 throw new RuntimeException("Unhandled state: " + val);
               }
@@ -1117,6 +1114,9 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       @SuppressWarnings("synthetic-access")
       public void receivedStatus(OperationStatus status) {
         rv.setStatus(status);
+        if (!status.isSuccess()) {
+          getLogger().warn("Unsuccessful get:  %s", status);
+        }
       }
 
       public void gotData(String k, int flags, byte[] data) {
@@ -1463,25 +1463,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   /**
-   * Increment the given key by the given amount.
-   *
-   * Due to the way the memcached server operates on items, incremented and
-   * decremented items will be returned as Strings with any operations that
-   * return a value.
-   *
-   * @param key the key
-   * @param by the amount to increment
-   * @return the new value (-1 if the key doesn't exist)
-   * @throws OperationTimeoutException if the global operation timeout is
-   *           exceeded
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  public long incr(String key, int by) {
-    return mutate(Mutator.incr, key, (long)by, 0, -1);
-  }
-
-  /**
    * Decrement the given key by the given value.
    *
    * Due to the way the memcached server operates on items, incremented and
@@ -1498,25 +1479,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public long decr(String key, long by) {
     return mutate(Mutator.decr, key, by, 0, -1);
-  }
-
-  /**
-   * Decrement the given key by the given value.
-   *
-   * Due to the way the memcached server operates on items, incremented and
-   * decremented items will be returned as Strings with any operations that
-   * return a value.
-   *
-   * @param key the key
-   * @param by the value
-   * @return the new value (-1 if the key doesn't exist)
-   * @throws OperationTimeoutException if the global operation timeout is
-   *           exceeded
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  public long decr(String key, int by) {
-    return mutate(Mutator.decr, key, (long)by, 0, -1);
   }
 
   /**
@@ -1541,27 +1503,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   /**
-   * Increment the given counter, returning the new value.
-   *
-   * Due to the way the memcached server operates on items, incremented and
-   * decremented items will be returned as Strings with any operations that
-   * return a value.
-   *
-   * @param key the key
-   * @param by the amount to increment
-   * @param def the default value (if the counter does not exist)
-   * @param exp the expiration of this object
-   * @return the new value, or -1 if we were unable to increment or add
-   * @throws OperationTimeoutException if the global operation timeout is
-   *           exceeded
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  public long incr(String key, int by, long def, int exp) {
-    return mutateWithDefault(Mutator.incr, key, (long)by, def, exp);
-  }
-
-  /**
    * Decrement the given counter, returning the new value.
    *
    * Due to the way the memcached server operates on items, incremented and
@@ -1580,27 +1521,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public long decr(String key, long by, long def, int exp) {
     return mutateWithDefault(Mutator.decr, key, by, def, exp);
-  }
-
-  /**
-   * Decrement the given counter, returning the new value.
-   *
-   * Due to the way the memcached server operates on items, incremented and
-   * decremented items will be returned as Strings with any operations that
-   * return a value.
-   *
-   * @param key the key
-   * @param by the amount to decrement
-   * @param def the default value (if the counter does not exist)
-   * @param exp the expiration of this object
-   * @return the new value, or -1 if we were unable to decrement or add
-   * @throws OperationTimeoutException if the global operation timeout is
-   *           exceeded
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  public long decr(String key, int by, long def, int exp) {
-    return mutateWithDefault(Mutator.decr, key, (long)by, def, exp);
   }
 
   private long mutateWithDefault(Mutator t, String key, long by, long def,
@@ -1663,19 +1583,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   /**
-   * Asychronous increment.
-   *
-   * @param key key to increment
-   * @param by the amount to increment the value by
-   * @return a future with the incremented value, or -1 if the increment failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  public OperationFuture<Long> asyncIncr(String key, int by) {
-    return asyncMutate(Mutator.incr, key, (long)by, 0, -1);
-  }
-
-  /**
    * Asynchronous decrement.
    *
    * @param key key to increment
@@ -1686,19 +1593,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public OperationFuture<Long> asyncDecr(String key, long by) {
     return asyncMutate(Mutator.decr, key, by, 0, -1);
-  }
-
-  /**
-   * Asynchronous decrement.
-   *
-   * @param key key to increment
-   * @param by the amount to increment the value by
-   * @return a future with the decremented value, or -1 if the increment failed.
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  public OperationFuture<Long> asyncDecr(String key, int by) {
-    return asyncMutate(Mutator.decr, key, (long)by, 0, -1);
   }
 
   /**
@@ -1718,22 +1612,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   /**
-   * Increment the given counter, returning the new value.
-   *
-   * @param key the key
-   * @param by the amount to increment
-   * @param def the default value (if the counter does not exist)
-   * @return the new value, or -1 if we were unable to increment or add
-   * @throws OperationTimeoutException if the global operation timeout is
-   *           exceeded
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  public long incr(String key, int by, long def) {
-    return mutateWithDefault(Mutator.incr, key, (long)by, def, 0);
-  }
-
-  /**
    * Decrement the given counter, returning the new value.
    *
    * @param key the key
@@ -1747,22 +1625,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public long decr(String key, long by, long def) {
     return mutateWithDefault(Mutator.decr, key, by, def, 0);
-  }
-
-  /**
-   * Decrement the given counter, returning the new value.
-   *
-   * @param key the key
-   * @param by the amount to decrement
-   * @param def the default value (if the counter does not exist)
-   * @return the new value, or -1 if we were unable to decrement or add
-   * @throws OperationTimeoutException if the global operation timeout is
-   *           exceeded
-   * @throws IllegalStateException in the rare circumstance where queue is too
-   *           full to accept any more requests
-   */
-  public long decr(String key, int by, long def) {
-    return mutateWithDefault(Mutator.decr, key, (long)by, def, 0);
   }
 
   /**
@@ -2055,10 +1917,5 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
   public void connectionLost(SocketAddress sa) {
     // Don't care.
-  }
-
-  @Override
-  public String toString() {
-    return connFactory.toString();
   }
 }

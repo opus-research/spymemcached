@@ -31,7 +31,7 @@ import net.spy.memcached.ops.GetAndTouchOperation;
 public class GetAndTouchOperationImpl extends SingleKeyOperationImpl implements
     GetAndTouchOperation {
 
-  static final byte GAT_CMD = 0x1d;
+  static final int GAT_CMD = 0x1d;
 
   /**
    * Length of the extra header stuff for a GET response.
@@ -64,6 +64,10 @@ public class GetAndTouchOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   public String toString() {
-    return super.toString() + " Exp: " + exp;
+    StringBuilder sb = new StringBuilder();
+    sb.append(super.toString());
+    sb.append(" Exp: ");
+    sb.append(exp);
+    return sb.toString();
   }
 }

@@ -30,7 +30,7 @@ import net.spy.memcached.ops.OperationCallback;
  */
 public class TouchOperationImpl extends SingleKeyOperationImpl {
 
-  static final byte CMD = 0x1c;
+  static final int CMD = 0x1c;
 
   private final int exp;
 
@@ -46,6 +46,9 @@ public class TouchOperationImpl extends SingleKeyOperationImpl {
 
   @Override
   public String toString() {
-    return super.toString() + " Exp: " + exp;
+    StringBuilder sb = new StringBuilder();
+    sb.append(" Exp: ");
+    sb.append(exp);
+    return sb.toString();
   }
 }

@@ -1,4 +1,4 @@
-package net.spy.memcached.protocol.couch;
+package net.spy.memcached.protocol.couchdb;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -14,10 +14,10 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-public class ReducedOperationImpl extends HttpOperationImpl implements
-		ReducedOperation {
+public class DocsOperationImpl extends HttpOperationImpl implements
+		DocsOperation {
 
-	public ReducedOperationImpl(HttpRequest r, ReducedCallback cb) {
+	public DocsOperationImpl(HttpRequest r, DocsCallback cb) {
 		super(r, cb);
 	}
 
@@ -27,9 +27,9 @@ public class ReducedOperationImpl extends HttpOperationImpl implements
 		int errorcode = response.getStatusLine().getStatusCode();
 		try {
 			OperationStatus status = parseViewForStatus(json, errorcode);
-			ViewResponseReduced vr = parseReducedViewResult(json);
+			ViewResponseWithDocs vr = parseDocsViewResult(json);
 
-			((ReducedCallback) callback).gotData(vr);
+			((DocsCallback) callback).gotData(vr);
 			callback.receivedStatus(status);
 		} catch (ParseException e) {
 			exception = new OperationException(OperationErrorType.GENERAL,
@@ -38,9 +38,9 @@ public class ReducedOperationImpl extends HttpOperationImpl implements
 		callback.complete();
 	}
 
-	private ViewResponseReduced parseReducedViewResult(String json)
+	private ViewResponseWithDocs parseDocsViewResult(String json)
 			throws ParseException {
-		final Collection<RowReduced> rows = new LinkedList<RowReduced>();
+		final Collection<RowWithDocs> rows = new LinkedList<RowWithDocs>();
 		final Collection<RowError> errors = new LinkedList<RowError>();
 		if (json != null) {
 			try {
@@ -49,10 +49,11 @@ public class ReducedOperationImpl extends HttpOperationImpl implements
 					JSONArray ids = base.getJSONArray("rows");
 					for (int i = 0; i < ids.length(); i++) {
 						JSONObject elem = ids.getJSONObject(i);
-						if (elem.has("key")) {
+						if (elem.has("id")) {
+							String id = elem.getString("id");
 							String key = elem.getString("key");
 							String value = elem.getString("value");
-							rows.add(new RowReduced(key, value));
+							rows.add(new RowWithDocs(id, key, value, null));
 						} else if (elem.has("error")) {
 							String from = elem.getString("from");
 							String reason = elem.getString("reason");
@@ -67,6 +68,6 @@ public class ReducedOperationImpl extends HttpOperationImpl implements
 				throw new ParseException("Cannot read json: " + json, 0);
 			}
 		}
-		return new ViewResponseReduced(rows, errors);
+		return new ViewResponseWithDocs(rows, errors);
 	}
 }

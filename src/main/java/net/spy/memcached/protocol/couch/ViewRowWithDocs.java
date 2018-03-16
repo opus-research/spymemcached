@@ -1,12 +1,12 @@
 package net.spy.memcached.protocol.couch;
 
-public class RowWithDocs implements ViewRow {
+public class ViewRowWithDocs implements ViewRow {
   private final String id;
   private final String key;
   private final String value;
 	private final Object doc;
 
-	public RowWithDocs(String id, String key, String value, Object doc) {
+	public ViewRowWithDocs(String id, String key, String value, Object doc) {
     // The id can be the string "null" so convert it to null
     if (id != null && id.equals("null")) {
       this.id = null;

@@ -55,7 +55,7 @@ public class NoDocsOperationImpl extends HttpOperationImpl implements
 						String id = elem.getString("id");
 						String key = elem.getString("key");
 						String value = elem.getString("value");
-						rows.add(new RowNoDocs(id, key, value));
+						rows.add(new ViewRowNoDocs(id, key, value));
 					}
 				}
 				if (base.has("errors")) {

@@ -54,7 +54,7 @@ public class ReducedOperationImpl extends HttpOperationImpl implements
 						JSONObject elem = ids.getJSONObject(i);
 						String key = elem.getString("key");
 						String value = elem.getString("value");
-						rows.add(new RowReduced(key, value));
+						rows.add(new ViewRowReduced(key, value));
 					}
 				}
 				if (base.has("errors")) {

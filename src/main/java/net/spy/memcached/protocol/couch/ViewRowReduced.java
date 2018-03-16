@@ -1,10 +1,10 @@
 package net.spy.memcached.protocol.couch;
 
-public class RowReduced implements ViewRow {
+public class ViewRowReduced implements ViewRow {
 	private final String key;
 	private final String value;
 
-	public RowReduced(String key, String value) {
+	public ViewRowReduced(String key, String value) {
 		// The key can be the string "null" so convert it to null
 		if (key != null && key.equals("null")) {
 			this.key = null;

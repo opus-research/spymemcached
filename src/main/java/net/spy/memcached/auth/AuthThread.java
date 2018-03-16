@@ -24,6 +24,7 @@
 package net.spy.memcached.auth;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,7 +58,7 @@ public class AuthThread extends SpyThread {
     start();
   }
 
-  protected String[] listSupportedSASLMechanisms(AtomicBoolean done) {
+  private String[] listSupportedSASLMechanisms(AtomicBoolean done) {
     final CountDownLatch listMechsLatch = new CountDownLatch(1);
     final AtomicReference<String> supportedMechs =
       new AtomicReference<String>();
@@ -81,11 +82,7 @@ public class AuthThread extends SpyThread {
     conn.insertOperation(node, listMechsOp);
 
     try {
-      if (!conn.isShutDown()) {
-        listMechsLatch.await();
-      } else {
-        done.set(true); // Connection is shutting down, tear.down.
-      }
+      listMechsLatch.await();
     } catch(InterruptedException ex) {
       // we can be interrupted if we were in the
       // process of auth'ing and the connection is
@@ -148,11 +145,7 @@ public class AuthThread extends SpyThread {
       conn.insertOperation(node, op);
 
       try {
-        if (!conn.isShutDown()) {
-          latch.await();
-        } else {
-          done.set(true); // Connection is shutting down, tear.down.
-        }
+        latch.await();
         Thread.sleep(100);
       } catch (InterruptedException e) {
         // we can be interrupted if we were in the

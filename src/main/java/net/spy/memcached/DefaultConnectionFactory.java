@@ -32,6 +32,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -104,6 +106,12 @@ public class DefaultConnectionFactory extends SpyObject implements
    * Maximum number + 2 of timeout exception for shutdown connection.
    */
   public static final int DEFAULT_MAX_TIMEOUTEXCEPTION_THRESHOLD = 998;
+
+  /**
+   * The ExecutorService in which the listener callbacks will be executed.
+   */
+  public static final ExecutorService DEFAULT_LISTENER_EXECUTOR_SERVICE =
+    Executors.newFixedThreadPool(2);
 
   protected final int opQueueLen;
   private final int readBufSize;
@@ -235,6 +243,10 @@ public class DefaultConnectionFactory extends SpyObject implements
    */
   public long getOpQueueMaxBlockTime() {
     return DEFAULT_OP_QUEUE_MAX_BLOCK_TIME;
+  }
+
+  public ExecutorService getListenerExecutorService() {
+    return DEFAULT_LISTENER_EXECUTOR_SERVICE;
   }
 
   /*

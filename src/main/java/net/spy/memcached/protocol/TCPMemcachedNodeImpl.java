@@ -185,21 +185,17 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     if (toWrite == 0 && readQ.remainingCapacity() > 0) {
       getWbuf().clear();
       Operation o = getCurrentWriteOp();
-
-      if (o != null && o.getState() == OperationState.WRITE_QUEUED) {
-        if (o.isCancelled()) {
-          getLogger().debug("Not writing cancelled op.");
-          Operation cancelledOp = removeCurrentWriteOp();
-          assert o == cancelledOp;
-          return;
-        } else if (o.isTimedOut(defaultOpTimeout)) {
-          getLogger().debug("Not writing timed out op.");
-          Operation timedOutOp = removeCurrentWriteOp();
-          assert o == timedOutOp;
-          return;
-        } else {
-          o.writing();
-        }
+      if (o != null && (o.isCancelled())) {
+        getLogger().debug("Not writing cancelled op.");
+        Operation cancelledOp = removeCurrentWriteOp();
+        assert o == cancelledOp;
+        return;
+      }
+      if (o != null && o.isTimedOut(defaultOpTimeout)) {
+        getLogger().debug("Not writing timed out op.");
+        Operation timedOutOp = removeCurrentWriteOp();
+        assert o == timedOutOp;
+        return;
       }
       while (o != null && toWrite < getWbuf().capacity()) {
         assert o.getState() == OperationState.WRITING;
@@ -229,9 +225,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           }
 
           o = getCurrentWriteOp();
-          if (o != null) {
-            o.writing();
-          }
         }
         toWrite += bytesToCopy;
       }

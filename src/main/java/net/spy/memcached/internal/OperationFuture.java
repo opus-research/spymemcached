@@ -71,7 +71,7 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
     op.cancel();
     // This isn't exactly correct, but it's close enough. If we're in
     // a writing state, we *probably* haven't started.
-    return op.getState() == OperationState.WRITE_QUEUED;
+    return op.getState() == OperationState.WRITING;
   }
 
   public T get() throws InterruptedException, ExecutionException {

@@ -37,6 +37,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -104,6 +105,7 @@ public class MemcachedConnection extends SpyThread {
   private final int timeoutExceptionThreshold;
   private final Collection<Operation> retryOps;
   protected final ConcurrentLinkedQueue<MemcachedNode> nodesToShutdown;
+  private final boolean verifyAliveOnConnect;
 
   /**
    * Construct a memcached connection.
@@ -130,6 +132,14 @@ public class MemcachedConnection extends SpyThread {
     nodesToShutdown = new ConcurrentLinkedQueue<MemcachedNode>();
     this.bufSize = bufSize;
     this.connectionFactory = f;
+
+    String verifyAlive = System.getProperty("net.spy.verifyAliveOnConnect");
+    if(verifyAlive != null && verifyAlive.equals("true")) {
+      verifyAliveOnConnect = true;
+    } else {
+      verifyAliveOnConnect = false;
+    }
+
     List<MemcachedNode> connections = createConnections(a);
     locator = f.createLocator(connections);
     setName("Memcached IO over " + this);
@@ -253,11 +263,21 @@ public class MemcachedConnection extends SpyThread {
     }
 
     // see if any connections blew up with large number of timeouts
-    for (SelectionKey sk : selector.keys()) {
-      MemcachedNode mn = (MemcachedNode) sk.attachment();
-      if (mn.getContinuousTimeout() > timeoutExceptionThreshold) {
-        getLogger().warn("%s exceeded continuous timeout threshold", sk);
-        lostConnection(mn);
+    boolean stillCheckingTimeouts = true;
+    while(stillCheckingTimeouts) {
+      try {
+        for (SelectionKey sk : selector.keys()) {
+          MemcachedNode mn = (MemcachedNode) sk.attachment();
+          if (mn.getContinuousTimeout() > timeoutExceptionThreshold) {
+            getLogger().warn("%s exceeded continuous timeout threshold", sk);
+            lostConnection(mn);
+          }
+        }
+        stillCheckingTimeouts = false;
+      } catch(ConcurrentModificationException e) {
+        getLogger().warn("Retrying selector keys after "
+          + "ConcurrentModificationException caught", e);
+        continue;
       }
     }
 
@@ -401,47 +421,49 @@ public class MemcachedConnection extends SpyThread {
         final SocketChannel channel = node.getChannel();
         if (channel.finishConnect()) {
 
-          // Test to see if it's truly alive, could be a hung process, OS
-          final CountDownLatch latch = new CountDownLatch(1);
-          final OperationFuture<Boolean> rv =
-            new OperationFuture<Boolean>("noop", latch, 2500);
-          NoopOperation testOp = opFact.noop(new OperationCallback() {
-            public void receivedStatus(OperationStatus status) {
-              rv.set(status.isSuccess(), status);
-            }
+          if(verifyAliveOnConnect) {
+            // Test to see if it's truly alive, could be a hung process, OS
+            final CountDownLatch latch = new CountDownLatch(1);
+            final OperationFuture<Boolean> rv =
+              new OperationFuture<Boolean>("noop", latch, 2500);
+            NoopOperation testOp = opFact.noop(new OperationCallback() {
+              public void receivedStatus(OperationStatus status) {
+                rv.set(status.isSuccess(), status);
+              }
 
-            @Override
-            public void complete() {
-              latch.countDown();
-            }
-          });
+              @Override
+              public void complete() {
+                latch.countDown();
+              }
+            });
 
-          testOp.setHandlingNode(node);
-          testOp.initialize();
+            testOp.setHandlingNode(node);
+            testOp.initialize();
 
-          checkState();
-          insertOperation(node, testOp);
-          node.copyInputQueue();
+            checkState();
+            insertOperation(node, testOp);
+            node.copyInputQueue();
 
-          boolean done = false;
-          if(sk.isValid()) {
-            long timeout = TimeUnit.MILLISECONDS.toNanos(
-              connectionFactory.getOperationTimeout());
-            for(long stop = System.nanoTime() + timeout;
-              stop > System.nanoTime();) {
-              handleWrites(sk, node);
-              handleReads(sk, node);
-              if(done = (latch.getCount() == 0)) {
-                break;
+            boolean done = false;
+            if(sk.isValid()) {
+              long timeout = TimeUnit.MILLISECONDS.toNanos(
+                connectionFactory.getOperationTimeout());
+              for(long stop = System.nanoTime() + timeout;
+                stop > System.nanoTime();) {
+                handleWrites(sk, node);
+                handleReads(sk, node);
+                if(done = (latch.getCount() == 0)) {
+                  break;
+                }
               }
             }
-          }
 
-          if (!done || testOp.isCancelled() || testOp.hasErrored()
-            || testOp.isTimedOut()) {
-            throw new ConnectException("Could not send noop upon connect! "
-              + "This may indicate a running, but not responding memcached "
-              + "instance.");
+            if (!done || testOp.isCancelled() || testOp.hasErrored()
+              || testOp.isTimedOut()) {
+              throw new ConnectException("Could not send noop upon connect! "
+                + "This may indicate a running, but not responding memcached "
+                + "instance.");
+            }
           }
 
           connected(node);
@@ -923,6 +945,8 @@ public class MemcachedConnection extends SpyThread {
       } catch (ClosedSelectorException e) {
         logRunException(e);
       } catch (IllegalStateException e) {
+        logRunException(e);
+      } catch (ConcurrentModificationException e) {
         logRunException(e);
       }
     }

@@ -40,11 +40,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class ListenableFutureTest {
 
-  /**
-   * Use an unbounded thread pool for testing, which is very similar to
-   * the one used in the {@link DefaultConnectionFactory}.
-   */
-  private ExecutorService service = Executors.newCachedThreadPool();
+  private ExecutorService service =
+    DefaultConnectionFactory.DEFAULT_LISTENER_EXECUTOR_SERVICE;
 
   @Test
   public void verifyOnComplete() throws Exception {

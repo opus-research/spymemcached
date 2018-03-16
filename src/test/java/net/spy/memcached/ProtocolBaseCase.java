@@ -59,14 +59,11 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 		// use flush when testing, so we check that there's at least
 		// one.
 		client.set("sizeinitializer", 0, "hi");
-		Map<SocketAddress, Map<String, String>> cachedump = client.getStats("cachedump 1 0 0");
-		System.err.println("Cachedump: " + cachedump);
 		Map<SocketAddress, Map<String, String>> stats = client.getStats("sizes");
 		System.out.println("Stats sizes:  " + stats);
 		assertEquals(1, stats.size());
 		Map<String, String> oneStat=stats.values().iterator().next();
 		String noItemsSmall = oneStat.get("96");
-		System.err.println("Statswelookinat: " + noItemsSmall);
 		assertTrue(Integer.parseInt(noItemsSmall) >= 1);
 	}
 
@@ -567,63 +564,24 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 		initClient(new DefaultConnectionFactory() {
 			@Override
 			public long getOperationTimeout() {
-				return 2;
-			}
-
-			@Override
-			public int getTimeoutExceptionThreshold() {
-				return 1000000;
+				return 20;
 			}
 		});
 
-		Thread.sleep(50); // allow connections to be established
-
-		int j = 0;
-		boolean set = false;
-		do {
-			set = client.set(key, 0, value).get();
-			j++;
-		} while (!set && j < 10);
-		assert set == true;
-
-		int i = 0;
+		client.set(key, 0, value);
 		try {
-			for(i = 0; i < 1000000; i++) {
+			for(int i=0; i<1000000; i++) {
 				client.get(key);
 			}
 			throw new Exception("Didn't get a timeout.");
 		} catch(OperationTimeoutException e) {
-			System.out.println("Got a timeout at iteration " + i + ".");
+			System.out.println("Got a timeout.");
 		}
-		Thread.sleep(50); // let whatever caused the timeout to pass
-		try {
-			client.asyncGet("boundaryBefore").get(30, TimeUnit.SECONDS);
-			if (value.equals(client.asyncGet(key).get(30, TimeUnit.SECONDS))) {
+		if(value.equals(client.asyncGet(key).get(1, TimeUnit.SECONDS))) {
 			System.out.println("Got the right value.");
 		} else {
 			throw new Exception("Didn't get the expected value.");
 		}
-		} catch (java.util.concurrent.TimeoutException timeoutException) {
-		        debugNodeInfo(client.getNodeLocator().getAll());
-			client.asyncGet("boundaryAfter").get(30, TimeUnit.SECONDS);
-			throw new Exception("Unexpected timeout after 30 seconds waiting", timeoutException);
-		}
-	}
-
-	private void debugNodeInfo(Collection<MemcachedNode> nodes) {
-	    System.err.println("Debug nodes:");
-	    for (MemcachedNode node : nodes) {
-		    System.err.println(node);
-		    System.err.println("Is active? " + node.isActive());
-		    System.err.println("Has read operation? " + node.hasReadOp() + " Has write operation? " + node.hasWriteOp());
-		try {
-		    System.err.println("Has timed out this many times: " + node.getContinuousTimeout());
-		    System.err.println("Write op: " + node.getCurrentWriteOp());
-		    System.err.println("Read op: " + node.getCurrentReadOp());
-		} catch (UnsupportedOperationException e) {
-		    System.err.println("Node does not support full interface, likely read only.");
-		}
-	    }
 	}
 
 	public void xtestGracefulShutdownTooSlow() throws Exception {

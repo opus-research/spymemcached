@@ -48,7 +48,7 @@ import net.spy.memcached.util.KetamaNodeLocatorConfiguration;
 public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 
   private volatile TreeMap<Long, MemcachedNode> ketamaNodes;
-  private volatile Collection<MemcachedNode> allNodes;
+  private final Collection<MemcachedNode> allNodes;
 
   private final HashAlgorithm hashAlg;
   private final KetamaNodeLocatorConfiguration config;
@@ -153,7 +153,6 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
   @Override
   public void updateLocator(List<MemcachedNode> nodes) {
     setKetamaNodes(nodes);
-    allNodes = nodes;
   }
 
   /**

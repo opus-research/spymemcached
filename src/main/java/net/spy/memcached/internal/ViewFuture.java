@@ -92,7 +92,7 @@ public class ViewFuture extends SpyObject implements
 					docMap.get(r.getId())));
 		}
 
-		return new ViewResponseWithDocs(rows, view.getErrors());
+		return new ViewResponseWithDocs(rows);
 	}
 
 	public OperationStatus getStatus() {

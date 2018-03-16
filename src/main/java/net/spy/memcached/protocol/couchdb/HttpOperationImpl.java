@@ -104,7 +104,6 @@ public abstract class HttpOperationImpl implements HttpOperation {
 							+ errorcode);
 				}
 			} catch (JSONException e) {
-				System.out.println(e.getMessage());
 				throw new ParseException("Cannot read json: " + json);
 			}
 		}

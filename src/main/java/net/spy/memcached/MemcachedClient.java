@@ -70,6 +70,7 @@ import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.ops.TimedOutOperationStatus;
 import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
+import net.spy.memcached.util.StringUtils;
 
 /**
  * Client to a memcached server.
@@ -258,40 +259,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     return transcoder;
   }
 
-  private void validateKey(String key) {
-    byte[] keyBytes = KeyUtil.getKeyBytes(key);
-    if (keyBytes.length > MAX_KEY_LENGTH) {
-      throw new IllegalArgumentException("Key is too long (maxlen = "
-          + MAX_KEY_LENGTH + ")");
-    }
-    if (keyBytes.length == 0) {
-      throw new IllegalArgumentException(
-          "Key must contain at least one character.");
-    }
-    // Validate the key
-    for (byte b : keyBytes) {
-      if (b == ' ' || b == '\n' || b == '\r' || b == 0) {
-        throw new IllegalArgumentException(
-            "Key contains invalid characters:  ``" + key + "''");
-      }
-    }
-  }
-
-  /**
-   * (internal use) Add a raw operation to a numbered connection. This method is
-   * exposed for testing.
-   *
-   * @param which server number
-   * @param op the operation to perform
-   * @return the Operation
-   */
-  public Operation addOp(final String key, final Operation op) {
-    validateKey(key);
-    mconn.checkState();
-    mconn.addOperation(key, op);
-    return op;
-  }
-
   CountDownLatch broadcastOp(final BroadcastOpFactory of) {
     return broadcastOp(of, mconn.getLocator().getAll(), true);
   }
@@ -326,7 +293,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
             }
           });
     rv.setOperation(op);
-    addOp(key, op);
+    mconn.addOperation(key, op);
     return rv;
   }
 
@@ -352,7 +319,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
           }
         });
     rv.setOperation(op);
-    addOp(key, op);
+    mconn.addOperation(key, op);
     return rv;
   }
 
@@ -398,7 +365,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       }
     });
     rv.setOperation(op);
-    addOp(key, op);
+    mconn.addOperation(key, op);
     return rv;
   }
 
@@ -536,7 +503,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
             }
           });
     rv.setOperation(op);
-    addOp(key, op);
+    mconn.addOperation(key, op);
     return rv;
   }
 
@@ -865,7 +832,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       }
     });
     rv.setOperation(op);
-    addOp(key, op);
+    mconn.addOperation(key, op);
     return rv;
   }
 
@@ -918,7 +885,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       }
     });
     rv.setOperation(op);
-    addOp(key, op);
+    mconn.addOperation(key, op);
     return rv;
   }
 
@@ -1083,7 +1050,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     while (keyIter.hasNext() && tcIter.hasNext()) {
       String key = keyIter.next();
       tcMap.put(key, tcIter.next());
-      validateKey(key);
+      StringUtils.validateKey(key);
       final MemcachedNode primaryNode = locator.getPrimary(key);
       MemcachedNode node = null;
       if (primaryNode.isActive()) {
@@ -1253,7 +1220,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
           }
         });
     rv.setOperation(op);
-    addOp(key, op);
+    mconn.addOperation(key, op);
     return rv;
   }
 
@@ -1419,18 +1386,19 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   private long mutate(Mutator m, String key, long by, long def, int exp) {
     final AtomicLong rv = new AtomicLong();
     final CountDownLatch latch = new CountDownLatch(1);
-    addOp(key, opFact.mutate(m, key, by, def, exp, new OperationCallback() {
-      public void receivedStatus(OperationStatus s) {
-        // XXX: Potential abstraction leak.
-        // The handling of incr/decr in the binary protocol
-        // Allows us to avoid string processing.
-        rv.set(new Long(s.isSuccess() ? s.getMessage() : "-1"));
-      }
+    mconn.addOperation(key, opFact.mutate(m, key, by, def, exp,
+        new OperationCallback() {
+        public void receivedStatus(OperationStatus s) {
+          // XXX: Potential abstraction leak.
+          // The handling of incr/decr in the binary protocol
+          // Allows us to avoid string processing.
+          rv.set(new Long(s.isSuccess() ? s.getMessage() : "-1"));
+        }
 
-      public void complete() {
-        latch.countDown();
-      }
-    }));
+        public void complete() {
+          latch.countDown();
+        }
+      }));
     try {
       if (!latch.await(operationTimeout, TimeUnit.MILLISECONDS)) {
         throw new OperationTimeoutException("Mutate operation timed out,"
@@ -1635,7 +1603,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Long> rv =
         new OperationFuture<Long>(key, latch, operationTimeout);
-    Operation op = addOp(key, opFact.mutate(m, key, by, def, exp,
+    Operation op = opFact.mutate(m, key, by, def, exp,
         new OperationCallback() {
           public void receivedStatus(OperationStatus s) {
             rv.set(new Long(s.isSuccess() ? s.getMessage() : "-1"), s);
@@ -1644,7 +1612,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
           public void complete() {
             latch.countDown();
           }
-        }));
+        });
+    mconn.addOperation(key, op);
     rv.setOperation(op);
     return rv;
   }
@@ -1811,7 +1780,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       }
     });
     rv.setOperation(op);
-    addOp(key, op);
+    mconn.addOperation(key, op);
     return rv;
   }
 

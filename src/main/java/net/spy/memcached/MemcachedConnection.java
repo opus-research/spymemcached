@@ -57,6 +57,7 @@ import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VBucketAware;
 import net.spy.memcached.protocol.binary.TapAckOperationImpl;
+import net.spy.memcached.util.StringUtils;
 
 /**
  * Connection to a cluster of memcached servers.
@@ -628,7 +629,7 @@ public class MemcachedConnection extends SpyThread {
   /**
    * Get the node locator used by this connection.
    */
-  public NodeLocator getLocator() {
+  NodeLocator getLocator() {
     return locator;
   }
 
@@ -639,6 +640,9 @@ public class MemcachedConnection extends SpyThread {
    * @param o the operation
    */
   public void addOperation(final String key, final Operation o) {
+    StringUtils.validateKey(key);
+    checkState();
+
     MemcachedNode placeIn = null;
     MemcachedNode primary = locator.getPrimary(key);
     if (primary.isActive() || failureMode == FailureMode.Retry) {
@@ -808,7 +812,7 @@ public class MemcachedConnection extends SpyThread {
     }
   }
 
-  public void checkState() {
+  protected void checkState() {
     if (shutDown) {
       throw new IllegalStateException("Shutting down");
     }

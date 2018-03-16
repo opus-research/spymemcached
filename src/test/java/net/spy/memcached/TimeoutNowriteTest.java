@@ -53,7 +53,8 @@ public class TimeoutNowriteTest extends ClientBaseCase {
       public FailureMode getFailureMode() {
         return FailureMode.Retry;
       }
-    }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":11211"));
+    }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":"
+         + TestConfig.PORT_NUMBER));
   }
 
   public void testTimeoutDontwrite() {
@@ -84,7 +85,7 @@ public class TimeoutNowriteTest extends ClientBaseCase {
       System.err.println("Interrupted when sleeping for timeout nowrite");
     }
 
-    client.addOp("x", op);
+    client.mconn.addOperation("x", op);
     System.err.println("Operation attempted:");
     System.err.println(op);
     System.err.println("Trying to get:");

@@ -80,7 +80,12 @@ public class ResponseMessage extends BaseMessage {
     }
 
     if (opcode.equals(TapOpcode.MUTATION)) {
-      itemflags = decodeInt(b, ITEM_FLAGS_OFFSET);
+      if (flags.contains(TapResponseFlag.TAP_FLAG_NETWORK_BYTE_ORDER)) {
+        itemflags = decodeInt(b, ITEM_FLAGS_OFFSET);
+      } else {
+        // handles Couchbase bug MB-4834
+        itemflags = decodeIntHostOrder(b, ITEM_FLAGS_OFFSET);
+      }
       itemexpiry = decodeInt(b, ITEM_EXPIRY_OFFSET);
       vbucketstate = 0;
       revid = new byte[engineprivate];
@@ -230,7 +235,14 @@ public class ResponseMessage extends BaseMessage {
   }
 
   public ByteBuffer getBytes() {
-    ByteBuffer bb = ByteBuffer.allocate(HEADER_LENGTH + getTotalbody());
+    int bufSize = 0;
+    bufSize += HEADER_LENGTH;
+    if (opcode.equals(TapOpcode.MUTATION)) {
+      bufSize += 16;
+    }
+    bufSize += getTotalbody();
+
+    ByteBuffer bb = ByteBuffer.allocate(bufSize);
     bb.put(magic.getMagic());
     bb.put(opcode.getOpcode());
     bb.putShort(keylength);
@@ -249,7 +261,7 @@ public class ResponseMessage extends BaseMessage {
 
     short flag = 0;
     for (int i = 0; i < flags.size(); i++) {
-      flag |= flags.get(i).getFlag();
+      flag |= flags.get(i).getFlags();
     }
 
     bb.putShort(flag);

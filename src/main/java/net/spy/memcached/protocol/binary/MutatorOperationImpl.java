@@ -29,6 +29,8 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatusCode;
 
+import java.util.Arrays;
+
 class MutatorOperationImpl extends SingleKeyOperationImpl implements
     MutatorOperation {
 

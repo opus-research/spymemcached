@@ -2,6 +2,7 @@ package net.spy.memcached.protocol.couch;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
 public class ViewResponseNoDocs implements ViewResponse {
 
@@ -25,6 +26,11 @@ public class ViewResponseNoDocs implements ViewResponse {
 	@Override
 	public Iterator<ViewRow> iterator() {
 		return rows.iterator();
+	}
+
+	@Override
+	public Map<String, Object> getMap() {
+		throw new UnsupportedOperationException("This view doesn't contain documents");
 	}
 
 	@Override

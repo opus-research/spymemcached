@@ -3,11 +3,9 @@ package net.spy.memcached;
 import java.util.List;
 
 import net.spy.memcached.internal.HttpFuture;
-import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
+import net.spy.memcached.protocol.couch.ViewResponse;
 import net.spy.memcached.protocol.couch.Query;
-import net.spy.memcached.protocol.couch.ViewResponseReduced;
 import net.spy.memcached.protocol.couch.View;
-import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
 
 public interface CouchbaseClientIF {
 
@@ -21,15 +19,15 @@ public interface CouchbaseClientIF {
 	public List<View> getViews(final String designDocumentName);
 
 	// Query
-	public HttpFuture<ViewResponseWithDocs> asyncQuery(View view, Query query);
+	public HttpFuture<ViewResponse> asyncQuery(View view, Query query);
 
-	public HttpFuture<ViewResponseNoDocs> asyncQueryAndExcludeDocs(View view, Query query);
+	public HttpFuture<ViewResponse> asyncQueryAndExcludeDocs(View view, Query query);
 
-	public HttpFuture<ViewResponseReduced> asyncQueryAndReduce(View view, Query query);
+	public HttpFuture<ViewResponse> asyncQueryAndReduce(View view, Query query);
 
-	public ViewResponseWithDocs query(View view, Query query);
+	public ViewResponse query(View view, Query query);
 
-	public ViewResponseNoDocs queryAndExcludeDocs(View view, Query query);
+	public ViewResponse queryAndExcludeDocs(View view, Query query);
 
-	public ViewResponseReduced queryAndReduce(View view, Query query);
+	public ViewResponse queryAndReduce(View view, Query query);
 }

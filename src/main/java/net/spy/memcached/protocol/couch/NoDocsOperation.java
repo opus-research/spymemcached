@@ -5,6 +5,6 @@ import net.spy.memcached.ops.OperationCallback;
 public interface NoDocsOperation {
 
 	interface NoDocsCallback extends OperationCallback {
-		void gotData(ViewResponseNoDocs response);
+		void gotData(ViewResponse response);
 	}
 }

@@ -12,10 +12,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.message.BasicHttpRequest;
-import org.apache.http.util.EntityUtils;
 
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.protocol.couchdb.DocParserUtils;
@@ -25,7 +23,7 @@ import net.spy.memcached.protocol.couchdb.View;
 import net.spy.memcached.vbucket.ConfigurationException;
 
 public class CouchbaseClient extends MembaseClient {
-	
+
 	private CouchbaseConnection cconn;
 	private final String bucketName;
 
@@ -33,66 +31,53 @@ public class CouchbaseClient extends MembaseClient {
 			throws IOException, ConfigurationException {
 		this(baseList, bucketName, bucketName, pwd);
 	}
-	
+
 	public CouchbaseClient(List<URI> baseList, String bucketName, String usr, String pwd)
 			throws IOException, ConfigurationException {
 		super(new CouchbaseConnectionFactory(baseList, bucketName, usr, pwd));
 		this.bucketName = bucketName;
 		CouchbaseConnectionFactory cf = (CouchbaseConnectionFactory)connFactory;
 		List<InetSocketAddress> addrs = AddrUtil.getAddresses(cf.getVBucketConfig().getServers());
-		
-		//-- TODO: Hack! NS_Server sends us addrs like ip:11210, but we want ip:5984.
+
 		List<InetSocketAddress> conv = new LinkedList<InetSocketAddress>();
 		while (!addrs.isEmpty()) { conv.add(addrs.remove(0)); }
 		while (!conv.isEmpty()) { addrs.add(new InetSocketAddress(conv.remove(0).getHostName(), 5984)); }
-		//-- End Hack --
-		
+
 		cconn = cf.createCouchDBConnection(addrs);
 	}
-	
-	public View getView(String designDocumentName, String viewName)
-			throws InterruptedException, ExecutionException {
-		Collection<View> views = getViews(designDocumentName);
-		for (View v : views) {
-			if (v.getViewName().equals(viewName)) {
-				return v;
-			}
-		}
-		getLogger().warn("No view for design document " + designDocumentName + " was found");
-		return null;
-	}
-	
-	public List<View> getViews(String ddn)
-			throws InterruptedException, ExecutionException {
-		String uri = "/" + bucketName + "/_design/" + ddn;
-		String designDocJson = asyncHttpGet(uri).get();
-		System.out.println(designDocJson);
-		List<View> views;
-		try {
-			views = DocParserUtils.parseDesignDocumentForViews(bucketName, ddn, designDocJson);
-		} catch (ParseException e) {
-			getLogger().error(e.getMessage());
-			return null;
-		}
-		return views;
-	}
 
-	private HttpFuture<String> asyncHttpGet(String uri) {
+	/**
+	 * Gets a view contained in a design document from the cluster.
+	 *
+	 * @param designDocumentName the name of the design document.
+	 * @param viewName the name of the view to get.
+	 * @return a View object from the cluster.
+	 * @throws InterruptedException if the operation is interrupted while in flight
+	 * @throws ExecutionException if an error occurs during execution
+	 */
+	public HttpFuture<View> asyncGetView(final String designDocumentName, final String viewName) {
+		String uri = "/" + bucketName + "/_design/" + designDocumentName;
 		final CountDownLatch couchLatch = new CountDownLatch(1);
-		final HttpFuture<String> crv =
-			new HttpFuture<String>(couchLatch, operationTimeout);
-		
-		HttpRequest request = new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-		HttpOperation op = new HttpOperation(request, new HttpCallback() {
+		final HttpFuture<View> crv =
+			new HttpFuture<View>(couchLatch, operationTimeout);
+
+		final HttpRequest request = new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
+		final HttpOperation op = new HttpOperation(request, new HttpCallback() {
 			@Override
-			public void complete(HttpResponse response) {
+			public void complete(String response) {
+
+				Collection<View> views;
 				try {
-					crv.set(EntityUtils.toString(response.getEntity()));
-				} catch (org.apache.http.ParseException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
+					views = DocParserUtils.parseDesignDocumentForViews(bucketName, designDocumentName, response);
+					crv.set(null);
+					for (View v : views) {
+						if (v.getViewName().equals(viewName)) {
+							crv.set(v);
+							break;
+						}
+					}
+				} catch (ParseException e) {
+					crv.set(null);
 					e.printStackTrace();
 				}
 				couchLatch.countDown();
@@ -102,12 +87,86 @@ public class CouchbaseClient extends MembaseClient {
 		addOp(op);
 		return crv;
 	}
-	
+
+	/**
+	 * Gets a list of views for a given design document from the cluster.
+	 *
+	 * @param designDocumentName the name of the design document.
+	 * @param viewName the name of the view to get.
+	 * @return a View object from the cluster.
+	 * @throws InterruptedException if the operation is interrupted while in flight
+	 * @throws ExecutionException if an error occurs during execution
+	 */
+
+	public HttpFuture<List<View>> asyncGetViews(final String designDocumentName) {
+		String uri = "/" + bucketName + "/_design/" + designDocumentName;
+		final CountDownLatch couchLatch = new CountDownLatch(1);
+		final HttpFuture<List<View>> crv =
+			new HttpFuture<List<View>>(couchLatch, operationTimeout);
+
+		final HttpRequest request = new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
+		final HttpOperation op = new HttpOperation(request, new HttpCallback() {
+			@Override
+			public void complete(String response) {
+				try {
+					crv.set(DocParserUtils.parseDesignDocumentForViews(bucketName, designDocumentName, response));
+				} catch (ParseException e) {
+					getLogger().error(e.getMessage());
+				}
+				couchLatch.countDown();
+			}
+		});
+		crv.setOperation(op);
+		addOp(op);
+		return crv;
+	}
+
+	/**
+	 * Gets a view contained in a design document from the cluster.
+	 *
+	 * @param designDocumentName the name of the design document.
+	 * @param viewName the name of the view to get.
+	 * @return a View object from the cluster.
+	 */
+	public View getView(final String designDocumentName, final String viewName) {
+		try {
+			return asyncGetView(designDocumentName, viewName).get();
+		}catch (InterruptedException e) {
+			throw new RuntimeException("Interrupted getting views", e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException("Failed getting views", e);
+		}
+	}
+
+	/**
+	 * Gets  a list of views for a given design document from the cluster.
+	 *
+	 * @param designDocumentName the name of the design document.
+	 * @param viewName the name of the view to get.
+	 * @return a list of View objects from the cluster.
+	 */
+	public List<View> getViews(final String designDocumentName) {
+		try {
+			return asyncGetViews(designDocumentName).get();
+		}catch (InterruptedException e) {
+			throw new RuntimeException("Interrupted getting views", e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException("Failed getting views", e);
+		}
+	}
+
+	/**
+	 * Adds an operation to the queue where it waits to be sent to
+	 * Couchbase. This function is for internal use only.
+	 */
 	public void addOp(final HttpOperation op) {
 		cconn.checkState();
 		cconn.addOp(op);
 	}
 
+	/**
+	 * Shuts down the client.
+	 */
 	@Override
 	public void shutdown() {
 		shutdown(-1, TimeUnit.MILLISECONDS);
@@ -116,9 +175,7 @@ public class CouchbaseClient extends MembaseClient {
 	@Override
 	public boolean shutdown(long duration, TimeUnit units) {
 		try {
-			super.shutdown(duration, units);
-			cconn.shutdown();
-			return true;
+			return super.shutdown(duration, units) && cconn.shutdown();
 		} catch (IOException e) {
 			getLogger().error("Error shutting down CouchbaseClient");
 			return false;

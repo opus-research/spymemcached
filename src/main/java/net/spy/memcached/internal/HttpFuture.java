@@ -14,16 +14,16 @@ public class HttpFuture<T> implements Future<T>{
 	private final CountDownLatch latch;
     private final long timeout;
     private HttpOperation op;
-    
-    private volatile boolean completed;    
-    
+
+    private volatile boolean completed;
+
     public HttpFuture(CountDownLatch latch, long timeout) {
         super();
         this.objRef = new AtomicReference<T>(null);
         this.latch = latch;
         this.timeout = timeout;
     }
-    
+
     public boolean isCompleted() {
         return this.completed;
     }
@@ -53,7 +53,7 @@ public class HttpFuture<T> implements Future<T>{
 			throw new TimeoutException(
 					"Timed out waiting for operation");
 		}
-		
+
 		if(op != null && op.hasErrored()) {
 			throw new ExecutionException(op.getException());
 		}
@@ -61,14 +61,14 @@ public class HttpFuture<T> implements Future<T>{
 		if(op.isCancelled()) {
 			throw new ExecutionException(new RuntimeException("Cancelled"));
 		}
-		
+
 		/*if(op != null && op.isTimedOut()) {
             throw new ExecutionException(new CheckedOperationTimeoutException("Operation timed out.", op));
 		}*/
 
 		return objRef.get();
 	}
-	
+
 	public void set(T op) {
 		objRef.set(op);
 	}
@@ -78,7 +78,7 @@ public class HttpFuture<T> implements Future<T>{
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
 	public void setOperation(HttpOperation to) {
 		this.op = to;
 	}

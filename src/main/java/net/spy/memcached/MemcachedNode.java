@@ -79,7 +79,8 @@ public interface MemcachedNode {
 	boolean hasWriteOp();
 
 	/**
-	 * Add an operation to the queue.
+	 * Add an operation to the queue.  Authentication operations should
+	 * never be added to the queue, but this is not checked.
 	 */
 	void addOp(Operation op);
 
@@ -174,4 +175,26 @@ public interface MemcachedNode {
 	 */
 	void fixupOps();
 
+	/**
+	 * Let the node know that auth is complete.  Typically this would
+	 * mean the node can start processing and accept new operations to
+	 * its input queue.
+	 */
+	void authComplete();
+
+	/**
+	 * Tell a node to set up for authentication.  Typically this would
+	 * mean blocking additions to the queue.  In a reconnect situation
+	 * this may mean putting any queued operations on hold to get to
+	 * an auth complete state.
+	 */
+	void setupForAuth();
+
+	/**
+	 * Count 'time out' exceptions to drop connections that fail perpetually
+	 * @param timedOut
+	 */
+	void setContinuousTimeout(boolean timedOut);
+
+	int getContinuousTimeout();
 }

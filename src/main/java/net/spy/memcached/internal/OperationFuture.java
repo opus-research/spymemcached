@@ -56,8 +56,17 @@ public class OperationFuture<T> implements Future<T> {
 	public T get(long duration, TimeUnit units)
 		throws InterruptedException, TimeoutException, ExecutionException {
 		if(!latch.await(duration, units)) {
+			// whenever timeout occurs, continuous timeout counter will increase by 1.
+			if (op != null && op.getHandlingNode() != null) {
+				op.getHandlingNode().setContinuousTimeout(true);
+			}
 			throw new CheckedOperationTimeoutException(
 					"Timed out waiting for operation", op);
+		} else {
+			// continuous timeout counter will be reset
+			if (op != null && op.getHandlingNode() != null) {
+				op.getHandlingNode().setContinuousTimeout(false);
+			}
 		}
 		if(op != null && op.hasErrored()) {
 			throw new ExecutionException(op.getException());
@@ -87,5 +96,4 @@ public class OperationFuture<T> implements Future<T> {
 		return latch.getCount() == 0 ||
 			op.isCancelled() || op.getState() == OperationState.COMPLETE;
 	}
-
 }

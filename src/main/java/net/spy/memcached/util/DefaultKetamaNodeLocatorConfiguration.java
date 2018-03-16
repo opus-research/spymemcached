@@ -41,7 +41,7 @@ public class DefaultKetamaNodeLocatorConfiguration implements
    * key format
    */
   public DefaultKetamaNodeLocatorConfiguration() {
-      ketamaNodeKeyFormat = KetamaNodeKeyFormat.SPYMEMCACHED;
+      ketamaNodeKeyFormat = new KetamaNodeKeyFormat();
   }
 
   /**

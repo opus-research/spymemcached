@@ -30,8 +30,13 @@ import java.util.Map;
  * Known key formats used in Ketama for assigning nodes around the ring
  */
 
-public enum KetamaNodeKeyFormat {
+public class KetamaNodeKeyFormat {
 
+    public Format getFormat() {
+        return format;
+    }
+
+    public enum Format { SPYMEMCACHED, LIBMEMCACHED }
     /**
      * SPYMEMCACHED uses the format traditionally used by spymemcached to map
      * nodes to names. The format is HOSTNAME/IP:PORT-ITERATION
@@ -63,19 +68,29 @@ public enum KetamaNodeKeyFormat {
      * <code>/10.0.2.1-0</code> and <code>/10.0.2.1-1</code>
      * </p>
      */
-    SPYMEMCACHED,
+    public static Format SPYMEMCACHED = Format.SPYMEMCACHED;
 
     /**
      * LIBMEMCACHED uses the format traditionally used by libmemcached to map
      * nodes to names. The format is HOSTNAME:[PORT]-ITERATION the PORT is not
      * part of the node identifier if it is the default memecached port (11211)
      */
-    LIBMEMCACHED;
+    public static Format LIBMEMCACHED = Format.LIBMEMCACHED;
+
+    private final Format format;
 
     // Carrried over from the DefaultKetamaNodeLocatorConfiguration:
     // Internal lookup map to try to carry forward the optimisation that was
     // previously in KetamaNodeLocator
     private Map<MemcachedNode, String> nodeKeys = new HashMap<MemcachedNode, String>();
+
+    public KetamaNodeKeyFormat() {
+        this(SPYMEMCACHED);
+    }
+
+    public KetamaNodeKeyFormat(Format format) {
+        this.format = format;
+    }
 
     /**
      * Returns a uniquely identifying key, suitable for hashing by the
@@ -98,7 +113,7 @@ public enum KetamaNodeKeyFormat {
         // all other cases should be as fast as possible.
         String nodeKey = nodeKeys.get(node);
         if (nodeKey == null) {
-            switch(this) {
+            switch(this.format) {
                 case LIBMEMCACHED:
                     InetSocketAddress address = (InetSocketAddress)node.getSocketAddress();
                     nodeKey = address.getHostName();
@@ -111,6 +126,7 @@ public enum KetamaNodeKeyFormat {
                     if (nodeKey.startsWith("/")) {
                         nodeKey = nodeKey.substring(1);
                     }
+                    System.out.println(nodeKey);
                     break;
                 default:
                     assert false;

@@ -43,7 +43,7 @@ import java.util.Map;
  */
 public class KetamaConnectionFactory extends DefaultConnectionFactory {
 
-    private KetamaNodeKeyFormat ketamaNodeKeyFormat;
+    private KetamaNodeKeyFormat.Format ketamaNodeKeyFormat;
     private Map<InetSocketAddress, Integer> weights;
 
   /**
@@ -72,7 +72,7 @@ public class KetamaConnectionFactory extends DefaultConnectionFactory {
           int bufSize,
           long opQueueMaxBlockTime,
           HashAlgorithm hash,
-          KetamaNodeKeyFormat nodeKeyFormat,
+          KetamaNodeKeyFormat.Format nodeKeyFormat,
           Map<InetSocketAddress, Integer> weights) {
       super(qLen, bufSize, hash);
       this.ketamaNodeKeyFormat = nodeKeyFormat;
@@ -101,7 +101,7 @@ public class KetamaConnectionFactory extends DefaultConnectionFactory {
   /**
    * @return the ketamaNodeKeyFormat
    */
-  public KetamaNodeKeyFormat getKetamaNodeKeyFormat() {
+  public KetamaNodeKeyFormat.Format getKetamaNodeKeyFormat() {
       return ketamaNodeKeyFormat;
   }
 

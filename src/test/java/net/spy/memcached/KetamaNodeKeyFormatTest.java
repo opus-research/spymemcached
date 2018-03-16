@@ -43,15 +43,20 @@ public class KetamaNodeKeyFormatTest extends TestCase {
         noHostnameNode = new MockMemcachedNode(new InetSocketAddress(ip, 11211));
     }
 
+    public void testSpymemcachedFormatIsDefault() throws Exception {
+        KetamaNodeKeyFormat format = new KetamaNodeKeyFormat();
+        assertEquals(format.getFormat(), KetamaNodeKeyFormat.SPYMEMCACHED);
+    }
+
     public void testSpymemcachedFormat() throws Exception {
-        KetamaNodeKeyFormat format = KetamaNodeKeyFormat.SPYMEMCACHED;
+        KetamaNodeKeyFormat format = new KetamaNodeKeyFormat(KetamaNodeKeyFormat.SPYMEMCACHED);
         assertEquals("localhost/127.0.0.1:11211-1", format.getKeyForNode(defaultNode, 1));
         assertEquals("1.2.3.4:11211-1", format.getKeyForNode(noHostnameNode, 1));
         assertEquals("localhost/127.0.0.1:11212-1", format.getKeyForNode(noDefaultPortNode, 1));
     }
 
     public void testLibmemcachedFormat() throws Exception {
-        KetamaNodeKeyFormat format = KetamaNodeKeyFormat.LIBMEMCACHED;
+        KetamaNodeKeyFormat format = new KetamaNodeKeyFormat(KetamaNodeKeyFormat.LIBMEMCACHED);
         assertEquals("localhost-1", format.getKeyForNode(defaultNode, 1));
         assertEquals("1.2.3.4-1", format.getKeyForNode(noHostnameNode, 1));
         assertEquals("localhost:11212-1", format.getKeyForNode(noDefaultPortNode, 1));

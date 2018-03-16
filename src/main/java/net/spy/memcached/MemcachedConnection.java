@@ -1363,11 +1363,4 @@ public class MemcachedConnection extends SpyThread {
     }
   }
 
-  /**
-   * return connection shutDown status.
-   *
-   */
-  public boolean isShutDown() {
-    return shutDown;
-  }
 }

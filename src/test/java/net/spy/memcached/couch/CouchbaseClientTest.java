@@ -23,22 +23,22 @@ import net.spy.memcached.TestConfig;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.protocol.couchdb.DocsOperation.DocsCallback;
-import net.spy.memcached.protocol.couchdb.DocsOperationImpl;
-import net.spy.memcached.protocol.couchdb.HttpOperation;
-import net.spy.memcached.protocol.couchdb.NoDocsOperation.NoDocsCallback;
-import net.spy.memcached.protocol.couchdb.NoDocsOperationImpl;
-import net.spy.memcached.protocol.couchdb.ReducedOperation.ReducedCallback;
-import net.spy.memcached.protocol.couchdb.ReducedOperationImpl;
-import net.spy.memcached.protocol.couchdb.RowError;
-import net.spy.memcached.protocol.couchdb.RowWithDocs;
-import net.spy.memcached.protocol.couchdb.ViewResponseNoDocs;
-import net.spy.memcached.protocol.couchdb.Query;
-import net.spy.memcached.protocol.couchdb.ViewResponseReduced;
-import net.spy.memcached.protocol.couchdb.RowReduced;
-import net.spy.memcached.protocol.couchdb.RowNoDocs;
-import net.spy.memcached.protocol.couchdb.View;
-import net.spy.memcached.protocol.couchdb.ViewResponseWithDocs;
+import net.spy.memcached.protocol.couch.DocsOperation.DocsCallback;
+import net.spy.memcached.protocol.couch.DocsOperationImpl;
+import net.spy.memcached.protocol.couch.HttpOperation;
+import net.spy.memcached.protocol.couch.NoDocsOperation.NoDocsCallback;
+import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
+import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
+import net.spy.memcached.protocol.couch.ReducedOperationImpl;
+import net.spy.memcached.protocol.couch.RowError;
+import net.spy.memcached.protocol.couch.RowWithDocs;
+import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
+import net.spy.memcached.protocol.couch.Query;
+import net.spy.memcached.protocol.couch.ViewResponseReduced;
+import net.spy.memcached.protocol.couch.RowReduced;
+import net.spy.memcached.protocol.couch.RowNoDocs;
+import net.spy.memcached.protocol.couch.View;
+import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
 
 public class CouchbaseClientTest {
 	protected TestingClient client = null;
@@ -78,13 +78,15 @@ public class CouchbaseClientTest {
 		List<URI> uris = new LinkedList<URI>();
 		uris.add(URI.create(SERVER_URI));
 		TestingClient c = new TestingClient(uris, "default", "");
-		String docUri = "/default/_design/" + DESIGN_DOC_W_REDUCE;
+		String docUri = "/default/_design/" + TestingClient.MODE_PREFIX
+			+ DESIGN_DOC_W_REDUCE;
 		String view = "{\"language\":\"javascript\",\"views\":{\""
 				+ VIEW_NAME_W_REDUCE + "\":{\"map\":\"function (doc) {  "
 				+ "emit(doc._id, 1)}\",\"reduce\":\"_sum\" }}}";
 		c.asyncHttpPut(docUri, view);
 
-		docUri = "/default/_design/" + DESIGN_DOC_WO_REDUCE;
+		docUri = "/default/_design/" + TestingClient.MODE_PREFIX
+			+ DESIGN_DOC_WO_REDUCE;
 		view = "{\"language\":\"javascript\",\"views\":{\""
 				+ VIEW_NAME_WO_REDUCE + "\":{\"map\":\"function (doc) {  "
 				+ "emit(doc._id, 1)}\"}}}";
@@ -119,14 +121,17 @@ public class CouchbaseClientTest {
 		List<URI> uris = new LinkedList<URI>();
 		uris.add(URI.create(SERVER_URI));
 		TestingClient c = new TestingClient(uris, "default", "");
-		String json = c.asyncHttpGet("/default/_design/" + DESIGN_DOC_W_REDUCE).get();
+		String json = c.asyncHttpGet("/default/_design/" + TestingClient.MODE_PREFIX
+				+ DESIGN_DOC_W_REDUCE).get();
 		String rev = (new JSONObject(json)).getString("_rev");
-		c.asyncHttpDelete("/default/_design/" + DESIGN_DOC_W_REDUCE + "?rev=" + rev).get();
+		c.asyncHttpDelete("/default/_design/" + TestingClient.MODE_PREFIX
+				+ DESIGN_DOC_W_REDUCE + "?rev=" + rev).get();
 
-		json = c.asyncHttpGet("/default/_design/" + DESIGN_DOC_WO_REDUCE).get();
-		System.out.println(json);
+		json = c.asyncHttpGet("/default/_design/" + TestingClient.MODE_PREFIX
+				+ DESIGN_DOC_WO_REDUCE).get();
 		rev = (new JSONObject(json)).getString("_rev");
-		c.asyncHttpDelete("/default/_design/" + DESIGN_DOC_WO_REDUCE + "?rev=" + rev).get();
+		c.asyncHttpDelete("/default/_design/" + TestingClient.MODE_PREFIX
+				+ DESIGN_DOC_WO_REDUCE + "?rev=" + rev).get();
 	}
 
 	private static String generateDoc(String type, String small, String large) {

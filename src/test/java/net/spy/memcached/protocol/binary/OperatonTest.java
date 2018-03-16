@@ -62,6 +62,6 @@ public class OperatonTest extends TestCase {
 
   public void testOperationStatusString() {
     String s = String.valueOf(OperationImpl.STATUS_OK);
-    assertEquals("{OperationStatus success=true:  OK}", s);
+    assertEquals("{OperationStatus(SUCCESS) success=true:  OK}", s);
   }
 }

@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import net.spy.memcached.ops.Operation;
-import net.spy.memcached.ops.OperationStatus;
 
 /**
  * Future returned for GET operations.
@@ -39,12 +38,8 @@ public class GetFuture<T> implements Future<T> {
 		return v == null ? null : v.get();
 	}
 
-	public OperationStatus getStatus() {
-		return rv.getStatus();
-	}
-
-	public void set(Future<T> d, OperationStatus s) {
-		rv.set(d, s);
+	public void set(Future<T> d) {
+		rv.set(d);
 	}
 
 	public void setOperation(Operation to) {

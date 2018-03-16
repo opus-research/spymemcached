@@ -191,6 +191,9 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF,
       private CASValue<T> val = null;
 
       public void receivedStatus(OperationStatus status) {
+        if (!status.isSuccess()) {
+          val = new CASValue<T>(-1, null);
+        }
         rv.set(val, status);
       }
 
@@ -268,6 +271,17 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF,
    */
   public CASValue<Object> getAndLock(String key, int exp) {
     return getAndLock(key, exp, transcoder);
+  }
+
+  /**
+   * Gets the number of vBuckets that are contained in the cluster. This
+   * function is for internal use only and should rarely be since there
+   * are few use cases in which it is necessary.
+   */
+  @Override
+  public int getNumVBuckets() {
+    return ((MembaseConnectionFactory)connFactory).getVBucketConfig()
+      .getVbucketsCount();
   }
 
   @Override

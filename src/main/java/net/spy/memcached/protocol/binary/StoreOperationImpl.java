@@ -61,10 +61,10 @@ class StoreOperationImpl extends SingleKeyOperationImpl implements
       rv = REPLACE;
       break;
     default:
-      rv = -1;
+      rv = DUMMY_OPCODE;
     }
     // Check fall-through.
-    assert rv != -1 : "Unhandled store type:  " + t;
+    assert rv != DUMMY_OPCODE : "Unhandled store type:  " + t;
     return rv;
   }
 
@@ -81,10 +81,6 @@ class StoreOperationImpl extends SingleKeyOperationImpl implements
   @Override
   public void initialize() {
     prepareBuffer(key, cas, data, flags, exp);
-  }
-
-  public byte[] getBytes() {
-    return data;
   }
 
   public long getCasValue() {

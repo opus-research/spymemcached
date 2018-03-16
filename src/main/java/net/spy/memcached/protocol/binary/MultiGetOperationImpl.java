@@ -49,7 +49,7 @@ class MultiGetOperationImpl extends MultiKeyOperationImpl implements
   private final int terminalOpaque = generateOpaque();
 
   public MultiGetOperationImpl(Collection<String> k, OperationCallback cb) {
-    super((byte)-1, -1, cb);
+    super(DUMMY_OPCODE, -1, cb);
     for (String s : new HashSet<String>(k)) {
       addKey(s);
     }

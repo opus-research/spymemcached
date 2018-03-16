@@ -45,6 +45,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 
   protected static final byte REQ_MAGIC = (byte) 0x80;
   protected static final byte RES_MAGIC = (byte) 0x81;
+  protected static final byte DUMMY_OPCODE = (byte)0xff;
   protected static final int MIN_RECV_PACKET = 24;
 
   /**
@@ -83,7 +84,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 
   // Response header fields
   protected int keyLen;
-  protected int responseCmd;
+  protected byte responseCmd;
   protected int errorCode;
   protected int responseOpaque;
   protected long responseCas;
@@ -132,8 +133,8 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
         int magic = header[0];
         assert magic == RES_MAGIC : "Invalid magic:  " + magic;
         responseCmd = header[1];
-        assert cmd == -1 || responseCmd == cmd : "Unexpected response"
-            + " command value";
+        assert cmd == DUMMY_OPCODE || responseCmd == cmd
+          : "Unexpected response command value";
         keyLen = decodeShort(header, 2);
         // TODO: Examine extralen and datatype
         errorCode = decodeShort(header, 6);
@@ -264,14 +265,14 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
   }
 
   static long decodeLong(byte[] data, int i) {
-    return (data[i] & 0xff) << 56
-      | (data[i + 1] & 0xff) << 48
-      | (data[i + 2] & 0xff) << 40
-      | (data[i + 3] & 0xff) << 32
-      | (data[i + 4] & 0xff) << 24
-      | (data[i + 5] & 0xff) << 16
-      | (data[i + 6] & 0xff) << 8
-      | (data[i + 7] & 0xff);
+    return (data[i] & 0xffL) << 56
+      | (data[i + 1] & 0xffL) << 48
+      | (data[i + 2] & 0xffL) << 40
+      | (data[i + 3] & 0xffL) << 32
+      | (data[i + 4] & 0xffL) << 24
+      | (data[i + 5] & 0xffL) << 16
+      | (data[i + 6] & 0xffL) << 8
+      | (data[i + 7] & 0xffL);
   }
 
   /**

@@ -83,7 +83,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     assert iq != null : "No input queue";
     socketAddress = sa;
     setChannel(c);
-
     // Since these buffers are allocated rarely (only on client creation
     // or reconfigure), and are passed to Channel.read() and Channel.write(),
     // use direct buffers to avoid
@@ -189,8 +188,9 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   public final void fillWriteBuffer(boolean shouldOptimize) {
     if (toWrite == 0 && readQ.remainingCapacity() > 0) {
       getWbuf().clear();
-      Operation o = getNextWritableOp();
-      while (o != null && toWrite < getWbuf().capacity()) {
+      Operation o=getNextWritableOp();
+
+      while(o != null && toWrite < getWbuf().capacity()) {
         synchronized(o) {
           assert o.getState() == OperationState.WRITING;
 
@@ -209,7 +209,8 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
             if (shouldOptimize) {
               optimize();
             }
-            o = getNextWritableOp();
+
+            o=getNextWritableOp();
           }
           toWrite += bytesToCopy;
         }
@@ -223,6 +224,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
       getLogger().debug("Buffer is full, skipping");
     }
   }
+
 
   private Operation getNextWritableOp() {
     Operation o = getCurrentWriteOp();
@@ -249,9 +251,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     return o;
   }
 
-  /*
-   * (non-Javadoc)
-   *
+  /* (non-Javadoc)
    * @see net.spy.memcached.MemcachedNode#transitionWriteItem()
    */
   public final void transitionWriteItem() {

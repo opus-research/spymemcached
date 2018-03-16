@@ -30,8 +30,8 @@ import net.spy.memcached.ops.OperationCallback;
 class ConcatenationOperationImpl extends SingleKeyOperationImpl implements
     ConcatenationOperation {
 
-  private static final byte APPEND = 0x0e;
-  private static final byte PREPEND = 0x0f;
+  private static final int APPEND = 0x0e;
+  private static final int PREPEND = 0x0f;
 
   private final long cas;
   private final ConcatenationType catType;
@@ -47,10 +47,10 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl implements
       rv = PREPEND;
       break;
     default:
-      rv = -1;
+      rv = DUMMY_OPCODE;
     }
     // Check fall-through.
-    assert rv != -1 : "Unhandled store type:  " + t;
+    assert rv != DUMMY_OPCODE : "Unhandled store type:  " + t;
     return rv;
   }
 

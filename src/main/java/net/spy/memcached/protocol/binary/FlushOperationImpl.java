@@ -32,10 +32,10 @@ class FlushOperationImpl extends OperationImpl implements FlushOperation {
   private final int delay;
 
   public FlushOperationImpl(OperationCallback cb) {
-    this((byte)0, cb);
+    this(0, cb);
   }
 
-  public FlushOperationImpl(byte d, OperationCallback cb) {
+  public FlushOperationImpl(int d, OperationCallback cb) {
     super(CMD, generateOpaque(), cb);
     delay = d;
   }

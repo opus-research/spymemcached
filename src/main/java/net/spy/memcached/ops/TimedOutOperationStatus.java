@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,28 +23,11 @@
 package net.spy.memcached.ops;
 
 /**
- * State of this operation.
+ * Operation status indicating an operation was timed out.
  */
-public enum OperationState {
-  /**
-   * State indicating this operation is waiting to be written to the server.
-   */
-  WRITE_QUEUED,
-  /**
-   * State indicating this operation is writing data to the server.
-   */
-  WRITING,
-  /**
-   * State indicating this operation is reading data from the server.
-   */
-  READING,
-  /**
-   * State indicating this operation is complete.
-   */
-  COMPLETE,
-  /**
-   * State indicating this operation needs to be resent.  Typically
-   * this means vbucket hashing and there is a topology change.
-   */
-  RETRY
+public class TimedOutOperationStatus extends OperationStatus {
+
+  public TimedOutOperationStatus() {
+    super(false, "timed out");
+  }
 }

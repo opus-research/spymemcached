@@ -67,6 +67,7 @@ import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreType;
+import net.spy.memcached.ops.TimedOutOperationStatus;
 import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
 
@@ -523,6 +524,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
                 rv.set(((CASOperationStatus) val).getCASResponse(), val);
               } else if (val instanceof CancelledOperationStatus) {
                 getLogger().debug("CAS operation cancelled");
+              } else if (val instanceof TimedOutOperationStatus) {
+                getLogger().debug("CAS operation timed out");
               } else {
                 throw new RuntimeException("Unhandled state: " + val);
               }
@@ -1114,9 +1117,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       @SuppressWarnings("synthetic-access")
       public void receivedStatus(OperationStatus status) {
         rv.setStatus(status);
-        if (!status.isSuccess()) {
-          getLogger().warn("Unsuccessful get:  %s", status);
-        }
       }
 
       public void gotData(String k, int flags, byte[] data) {
@@ -1917,5 +1917,10 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
   public void connectionLost(SocketAddress sa) {
     // Don't care.
+  }
+
+  @Override
+  public String toString() {
+    return connFactory.toString();
   }
 }

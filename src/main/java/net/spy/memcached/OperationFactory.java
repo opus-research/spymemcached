@@ -28,32 +28,7 @@ import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 
-import net.spy.memcached.ops.CASOperation;
-import net.spy.memcached.ops.ConcatenationOperation;
-import net.spy.memcached.ops.ConcatenationType;
-import net.spy.memcached.ops.DeleteOperation;
-import net.spy.memcached.ops.FlushOperation;
-import net.spy.memcached.ops.GetAndTouchOperation;
-import net.spy.memcached.ops.GetOperation;
-import net.spy.memcached.ops.GetlOperation;
-import net.spy.memcached.ops.GetsOperation;
-import net.spy.memcached.ops.KeyedOperation;
-import net.spy.memcached.ops.Mutator;
-import net.spy.memcached.ops.MutatorOperation;
-import net.spy.memcached.ops.NoopOperation;
-import net.spy.memcached.ops.ObserveOperation;
-import net.spy.memcached.ops.Operation;
-import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.ReplicaGetOperation;
-import net.spy.memcached.ops.SASLAuthOperation;
-import net.spy.memcached.ops.SASLMechsOperation;
-import net.spy.memcached.ops.SASLStepOperation;
-import net.spy.memcached.ops.StatsOperation;
-import net.spy.memcached.ops.StoreOperation;
-import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.TapOperation;
-import net.spy.memcached.ops.UnlockOperation;
-import net.spy.memcached.ops.VersionOperation;
+import net.spy.memcached.ops.*;
 import net.spy.memcached.tapmessage.RequestMessage;
 import net.spy.memcached.tapmessage.TapOpcode;
 
@@ -151,6 +126,16 @@ public interface OperationFactory {
    */
   ReplicaGetOperation replicaGet(String key, int index,
     ReplicaGetOperation.Callback callback);
+
+  /**
+   * Create a replica gets operation.
+   *
+   * @param key the key to get
+   * @param callback the callback that will contain the results
+   * @return a new ReplicaGetOperation
+   */
+  ReplicaGetsOperation replicaGets(String key, int index,
+    ReplicaGetsOperation.Callback callback);
 
   /**
    * Create a getl operation. A getl gets the value for a key and then locks the

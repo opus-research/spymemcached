@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2011 Couchbase, Inc.
+ * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,6 +53,7 @@ import net.spy.memcached.internal.BulkGetFuture;
 import net.spy.memcached.internal.GetFuture;
 import net.spy.memcached.internal.OperationFuture;
 import net.spy.memcached.internal.SingleElementInfiniteIterator;
+import net.spy.memcached.management.Stats;
 import net.spy.memcached.ops.CASOperationStatus;
 import net.spy.memcached.ops.CancelledOperationStatus;
 import net.spy.memcached.ops.ConcatenationType;
@@ -198,6 +199,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     if (authDescriptor != null) {
       addObserver(this);
     }
+    Stats.incrTotalClients();
   }
 
   /**
@@ -277,7 +279,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     return mconn.broadcastOperation(of, nodes);
   }
 
-  private <T> OperationFuture<Boolean> asyncStore(StoreType storeType,
+  private <T> OperationFuture<Boolean> asyncStore(final StoreType storeType,
       String key, int exp, T value, Transcoder<T> tc) {
     CachedData co = tc.encode(value);
     final CountDownLatch latch = new CountDownLatch(1);
@@ -286,6 +288,13 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     Operation op = opFact.store(storeType, key, co.getFlags(), exp,
         co.getData(), new OperationCallback() {
             public void receivedStatus(OperationStatus val) {
+              if (StoreType.add == storeType) {
+                Stats.incrTotalAdd(val);
+              } else if (StoreType.set == storeType) {
+                Stats.incrTotalSet(val);
+              } else if (StoreType.replace == storeType) {
+                Stats.incrTotalReplace(val);
+              }
               rv.set(val.isSuccess(), val);
             }
 
@@ -298,8 +307,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     return rv;
   }
 
-  private OperationFuture<Boolean> asyncStore(StoreType storeType, String key,
-      int exp, Object value) {
+  private OperationFuture<Boolean> asyncStore(final StoreType storeType,
+      String key, int exp, Object value) {
     return asyncStore(storeType, key, exp, value, transcoder);
   }
 
@@ -488,6 +497,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     Operation op = opFact.cas(StoreType.set, key, casId, co.getFlags(), exp,
         co.getData(), new OperationCallback() {
             public void receivedStatus(OperationStatus val) {
+              Stats.incrTotalCas(val);
               if (val instanceof CASOperationStatus) {
                 rv.set(((CASOperationStatus) val).getCASResponse(), val);
               } else if (val instanceof CancelledOperationStatus) {
@@ -819,6 +829,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       private Future<T> val = null;
 
       public void receivedStatus(OperationStatus status) {
+        Stats.incrTotalGet(status);
         rv.set(val, status);
       }
 
@@ -1679,14 +1690,19 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     return rv;
   }
 
-  private OperationFuture<Long> asyncMutate(Mutator m, String key, long by,
-      long def, int exp) {
+  private OperationFuture<Long> asyncMutate(final Mutator m, String key,
+      long by, long def, int exp) {
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Long> rv =
         new OperationFuture<Long>(key, latch, operationTimeout);
     Operation op = opFact.mutate(m, key, by, def, exp,
         new OperationCallback() {
           public void receivedStatus(OperationStatus s) {
+            if (Mutator.decr == m) {
+              Stats.incrTotalDecr(s);
+            } else if (Mutator.incr == m) {
+              Stats.incrTotalIncr(s);
+            }
             rv.set(new Long(s.isSuccess() ? s.getMessage() : "-1"), s);
           }
 
@@ -1853,6 +1869,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
         latch, operationTimeout);
     DeleteOperation op = opFact.delete(key, new OperationCallback() {
       public void receivedStatus(OperationStatus s) {
+        Stats.incrTotalDelete(s);
         rv.set(s.isSuccess(), s);
       }
 
@@ -2015,6 +2032,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
         getLogger().warn("exception while shutting down", e);
       }
     }
+    Stats.decrTotalClients();
     return rv;
   }
 

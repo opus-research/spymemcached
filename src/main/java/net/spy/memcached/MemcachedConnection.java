@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2011 Couchbase, Inc.
+ * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -50,6 +50,7 @@ import java.util.concurrent.CountDownLatch;
 
 import net.spy.memcached.compat.SpyThread;
 import net.spy.memcached.compat.log.LoggerFactory;
+import net.spy.memcached.management.Stats;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationException;
@@ -161,6 +162,7 @@ public class MemcachedConnection extends SpyThread {
         queueReconnect(qa);
       }
       connections.add(qa);
+      Stats.incrTotalConnections();
     }
     return connections;
   }
@@ -349,6 +351,7 @@ public class MemcachedConnection extends SpyThread {
   }
 
   private void lostConnection(MemcachedNode qa) {
+    Stats.decrTotalConnections();
     queueReconnect(qa);
     for (ConnectionObserver observer : connObservers) {
       observer.connectionLost(qa.getSocketAddress());
@@ -593,6 +596,7 @@ public class MemcachedConnection extends SpyThread {
           if (ch.connect(qa.getSocketAddress())) {
             getLogger().info("Immediately reconnected to %s", qa);
             assert ch.isConnected();
+            Stats.incrTotalConnections();
           } else {
             ops = SelectionKey.OP_CONNECT;
           }

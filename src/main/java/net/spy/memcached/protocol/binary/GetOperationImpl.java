@@ -14,7 +14,7 @@ class GetOperationImpl extends OperationImpl
 	implements GetOperation, GetsOperation, GetlOperation,
 	GetAndTouchOperation {
 
-	static final int GET_CMD=0;
+	static final int GET_CMD=0x00;
 	static final int GETL_CMD=0x94;
 	static final int GAT_CMD=0x1d;
 
@@ -80,8 +80,11 @@ class GetOperationImpl extends OperationImpl
 			GetsOperation.Callback gcb=(GetsOperation.Callback)cb;
 			gcb.gotData(key, flags, responseCas, data);
 		} else if (cb instanceof GetlOperation.Callback) {
+			//getl return the key and value. So we need to strip off the key
+			byte[] value = new byte[data.length-key.length()];
+			System.arraycopy(data, key.length(), value, 0, data.length-key.length());
 			GetlOperation.Callback gcb=(GetlOperation.Callback)cb;
-			gcb.gotData(key, flags, responseCas, data);
+			gcb.gotData(key, flags, responseCas, value);
 		} else if (cb instanceof GetAndTouchOperation.Callback) {
 			GetAndTouchOperation.Callback gcb=(GetAndTouchOperation.Callback)cb;
 			gcb.gotData(key, flags, responseCas, data);

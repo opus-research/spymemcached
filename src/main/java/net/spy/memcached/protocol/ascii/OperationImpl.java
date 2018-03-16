@@ -45,7 +45,6 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
   private final ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
   private OperationReadType readType = OperationReadType.LINE;
   private boolean foundCr = false;
-  private byte[] errorMsg = null;
 
   protected OperationImpl() {
     super();
@@ -149,7 +148,6 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
           byteBuffer.reset();
           OperationErrorType eType = classifyError(line);
           if (eType != null) {
-            errorMsg = line.getBytes();
             handleError(eType, line);
           } else {
             handleLine(line);
@@ -166,10 +164,4 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
    * net.spy.memcached.protocol.ascii.Operation#handleLine(java.lang.String)
    */
   public abstract void handleLine(String line);
-
-  @Override
-  public byte[] getErrorMsg() {
-    return errorMsg;
-  }
-
 }

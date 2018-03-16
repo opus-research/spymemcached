@@ -1,8 +1,0 @@
-#host=plabb17.dev.sabre.com
-#host=plabq23.dev.sabre.com,plabq24.dev.sabre.com,plabh07.dev.sabre.com,plabh08.dev.sabre.com
-host=10.4.2.4,10.4.2.5,10.4.2.6
-
-##Preload options
-preload.noOfObjects=50000
-preload.objectTTL=1800
-#preload.objectSize=8000

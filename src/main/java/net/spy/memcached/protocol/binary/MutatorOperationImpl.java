@@ -85,17 +85,4 @@ class MutatorOperationImpl extends SingleKeyOperationImpl implements
   public Mutator getType() {
     return mutator;
   }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString());
-    sb.append(" Amount: ");
-    sb.append(by);
-    sb.append(" Default: ");
-    sb.append(def);
-    sb.append(" Exp: ");
-    sb.append(exp);
-    return sb.toString();
-  }
 }

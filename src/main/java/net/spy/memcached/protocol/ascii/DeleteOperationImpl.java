@@ -71,13 +71,4 @@ final class DeleteOperationImpl extends OperationImpl implements
   public Collection<String> getKeys() {
     return Collections.singleton(key);
   }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Cmd: delete");
-    sb.append(" Key: ");
-    sb.append(key);
-    return sb.toString();
-  }
 }

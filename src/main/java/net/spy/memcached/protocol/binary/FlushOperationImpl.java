@@ -44,13 +44,4 @@ class FlushOperationImpl extends OperationImpl implements FlushOperation {
   public void initialize() {
     prepareBuffer("", 0, EMPTY_BYTES, delay);
   }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString());
-    sb.append(" Delay: ");
-    sb.append(delay);
-    return sb.toString();
-  }
 }

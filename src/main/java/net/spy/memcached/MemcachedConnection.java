@@ -98,11 +98,6 @@ public class MemcachedConnection extends SpyThread {
   private static final int DEFAULT_WAKEUP_DELAY = 1000;
 
   /**
-   * By default, do not bound the retry queue.
-   */
-  private static final int DEFAULT_RETRY_QUEUE_SIZE = -1;
-
-  /**
    * If an operation gets cloned more than this ceiling, cancel it for
    * safety reasons.
    */
@@ -246,11 +241,6 @@ public class MemcachedConnection extends SpyThread {
   private final int wakeupDelay;
 
   /**
-   * Optionally bound the retry queue if set via system property.
-   */
-  private final int retryQueueSize;
-
-  /**
    * Construct a {@link MemcachedConnection}.
    *
    * @param bufSize the size of the buffer used for reading from the server.
@@ -288,10 +278,6 @@ public class MemcachedConnection extends SpyThread {
 
     wakeupDelay = Integer.parseInt( System.getProperty("net.spy.wakeupDelay",
       Integer.toString(DEFAULT_WAKEUP_DELAY)));
-
-    retryQueueSize = Integer.parseInt(System.getProperty("net.spy.retryQueueSize",
-        Integer.toString(DEFAULT_RETRY_QUEUE_SIZE)));
-    getLogger().info("Setting retryQueueSize to " + retryQueueSize);
 
     List<MemcachedNode> connections = createConnections(a);
     locator = f.createLocator(connections);
@@ -892,7 +878,7 @@ public class MemcachedConnection extends SpyThread {
       assert op == currentOp : "Expected to pop " + currentOp + " got "
         + op;
 
-      retryOperation(currentOp);
+      retryOps.add(currentOp);
       metrics.markMeter(OVERALL_RESPONSE_RETRY_METRIC);
     }
   }
@@ -1498,18 +1484,9 @@ public class MemcachedConnection extends SpyThread {
   /**
    * Add a operation to the retry queue.
    *
-   * If the retry queue size is bounded and the size of the queue is reaching
-   * that boundary, the operation is cancelled rather than added to the
-   * retry queue.
-   *
    * @param op the operation to retry.
    */
   public void retryOperation(Operation op) {
-    if (retryQueueSize >= 0 && retryOps.size() >= retryQueueSize) {
-      if (!op.isCancelled()) {
-        op.cancel();
-      }
-    }
     retryOps.add(op);
   }
 

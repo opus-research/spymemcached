@@ -40,7 +40,6 @@ import net.spy.memcached.ops.CASOperationStatus;
 import net.spy.memcached.ops.CancelledOperationStatus;
 import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
-import net.spy.memcached.ops.GetAndTouchOperation;
 import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
@@ -58,7 +57,6 @@ import net.spy.memcached.vbucket.ConfigurationProvider;
 import net.spy.memcached.vbucket.ConfigurationProviderHTTP;
 import net.spy.memcached.vbucket.Reconfigurable;
 import net.spy.memcached.vbucket.config.Bucket;
-import net.spy.memcached.vbucket.config.Config;
 import net.spy.memcached.vbucket.config.ConfigType;
 
 /**
@@ -214,8 +212,8 @@ public class MemcachedClient extends SpyThread
             }
         }
 
-        configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
-        Bucket bucket = configurationProvider.getBucketConfiguration(bucketName);
+        this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
+        Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
         ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
         if (isVBucketAware) {
             cfb.setFailureMode(FailureMode.Retry)
@@ -230,7 +228,7 @@ public class MemcachedClient extends SpyThread
                     .setLocatorType(ConnectionFactoryBuilder.Locator.CONSISTENT);
 
         }
-        if (!configurationProvider.getAnonymousAuthBucket().equals(bucketName) && usr != null) {
+        if (!this.configurationProvider.getAnonymousAuthBucket().equals(bucketName) && usr != null) {
             AuthDescriptor ad = new AuthDescriptor(new String[]{"PLAIN"},
                     new PlainCallbackHandler(usr, pwd));
             cfb.setAuthDescriptor(ad);
@@ -264,7 +262,7 @@ public class MemcachedClient extends SpyThread
         }
         setName("Memcached IO over " + conn);
         setDaemon(cf.isDaemon());
-        configurationProvider.subscribe(bucketName, this);
+        this.configurationProvider.subscribe(bucketName, this);
         start();
     }
 
@@ -289,7 +287,7 @@ public class MemcachedClient extends SpyThread
 
         this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
         Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
-	Config config = bucket.getConfig();
+	net.spy.memcached.vbucket.config.Config config = bucket.getConfig();
         ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
         if (config.getConfigType() == ConfigType.MEMBASE) {
             cfb.setFailureMode(FailureMode.Retry)
@@ -344,16 +342,12 @@ public class MemcachedClient extends SpyThread
         start();
     }
 
-	public void reconfigure(Bucket bucket) {
-		reconfiguring = true;
-		try {
-			conn.reconfigure(bucket);
-		} catch (IllegalArgumentException ex) {
-			getLogger().warn("Failed to reconfigure client, staying with previous configuration.", ex);
-		} finally {
-			reconfiguring = false;
-		}
-	}
+    public void reconfigure(Bucket bucket) {
+        this.reconfiguring = true;
+        this.conn.reconfigure(bucket);
+        this.reconfiguring = false;
+
+    }
 
 	/**
 	 * Get the addresses of available servers.
@@ -1109,47 +1103,6 @@ public class MemcachedClient extends SpyThread
 	}
 
 	/**
-	 * Get with a single key and reset its expiration.
-	 *
-	 * @param <T>
-	 * @param key the key to get
-	 * @param exp the new expiration for the key
-	 * @param tc the transcoder to serialize and unserialize value
-	 * @return the result from the cache (null if there is none)
-	 * @throws OperationTimeoutException if the global operation timeout is
-	 *		   exceeded
-	 * @throws IllegalStateException in the rare circumstance where queue
-	 *         is too full to accept any more requests
-	 */
-	public <T> CASValue<T> getAndTouch(String key, int exp, Transcoder<T> tc) {
-		try {
-			return asyncGetAndTouch(key, exp, tc).get(operationTimeout,
-					TimeUnit.MILLISECONDS);
-		} catch (InterruptedException e) {
-			throw new RuntimeException("Interrupted waiting for value", e);
-		} catch (ExecutionException e) {
-			throw new RuntimeException("Exception waiting for value", e);
-		} catch (TimeoutException e) {
-			throw new OperationTimeoutException("Timeout waiting for value", e);
-		}
-	}
-
-	/**
-	 * Get a single key and reset its expiration using the default transcoder.
-	 *
-	 * @param key the key to get
-	 * @param exp the new expiration for the key
-	 * @return the result from the cache and CAS id (null if there is none)
-	 * @throws OperationTimeoutException if the global operation timeout is
-	 *		   exceeded
-	 * @throws IllegalStateException in the rare circumstance where queue
-	 *         is too full to accept any more requests
-	 */
-	public CASValue<Object> getAndTouch(String key, int exp) {
-		return getAndTouch(key, exp, transcoder);
-	}
-
-	/**
 	 * Gets (with CAS support) with a single key using the default transcoder.
 	 *
 	 * @param key the key to get
@@ -1401,54 +1354,6 @@ public class MemcachedClient extends SpyThread
 	 */
 	public BulkFuture<Map<String, Object>> asyncGetBulk(String... keys) {
 		return asyncGetBulk(Arrays.asList(keys), transcoder);
-	}
-
-	/**
-	 * Get the given key to reset its expiration time.
-	 *
-	 * @param key the key to fetch
-	 * @param exp the new expiration to set for the given key
-	 * @return a future that will hold the return value of the fetch
-	 * @throws IllegalStateException in the rare circumstance where queue
-	 *         is too full to accept any more requests
-	 */
-	public Future<CASValue<Object>> asyncGetAndTouch(final String key, final int exp) {
-		return asyncGetAndTouch(key, exp, transcoder);
-	}
-
-	/**
-	 * Get the given key to reset its expiration time.
-	 *
-	 * @param key the key to fetch
-	 * @param exp the new expiration to set for the given key
-	 * @param tc the transcoder to serialize and unserialize value
-	 * @return a future that will hold the return value of the fetch
-	 * @throws IllegalStateException in the rare circumstance where queue
-	 *         is too full to accept any more requests
-	 */
-	public <T> Future<CASValue<T>> asyncGetAndTouch(final String key, final int exp,
-			final Transcoder<T> tc) {
-		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<CASValue<T>> rv=new OperationFuture<CASValue<T>>(latch,
-				operationTimeout);
-
-		Operation op=opFact.getAndTouch(key, exp, new GetAndTouchOperation.Callback() {
-			private CASValue<T> val=null;
-			public void receivedStatus(OperationStatus status) {
-				rv.set(val);
-			}
-			public void complete() {
-				latch.countDown();
-			}
-			public void gotData(String key, int flags, long cas, byte[] data) {
-				assert key.equals(key) : "Wrong key returned";
-				assert cas > 0 : "CAS was less than zero:  " + cas;
-				val=new CASValue<T>(cas, tc.decode(
-					new CachedData(flags, data, tc.getMaxSize())));
-			}});
-		rv.setOperation(op);
-		addOp(key, op);
-		return rv;
 	}
 
 	/**
@@ -2076,11 +1981,11 @@ public class MemcachedClient extends SpyThread
 				conn.shutdown();
 				setName(baseName + " - SHUTTING DOWN (informed client)");
 				tcService.shutdown();
-                if (configurationProvider != null) {
-                    configurationProvider.shutdown();
+                if (this.configurationProvider != null) {
+                    this.configurationProvider.shutdown();
                 }
 			} catch (IOException e) {
-				getLogger().warn("exception while shutting down configuration provider", e);
+				getLogger().warn("exception while shutting down", e);
 			}
 		}
 		return rv;

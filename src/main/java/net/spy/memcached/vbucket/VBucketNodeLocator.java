@@ -89,7 +89,7 @@ public class VBucketNodeLocator extends SpyObject implements NodeLocator {
     }
 
     private void setNodes(Collection<MemcachedNode> nodes) {
-        HashMap<String, MemcachedNode> vbnodesMap = new HashMap<String, MemcachedNode>();
+        Map<String, MemcachedNode> vbnodesMap = new HashMap<String, MemcachedNode>();
         getLogger().debug("Updating nodesMap in VBucketNodeLocator.");
         for (MemcachedNode node : nodes) {
             InetSocketAddress addr = (InetSocketAddress) node.getSocketAddress();

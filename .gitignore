@@ -2,11 +2,10 @@
 .classpath
 .project
 cobertura.ser
-lib/ivy*
 target/
 reports/
+lib/ivy*
 build/
 junit*
-bin/
 *.iml
 *~

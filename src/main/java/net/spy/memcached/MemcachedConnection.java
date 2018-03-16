@@ -222,7 +222,15 @@ public class MemcachedConnection extends SpyThread {
     }
     getLogger().debug("Selecting with delay of %sms", delay);
     assert selectorsMakeSense() : "Selectors don't make sense.";
-    int selected = selector.select(delay);
+    //int selected = selector.select(delay);
+
+    // Never block, just return immediately when nothing can be selected.
+    // http://docs.oracle.com/javase/6/docs/api/java/nio/channels/Selector.html#selectNow()
+    int selected = selector.selectNow();
+    if(selected == 0) {
+      return;
+    }
+
     Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
     if (selectedKeys.isEmpty() && !shutDown) {
@@ -397,7 +405,7 @@ public class MemcachedConnection extends SpyThread {
               sk.isReadable(), sk.isWritable(), sk.isConnectable(),
               sk.attachment());
       if (sk.isConnectable() && belongsToCluster(node)) {
-        getLogger().info("Connection state changed for %s", sk);
+        getLogger().debug("Connection state changed for %s", sk);
         final SocketChannel channel = node.getChannel();
         if (channel.finishConnect()) {
 

@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2013 Couchbase, Inc.
+ * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,17 +32,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.compat.SpyObject;
-import net.spy.memcached.metrics.DefaultMetricCollector;
-import net.spy.memcached.metrics.MetricCollector;
-import net.spy.memcached.metrics.MetricType;
-import net.spy.memcached.metrics.NoopMetricCollector;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.protocol.ascii.AsciiMemcachedNodeImpl;
 import net.spy.memcached.protocol.ascii.AsciiOperationFactory;
@@ -111,22 +105,9 @@ public class DefaultConnectionFactory extends SpyObject implements
    */
   public static final int DEFAULT_MAX_TIMEOUTEXCEPTION_THRESHOLD = 998;
 
-  /**
-   * Turn off metric collection by default.
-   */
-  public static final MetricType DEFAULT_METRIC_TYPE = MetricType.OFF;
-
-  /**
-   * The ExecutorService in which the listener callbacks will be executed.
-   */
-  public static final ExecutorService DEFAULT_LISTENER_EXECUTOR_SERVICE =
-    Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-
   protected final int opQueueLen;
   private final int readBufSize;
   private final HashAlgorithm hashAlg;
-
-  private MetricCollector metrics;
 
   /**
    * Construct a DefaultConnectionFactory with the given parameters.
@@ -140,7 +121,6 @@ public class DefaultConnectionFactory extends SpyObject implements
     opQueueLen = qLen;
     readBufSize = bufSize;
     hashAlg = hash;
-    metrics = null;
   }
 
   /**
@@ -257,10 +237,6 @@ public class DefaultConnectionFactory extends SpyObject implements
     return DEFAULT_OP_QUEUE_MAX_BLOCK_TIME;
   }
 
-  public ExecutorService getListenerExecutorService() {
-    return DEFAULT_LISTENER_EXECUTOR_SERVICE;
-  }
-
   /*
    * (non-Javadoc)
    *
@@ -367,31 +343,6 @@ public class DefaultConnectionFactory extends SpyObject implements
    */
   public int getTimeoutExceptionThreshold() {
     return DEFAULT_MAX_TIMEOUTEXCEPTION_THRESHOLD;
-  }
-
-  @Override
-  public MetricType enableMetrics() {
-    String metricType = System.getProperty("net.spy.metrics.type");
-    return metricType == null
-      ? DEFAULT_METRIC_TYPE : MetricType.valueOf(metricType.toUpperCase());
-  }
-
-  @Override
-  public MetricCollector getMetricCollector() {
-    if (metrics != null) {
-      return metrics;
-    }
-
-    String enableMetrics = System.getProperty("net.spy.metrics.enable");
-    if (enableMetrics().equals(MetricType.OFF) || enableMetrics == "false") {
-      getLogger().debug("Metric collection disabled.");
-      metrics =  new NoopMetricCollector();
-    } else {
-      getLogger().info("Metric collection enabled (Profile " + enableMetrics() + ").");
-      metrics = new DefaultMetricCollector();
-    }
-
-    return metrics;
   }
 
   protected String getName() {

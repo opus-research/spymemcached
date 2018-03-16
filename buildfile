@@ -59,7 +59,7 @@ desc "Java memcached client"
 define "spymemcached" do
 
   test.options[:java_args] = "-ea"
-  test.include "*CouchbaseClientTest"
+  test.include "*Test"
   if SERVER_TYPE == 'memcached' then
     test.exclude '*VBucketMemcachedClientTest', '*BucketMonitorTest',
               '*ConfigurationProviderHTTPTest', '*CouchbaseClientTest'

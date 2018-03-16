@@ -198,13 +198,16 @@ public class TapClient {
    *          stream
    * @param message the custom tap message that will be used to initiate the tap
    *          stream.
+   * @param runTime the amount of time to do backfill for. Set to 0 for infinite
+   *          backfill.
+   * @param timeunit the unit of time for the runtime parameter.
    * @return the operation that controls the tap stream.
    * @throws ConfigurationException a bad configuration was recieved from the
    *           Membase cluster.
    * @throws IOException if there are errors connecting to the cluster.
    */
   public Operation tapCustom(String id, RequestMessage message,
-      String keyFilter, String valueFilter) throws ConfigurationException,
+      final int runTime, final TimeUnit timeunit) throws ConfigurationException,
       IOException {
     final TapConnectionProvider conn;
     if (vBucketAware) {
@@ -236,6 +239,24 @@ public class TapClient {
       omap.put(op, conn);
     }
     conn.addOp(op);
+
+    if (runTime > 0) {
+      Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Thread.sleep(TimeUnit.MILLISECONDS.convert(runTime, timeunit));
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+          conn.shutdown();
+          synchronized (omap) {
+            omap.remove(op);
+          }
+        }
+      };
+      new Thread(r).start();
+    }
     return op;
   }
 

@@ -2098,7 +2098,14 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       if (authDescriptor.authThresholdReached()) {
         this.shutdown();
       }
-      authMonitor.authConnection(mconn, opFact, authDescriptor, findNode(sa));
+      MemcachedNode node = findNode(sa);
+      if (node != null) {
+          authMonitor.authConnection(mconn, opFact, authDescriptor, node);
+      }
+      else {
+          getLogger().warn("Unauthenticated Connection established to " +
+                  sa + " in cluster " + mconn.getLocator().getAll());
+      }
     }
   }
 

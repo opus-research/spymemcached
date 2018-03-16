@@ -373,7 +373,8 @@ public class MemcachedConnection extends SpyThread {
             handleWrites(sk, qa);
           }
         } else {
-          assert !channel.isConnected() : "connected";
+          assert !channel.isConnected() : "Could not finish "
+                  + "connect on channel";
         }
       } else {
         if (sk.isValid() && sk.isReadable()) {
@@ -435,6 +436,12 @@ public class MemcachedConnection extends SpyThread {
     }
     ByteBuffer rbuf = qa.getRbuf();
     final SocketChannel channel = qa.getChannel();
+    if ((channel == null) || (!channel.isConnected())) {
+        getLogger().warn("Channel is not connected for key " + sk
+                + " on node " + qa);
+        getLogger().warn("Client will retry the connection on node " + qa);
+        return;
+    }
     int read = channel.read(rbuf);
     if (read < 0) {
       if (currentOp instanceof TapOperation) {
@@ -505,6 +512,12 @@ public class MemcachedConnection extends SpyThread {
     if (!shutDown) {
       getLogger().warn("Closing, and reopening %s, attempt %d.", qa,
           qa.getReconnectCount());
+      try {
+        qa.getChannel().socket().close();
+      } catch (IOException e) {
+        getLogger().warn("IOException trying to close a socket", e);
+        getLogger().warn("Retry won't be attempted on node " + qa);
+      }
       if (qa.getSk() != null) {
         qa.getSk().cancel();
         assert !qa.getSk().isValid() : "Cancelled selection key is valid";

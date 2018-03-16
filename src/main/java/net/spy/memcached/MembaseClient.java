@@ -2,6 +2,8 @@ package net.spy.memcached;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.channels.CancelledKeyException;
+import java.nio.channels.ClosedSelectorException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -22,7 +24,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	private volatile boolean reconfiguring = false;
 
 	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server.
+	 * Get a MembaseClient based on the REST response from a Membase server.
 	 *
 	 * This constructor is merely a convenience for situations where the bucket
 	 * name is the same as the user name.  This is commonly the case.
@@ -46,7 +48,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	}
 
 	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server
+	 * Get a MembaseClient based on the REST response from a Membase server
 	 * where the username is different than the bucket name.
 	 *
 	 * To connect to the "default" special bucket for a given cluster, use an
@@ -70,7 +72,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	}
 
 	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server
+	 * Get a MembaseClient based on the REST response from a Membase server
 	 * where the username is different than the bucket name.
 	 *
 	 * Note that when specifying a ConnectionFactory you must specify a
@@ -96,9 +98,14 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	 *         server has issues or is not compatible
 	 */
 	public MembaseClient(MembaseConnectionFactory cf) throws IOException, ConfigurationException {
-		super(cf, AddrUtil.getAddresses(cf.getVBucketConfig().getServers()));
+		super(cf, AddrUtil.getAddresses(cf.getVBucketConfig().getServers()), false);
+		start();
 	}
 
+	/**
+	 * This function is called when there is a topology change in the
+	 * cluster. This function is intended for internal use only.
+	 */
 	public void reconfigure(Bucket bucket) {
 		reconfiguring = true;
 		try {
@@ -202,6 +209,29 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	 */
 	public CASValue<Object> getAndLock(String key, int exp) {
 		return getAndLock(key, exp, transcoder);
+	}
+
+	/**
+	 * Infinitely loop processing IO.
+	 */
+	@Override
+	public void run() {
+		while(running) {
+            if (!reconfiguring) {
+                try {
+                    mconn.handleIO();
+                } catch (IOException e) {
+                    logRunException(e);
+                } catch (CancelledKeyException e) {
+                    logRunException(e);
+                } catch (ClosedSelectorException e) {
+                    logRunException(e);
+                } catch (IllegalStateException e) {
+                    logRunException(e);
+                }
+			}
+		}
+		getLogger().info("Shut down membase client");
 	}
 
 	@Override

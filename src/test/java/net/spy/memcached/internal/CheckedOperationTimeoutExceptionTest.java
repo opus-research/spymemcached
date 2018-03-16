@@ -93,10 +93,5 @@ public class CheckedOperationTimeoutExceptionTest extends TestCase {
     public void readFromBuffer(ByteBuffer data) throws IOException {
       throw new RuntimeException("Not implemented");
     }
-
-    @Override
-    public byte[] getErrorMsg() {
-      return new byte[] {};
-    }
   }
 }

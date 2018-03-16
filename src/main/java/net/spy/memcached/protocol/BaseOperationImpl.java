@@ -37,7 +37,6 @@ import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.ops.StatusCode;
 import net.spy.memcached.ops.TimedOutOperationStatus;
 
 /**
@@ -173,7 +172,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
       assert false;
     }
     callback.receivedStatus(new OperationStatus(false,
-        exception.getMessage(), StatusCode.ERR_INTERNAL));
+        exception.getMessage()));
     transitionState(OperationState.COMPLETE);
     throw exception;
   }

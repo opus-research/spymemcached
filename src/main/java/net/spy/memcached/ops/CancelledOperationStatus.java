@@ -28,6 +28,6 @@ package net.spy.memcached.ops;
 public class CancelledOperationStatus extends OperationStatus {
 
   public CancelledOperationStatus() {
-    super(false, "cancelled", StatusCode.CANCELLED);
+    super(false, "cancelled");
   }
 }

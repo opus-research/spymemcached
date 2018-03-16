@@ -351,7 +351,9 @@ public class DefaultConnectionFactory extends SpyObject implements
 
   @Override
   public String toString() {
-    return "Failure Mode: " + getFailureMode().name() + ", Hash Algorithm: "
+    String retVal = null;
+    if(getFailureMode()!=null && getHashAlg()!=null){
+      retVal = "Failure Mode: " + getFailureMode().name() + ", Hash Algorithm: "
       + ((DefaultHashAlgorithm)getHashAlg()).name() + " Max Reconnect Delay: "
       + getMaxReconnectDelay() + ", Max Op Timeout: " + getOperationTimeout()
       + ", Op Queue Length: " + getOpQueueLen() + ", Op Max Queue Block Time"
@@ -361,5 +363,7 @@ public class DefaultConnectionFactory extends SpyObject implements
       + ", Operation Factory: " + getOperationFactory() + " isDaemon: "
       + isDaemon() + ", Optimized: " + shouldOptimize() + ", Using Nagle: "
       + useNagleAlgorithm() + ", ConnectionFactory: " + getName();
+    }
+    return retVal;
   }
 }

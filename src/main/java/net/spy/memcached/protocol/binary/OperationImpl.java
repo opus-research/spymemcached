@@ -52,7 +52,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
   protected static final byte[] EMPTY_BYTES = new byte[0];
 
   protected static final OperationStatus STATUS_OK = new CASOperationStatus(
-      true, "OK", ErrorCode.SUCCESS, CASResponse.OK);
+      true, "OK", CASResponse.OK);
 
   private static final AtomicInteger SEQ_NUMBER = new AtomicInteger(0);
 
@@ -68,7 +68,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
   // Response header fields
   protected int keyLen;
   protected byte responseCmd;
-  protected int errorCode;
+  protected short errorCode;
   protected int responseOpaque;
   protected long responseCas;
 
@@ -120,7 +120,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
           : "Unexpected response command value";
         keyLen = decodeShort(header, 2);
         // TODO: Examine extralen and datatype
-        errorCode = decodeShort(header, 6);
+        errorCode = (short) decodeShort(header, 6);
         int bytesToRead = decodeInt(header, 8);
         payload = new byte[bytesToRead];
         responseOpaque = decodeInt(header, 12);
@@ -154,7 +154,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 
   protected void finishedPayload(byte[] pl) throws IOException {
     OperationStatus status = getStatusForErrorCode(errorCode, pl);
-    ErrorCode ec = ErrorCode.getErrorCode((byte)errorCode);
+    ErrorCode ec = ErrorCode.getErrorCode(errorCode);
 
     if (status == null) {
       handleError(OperationErrorType.SERVER, new String(pl));
@@ -176,20 +176,19 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
    * @param errCode the error code
    * @return the status to return, or null if this is an exceptional case
    */
-  protected OperationStatus getStatusForErrorCode(int errCode, byte[] errPl)
+  protected OperationStatus getStatusForErrorCode(short errCode, byte[] errPl)
     throws IOException {
-    ErrorCode ec = ErrorCode.getErrorCode((byte)errCode);
-    switch (ec) {
+    switch (ErrorCode.getErrorCode(errCode)) {
     case SUCCESS:
       return STATUS_OK;
     case ERR_NOT_FOUND:
-      return new CASOperationStatus(false, new String(errPl), ec,
+      return new CASOperationStatus(false, new String(errPl),
           CASResponse.NOT_FOUND);
     case ERR_EXISTS:
-      return new CASOperationStatus(false, new String(errPl), ec,
+      return new CASOperationStatus(false, new String(errPl),
           CASResponse.EXISTS);
     case ERR_NOT_STORED:
-      return new CASOperationStatus(false, new String(errPl), ec,
+      return new CASOperationStatus(false, new String(errPl),
           CASResponse.NOT_FOUND);
     case ERR_2BIG:
     case ERR_INTERNAL:
@@ -202,7 +201,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
     case ERR_NOT_SUPPORTED:
     case ERR_BUSY:
     case ERR_TEMP_FAIL:
-      return new OperationStatus(false, new String(errPl), ec);
+      return new OperationStatus(false, new String(errPl));
     default:
       return null;
     }

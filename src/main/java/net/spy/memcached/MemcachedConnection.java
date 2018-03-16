@@ -473,9 +473,8 @@ public class MemcachedConnection extends SpyThread {
     }
 
     if (!retryOps.isEmpty()) {
-      ArrayList<Operation> operations = new ArrayList<Operation>(retryOps);
+      redistributeOperations(new ArrayList<Operation>(retryOps));
       retryOps.clear();
-      redistributeOperations(operations);
     }
 
     handleShutdownQueue();
@@ -1043,7 +1042,7 @@ public class MemcachedConnection extends SpyThread {
 
     // The operation gets redistributed but has never been actually written,
     // it we just straight re-add it without cloning.
-    if (op.getState() == OperationState.WRITE_QUEUED && op.getHandlingNode() != null) {
+    if (op.getState() == OperationState.WRITE_QUEUED) {
       addOperation(op.getHandlingNode(), op);
       return;
     }
@@ -1258,10 +1257,6 @@ public class MemcachedConnection extends SpyThread {
    * @param o the operation to add.
    */
   protected void addOperation(final MemcachedNode node, final Operation o) {
-    if (!node.isAuthenticated()) {
-      retryOperation(o);
-      return;
-    }
     o.setHandlingNode(node);
     o.initialize();
     node.addOp(o);

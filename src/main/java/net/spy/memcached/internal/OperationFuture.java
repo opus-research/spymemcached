@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
 
@@ -58,12 +57,16 @@ public class OperationFuture<T> implements Future<T> {
 		throws InterruptedException, TimeoutException, ExecutionException {
 		if(!latch.await(duration, units)) {
 			// whenever timeout occurs, continuous timeout counter will increase by 1.
-			MemcachedConnection.opTimedOut(op);
+			if (op != null && op.getHandlingNode() != null) {
+				op.getHandlingNode().setContinuousTimeout(true);
+			}
 			throw new CheckedOperationTimeoutException(
 					"Timed out waiting for operation", op);
 		} else {
 			// continuous timeout counter will be reset
-		    MemcachedConnection.opSucceeded(op);
+			if (op != null && op.getHandlingNode() != null) {
+				op.getHandlingNode().setContinuousTimeout(false);
+			}
 		}
 		if(op != null && op.hasErrored()) {
 			throw new ExecutionException(op.getException());

@@ -92,7 +92,7 @@ public abstract class AbstractMultiNodeFailure extends TestCase {
             logger.error(ex);
         }
 
-        //failPrimaryNode();
+        failPrimaryNode();
 
         try {
             Thread.sleep(500);

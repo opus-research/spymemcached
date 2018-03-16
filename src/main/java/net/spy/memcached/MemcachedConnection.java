@@ -66,6 +66,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -404,21 +405,19 @@ public class MemcachedConnection extends SpyThread {
     getLogger().debug("Selecting with delay of %sms", delay);
     assert selectorsMakeSense() : "Selectors don't make sense.";
     int selected = selector.select(delay);
-    //Set<SelectionKey> selectedKeys = selector.selectedKeys();
+    Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
-    if (selector.selectedKeys().isEmpty() && !shutDown) {
+    if (selectedKeys.isEmpty() && !shutDown) {
       handleEmptySelects();
     } else {
       getLogger().debug("Selected %d, selected %d keys", selected,
-        selector.selectedKeys().size());
+        selectedKeys.size());
       emptySelects = 0;
 
-      Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-      while(iterator.hasNext()) {
-        SelectionKey sk = iterator.next();
+      for (SelectionKey sk : selectedKeys) {
         handleIO(sk);
-        iterator.remove();
       }
+      selectedKeys.clear();
     }
 
     handleOperationalTasks();
@@ -1010,6 +1009,7 @@ public class MemcachedConnection extends SpyThread {
     // it we just straight re-add it without cloning.
     if (op.getState() == OperationState.WRITE_QUEUED) {
       addOperation(op.getHandlingNode(), op);
+      return;
     }
 
     if (op instanceof MultiGetOperationImpl) {

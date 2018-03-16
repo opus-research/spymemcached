@@ -1,5 +1,0 @@
-[gerrit]
-host=review.couchbase.com
-port=29418
-project=spymemcached.git
-defaultbranch=master

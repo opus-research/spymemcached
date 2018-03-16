@@ -21,7 +21,7 @@ SOFTWARE.
 -->
 
 <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
-  <info organisation="net.spy" module="${name}" revision="${version}"/>
+  <info organisation="spy" module="${name}" revision="${version}"/>
 
   <configurations defaultconfmapping="default">
     <!--these match the Maven configurations-->
@@ -53,8 +53,6 @@ SOFTWARE.
     <dependency org="jmock" name="jmock" rev="${jmock.version}"
         conf="common->master" />
     <dependency org="junit" name="junit" rev="${junit.version}"
-        conf="common->master" />
-    <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"
         conf="common->master" />
     <dependency org="org.springframework" name="spring-beans"
         rev="${spring-beans.version}" conf="common->master" />

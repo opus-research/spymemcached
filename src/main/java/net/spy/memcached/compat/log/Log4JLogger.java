@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,16 +44,17 @@ public class Log4JLogger extends AbstractLogger {
     l4jLogger = Logger.getLogger(name);
   }
 
-  @Override
-  public boolean isTraceEnabled() {
-    return (l4jLogger.isTraceEnabled());
-  }
-
+  /**
+   * True if the underlying logger would allow debug messages through.
+   */
   @Override
   public boolean isDebugEnabled() {
     return (l4jLogger.isDebugEnabled());
   }
 
+  /**
+   * True if the underlying logger would allow info messages through.
+   */
   @Override
   public boolean isInfoEnabled() {
     return (l4jLogger.isInfoEnabled());
@@ -63,7 +63,7 @@ public class Log4JLogger extends AbstractLogger {
   /**
    * Wrapper around log4j.
    *
-   * @param level net.spy.compat.log.Level level.
+   * @param level net.spy.compat.log.AbstractLogger level.
    * @param message object message
    * @param e optional throwable
    */
@@ -72,9 +72,6 @@ public class Log4JLogger extends AbstractLogger {
     org.apache.log4j.Level pLevel = org.apache.log4j.Level.DEBUG;
 
     switch (level == null ? Level.FATAL : level) {
-    case TRACE:
-      pLevel = org.apache.log4j.Level.TRACE;
-      break;
     case DEBUG:
       pLevel = org.apache.log4j.Level.DEBUG;
       break;

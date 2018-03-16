@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,61 +38,18 @@ public interface Logger {
   String getName();
 
   /**
-   * Checks whether DEBUG logging is enabled.
+   * True if debug is enabled for this logger.
    *
-   * This may return true, even when the logger is configured to not put the
-   * resulting output anywhere. You can use this method to avoid potential
-   * expensive (debugging) code when there is no need for it since it will
-   * be dropped anyway:
-   *
-   * <pre>{@code
-   *if (log.isDebugEnabled()) {
-   *  ... expensive code here ...
-   *  log.debug(result);
-   *}
-   * }</pre>
-   *
-   * @return true if debug messages would be displayed.
+   * @return true if debug messages would be displayed
    */
   boolean isDebugEnabled();
 
   /**
-   * Checks whether INFO logging is enabled.
+   * True if info is enabled for this logger.
    *
-   * This may return true, even when the logger is configured to not put the
-   * resulting output anywhere. You can use this method to avoid potential
-   * expensive (debugging) code when there is no need for it since it will
-   * be dropped anyway:
-   *
-   * <pre>{@code
-   *if (log.isInfoEnabled()) {
-   *  ... expensive code here ...
-   *  log.info(result);
-   *}
-   * }</pre>
-   *
-   * @return true if info messages would be displayed.
+   * @return true if info messages would be displayed
    */
   boolean isInfoEnabled();
-
-  /**
-   * Checks whether TRACE logging is enabled.
-   *
-   * This may return true, even when the logger is configured to not put the
-   * resulting output anywhere. You can use this method to avoid potential
-   * expensive (debugging) code when there is no need for it since it will
-   * be dropped anyway:
-   *
-   * <pre>{@code
-   *if (log.isTraceEnabled()) {
-   *  ... expensive code here ...
-   *  log.trace(result);
-   *}
-   * }</pre>
-   *
-   * @return true if trace messages would be displayed.
-   */
-  boolean isTraceEnabled();
 
   /**
    * Log a message at the specified level.
@@ -111,29 +67,6 @@ public interface Logger {
    * @param message the message to log
    */
   void log(Level level, Object message);
-
-  /**
-   * Log a message at trace level.
-   *
-   * @param message the message to log
-   * @param exception the exception that caused the message to be generated
-   */
-  void trace(Object message, Throwable exception);
-
-  /**
-   * Log a message at trace level.
-   *
-   * @param message the message to log
-   */
-  void trace(Object message);
-
-  /**
-   * Log a formatted message at trace level.
-   *
-   * @param message the message to log
-   * @param args the arguments for that message
-   */
-  void trace(String message, Object... args);
 
   /**
    * Log a message at debug level.

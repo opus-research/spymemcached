@@ -33,7 +33,7 @@
 
   <property name="name" value="spymemcached"/>
   <property name="copyright" value="2006-2011 Dustin Sallings, Matt Ingenthron" />
-  <property name="group" value="net.spy" />
+  <property name="group" value="spy" />
 
   <property name="base.src.dir" value="${basedir}/src" />
   <property name="build.dir" value="${basedir}/build" />
@@ -56,7 +56,7 @@
   <property name="ivy.settings.dir" value="${basedir}/ivy" />
   <property name="ivy.pom.url"
       value="http://www.couchbase.org/code/couchbase/java" />
-  <property name="ivy.pom.groupId" value="net.spy" />
+  <property name="ivy.pom.groupId" value="spy" />
   <property name="ivy.pom.description"
    value = "A client library for memcached."/>
   <path id="test.classpath">
@@ -281,10 +281,7 @@
         srcdir="${test.dir}"
         includes="**/*.java"
         destdir="${build.test.classes}"
-        debug="${javac.debug}"
-        includeantruntime="false"
-        target="1.6"
-        source="1.6">
+        debug="${javac.debug}">
       <classpath>
         <path refid="test.classpath"/>
       </classpath>
@@ -332,7 +329,6 @@
 
   <target name="docsjar" depends="docs"
       description="Create the documentation jar">
-    <mkdir dir="${build.dir}/javadocs" />
     <zip destfile="${build.dir}/javadocs/${name}-${version}.jar"
         basedir="${build.javadoc}" />
   </target>
@@ -369,10 +365,7 @@
         includes="**/*.java"
         destdir="${build.classes}"
         debug="${javac.debug}"
-        deprecation="${javac.deprecation}"
-        includeantruntime="false"
-        target="1.6"
-        source="1.6">
+        deprecation="${javac.deprecation}">
       <classpath refid="${name}.common.classpath" />
     </javac>
 
@@ -382,10 +375,7 @@
         includes="**/*.java"
         destdir="${build.classes}"
         debug="${javac.debug}"
-        deprecation="${javac.deprecation}"
-        includeantruntime="false"
-        target="1.6"
-        source="1.6">
+        deprecation="${javac.deprecation}">
       <classpath refid="${name}.common.classpath"/>
     </javac>
     <move file="${build.src.dir}/net/spy/memcached/changelog.txt"
@@ -394,7 +384,7 @@
 
   <target name="srcjar" depends="init,jar"
       description="Create source jars">
-    <mkdir dir="${build.dir}/sources" />
+    <mkdir dir="${build.dir}" />
     <jar jarfile="${build.dir}/sources/${name}-${version}.jar">
       <fileset dir="${src.dir}" />
       <fileset dir="${build.src.dir}" />
@@ -405,7 +395,6 @@
   </target>
 
   <target name="jar" depends="compile,compile-test" description="Creates a jar file for the library">
-    <mkdir dir="${build.dir}/jars" />
     <jar jarfile="${build.dir}/jars/${name}-${version}.jar" basedir="${build.classes}">
       <manifest>
         <attribute name="Implementation-Title" value="java memcached client" />
@@ -472,7 +461,6 @@
       <mapping conf="default" scope="compile" />
       <mapping conf="runtime" scope="runtime" />
       <dependency group="log4j" artifact="log4j" version="${log4j.version}" optional="true" />
-      <dependency group="org.slf4j" artifact="slf4j-api" version="${slf4j.version}" optional="true" />
       <dependency group="org.springframework" artifact="spring-beans" version="${spring-beans.version}" optional="true" />
     </ivy:makepom>
 
@@ -482,7 +470,6 @@
       <mapping conf="default" scope="compile" />
       <mapping conf="runtime" scope="runtime" />
       <dependency group="log4j" artifact="log4j" version="${log4j.version}" optional="true" />
-      <dependency group="org.slf4j" artifact="slf4j-api" version="${slf4j.version}" optional="true" />
       <dependency group="org.springframework" artifact="spring-beans" version="${spring-beans.version}" optional="true" />
    </ivy:makepom>
 
@@ -505,7 +492,7 @@
       <attach file="${build.dir}/sources/${name}-${version}.jar"
           classifier="sources" />
       <attach file="${build.dir}/javadocs/${name}-${version}.jar"
-          classifier="javadoc" />
+          classifier="javadocs" />
     </artifact:install>
     <artifact:pom id="spymemcached-test" file="${spymemcached-test.pom}" />
       <artifact:install file="${build.dir}/jars/${name}-test-${version}.jar">

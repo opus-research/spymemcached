@@ -55,8 +55,6 @@ public class MemcachedClientFactoryBeanTest extends TestCase {
     final Transcoder<Object> transcoder = new SerializingTranscoder();
     factory.setTranscoder(transcoder);
 
-    factory.afterPropertiesSet();
-
     final MemcachedClient memcachedClient =
         (MemcachedClient) factory.getObject();
 

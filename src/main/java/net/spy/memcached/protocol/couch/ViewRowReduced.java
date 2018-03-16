@@ -26,11 +26,11 @@ package net.spy.memcached.protocol.couch;
  * Holds a row in a view result that contains the fields
  * key and value.
  */
-public class RowReduced implements ViewRow {
+public class ViewRowReduced implements ViewRow {
   private String key;
   private String value;
 
-  public RowReduced(String key, String value) {
+  public ViewRowReduced(String key, String value) {
     // The key can be the string "null" so convert it to null
     if (key != null && key.equals("null")) {
       this.key = null;

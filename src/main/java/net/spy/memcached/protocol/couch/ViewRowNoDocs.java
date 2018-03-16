@@ -26,12 +26,12 @@ package net.spy.memcached.protocol.couch;
  * Holds a row in a view result that contains the fields
  * id, key, and value.
  */
-public class RowNoDocs implements ViewRow {
+public class ViewRowNoDocs implements ViewRow {
   private final String id;
   private final String key;
   private final String value;
 
-  public RowNoDocs(String id, String key, String value) {
+  public ViewRowNoDocs(String id, String key, String value) {
     // The id can be the string "null" so convert it to null
     if (id != null && id.equals("null")) {
       this.id = null;

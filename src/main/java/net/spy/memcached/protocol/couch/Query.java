@@ -82,8 +82,8 @@ public class Query {
     return this;
   }
 
-  public Query setIncludeDocs(boolean includedocs) {
-    this.includedocs = includedocs;
+  public Query setIncludeDocs(boolean include) {
+    this.includedocs = include;
     return this;
   }
 
@@ -147,22 +147,78 @@ public class Query {
     return this;
   }
 
+  public Query copy() {
+    Query query = new Query();
+
+    if (args.containsKey(DESCENDING)) {
+      query.setDescending(((Boolean)args.get(DESCENDING)).booleanValue());
+    }
+    if (args.containsKey(ENDKEY)) {
+      query.setRangeEnd(((String)args.get(ENDKEY)));
+    }
+    if (args.containsKey(ENDKEYDOCID)) {
+      query.setEndkeyDocID(((String)args.get(ENDKEYDOCID)));
+    }
+    if (args.containsKey(GROUP)) {
+      query.setGroup(((Boolean)args.get(GROUP)).booleanValue());
+    }
+    if (args.containsKey(GROUPLEVEL)) {
+      query.setGroup(((Boolean)args.get(GROUP)).booleanValue(),
+          ((Integer)args.get(GROUPLEVEL)).intValue());
+    }
+    if (args.containsKey(INCLUSIVEEND)) {
+      query.setInclusiveEnd(((Boolean)args.get(INCLUSIVEEND)).booleanValue());
+    }
+    if (args.containsKey(KEY)) {
+      query.setEndkeyDocID(((String)args.get(KEY)));
+    }
+    if (args.containsKey(LIMIT)) {
+      query.setLimit(((Integer)args.get(LIMIT)).intValue());
+    }
+    if (args.containsKey(REDUCE)) {
+      query.setReduce(((Boolean)args.get(REDUCE)).booleanValue());
+    }
+    if (args.containsKey(SKIP)) {
+      query.setSkip(((Integer)args.get(SKIP)).intValue());
+    }
+    if (args.containsKey(STALE)) {
+      query.setStale(((Stale)args.get(STALE)));
+    }
+    if (args.containsKey(STARTKEY)) {
+      query.setRangeStart(((String)args.get(STARTKEY)));
+    }
+    if (args.containsKey(STARTKEYDOCID)) {
+      query.setStartkeyDocID(((String)args.get(STARTKEYDOCID)));
+    }
+    if (args.containsKey(UPDATESEQ)) {
+      query.setUpdateSeq(((Boolean)args.get(UPDATESEQ)).booleanValue());
+    }
+    setIncludeDocs(willIncludeDocs());
+
+    return query;
+  }
+
   @Override
   public String toString() {
     boolean first = true;
-    String result = "";
+    StringBuffer result = new StringBuffer();
     for (Entry<String, Object> arg : args.entrySet()) {
       if (first) {
-        result += "?" + getArg(arg.getKey(), arg.getValue());
+        result.append("?");
         first = false;
       } else {
-        result += "&" + getArg(arg.getKey(), arg.getValue());
+        result.append("&");
       }
+      result.append(getArg(arg.getKey(), arg.getValue()));
     }
-    return result;
+    return result.toString();
   }
 
   private String getArg(String key, Object value) {
+    // Special case
+    if (key.equals(STARTKEYDOCID)) {
+      return key + "=" + value;
+    }
     if (value instanceof Boolean) {
       return key + "=" + ((Boolean) value).toString();
     } else if (value instanceof Integer) {

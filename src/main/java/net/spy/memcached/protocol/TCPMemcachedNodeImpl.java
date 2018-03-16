@@ -333,7 +333,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    */
   public final void addOp(Operation op) {
     try {
-      if (!authLatch.await(2500, TimeUnit.MILLISECONDS)) {
+      if (!authLatch.await(1, TimeUnit.SECONDS)) {
         op.cancel();
         getLogger().warn("Operation canceled because authentication "
                 + "or reconnection and authentication has "

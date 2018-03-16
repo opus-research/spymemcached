@@ -8,6 +8,7 @@ import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.OperationCallback;
+import net.spy.memcached.ops.OperationStatus;
 
 class GetOperationImpl extends OperationImpl
 	implements GetOperation, GetsOperation, GetlOperation,
@@ -24,41 +25,34 @@ class GetOperationImpl extends OperationImpl
 
 	private final String key;
 	private final int exp;
-	private final int cmd;
 
 	public GetOperationImpl(String k, GetOperation.Callback cb) {
 		super(GET_CMD, generateOpaque(), cb);
 		key=k;
 		exp=0;
-		cmd=GET_CMD;
 	}
 
 	public GetOperationImpl(String k, GetsOperation.Callback cb) {
 		super(GET_CMD, generateOpaque(), cb);
 		key=k;
 		exp=0;
-		cmd=GET_CMD;
 	}
 
 	public GetOperationImpl(String k, int e, GetlOperation.Callback cb) {
 		super(GETL_CMD, generateOpaque(), cb);
 		key=k;
 		exp=e;
-		cmd=GETL_CMD;
 	}
 
 	public GetOperationImpl(String k, int e, GetAndTouchOperation.Callback cb) {
 		super(GAT_CMD, generateOpaque(), cb);
 		key=k;
 		exp=e;
-		cmd=GAT_CMD;
 	}
 
 	@Override
 	public void initialize() {
-		if (cmd == GETL_CMD) {
-			prepareBuffer(key, 0, EMPTY_BYTES, 0, exp);
-		} else if (cmd == GAT_CMD) {
+		if (exp > 0) {
 			prepareBuffer(key, 0, EMPTY_BYTES, exp);
 		} else {
 			prepareBuffer(key, 0, EMPTY_BYTES);
@@ -88,6 +82,15 @@ class GetOperationImpl extends OperationImpl
 			throw new ClassCastException("Couldn't convert " + cb + "to a relevent op");
 		}
 		getCallback().receivedStatus(STATUS_OK);
+	}
+
+	@Override
+	protected OperationStatus getStatusForErrorCode(int errCode, byte[] errPl) {
+        OperationStatus baseStatus = super.getStatusForErrorCode(errCode, errPl);
+        if (baseStatus != null) {
+            return baseStatus;
+        }
+        return errCode == ERR_NOT_FOUND ? NOT_FOUND_STATUS : null;
 	}
 
 	public Collection<String> getKeys() {

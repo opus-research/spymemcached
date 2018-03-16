@@ -1714,7 +1714,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
         boolean rv = false;
         for (Operation op : ops) {
           op.cancel();
-          rv |= op.getState() == OperationState.WRITING;
+          rv |= op.getState() == OperationState.WRITE_QUEUED;
         }
         return rv;
       }
@@ -1809,7 +1809,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     shuttingDown = true;
     String baseName = mconn.getName();
     mconn.setName(baseName + " - SHUTTING DOWN");
-    boolean rv = false;
+    boolean rv = true;
     try {
       // Conditionally wait
       if (timeout > 0) {

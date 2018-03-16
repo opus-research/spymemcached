@@ -58,7 +58,7 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
    * Construct an optimized get starting with the given get operation.
    */
   public OptimizedSetImpl(CASOperation firstStore) {
-    super(-1, -1, NOOP_CALLBACK);
+    super((byte)-1, -1, NOOP_CALLBACK);
     addOperation(firstStore);
   }
 

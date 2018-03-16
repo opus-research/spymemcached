@@ -79,7 +79,7 @@ public class CouchbaseClient extends MembaseClient
     boolean propsFileExists;
     try {
       Properties properties = new Properties();
-      properties.load(new FileInputStream("config.properties"));
+      properties.load(new FileInputStream("cbclient.properties"));
       viewmode = properties.getProperty("viewmode");
       propsFileExists = true;
     } catch (IOException e) {

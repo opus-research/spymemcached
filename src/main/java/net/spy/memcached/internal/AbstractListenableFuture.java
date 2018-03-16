@@ -113,6 +113,8 @@ public abstract class AbstractListenableFuture
     executor.submit(new Runnable() {
       @Override
       public void run() {
+        Thread.currentThread().setName("FutureNotifyListener");
+
         try {
           listener.onComplete(future);
         } catch(Throwable t) {

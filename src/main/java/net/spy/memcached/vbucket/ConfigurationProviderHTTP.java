@@ -97,8 +97,8 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
      * @throws ConfigurationException
      */
     private void readPools(String bucketToFind) throws ConfigurationException {
-    // the intent with this method is to encapsulate all of the walking of URIs
-    // and populating an internal object model of the configuration to one place
+	// the intent with this method is to encapsulate all of the walking of URIs
+	// and populating an internal object model of the configuration to one place
         for (URI baseUri : baseList) {
             try {
                 // get and parse the response from the current base uri
@@ -126,7 +126,7 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
                     pool.replaceBuckets(bucketsForPool);
 
                 }
-                // did we find our bucket?
+                // did we found our bucket?
                 boolean bucketFound = false;
                 for (Pool pool : pools.values()) {
                     if (pool.hasBucket(bucketToFind)) {
@@ -144,13 +144,11 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
                     return;
                 }
             } catch (ParseException e) {
-		getLogger().warn("Provided URI " + baseUri + " has an unparsable response...skipping", e);
-		continue;
+                getLogger().warn("Provided URI " + baseUri + " has an unparsable response...skipping", e);
             } catch (IOException e) {
-		getLogger().warn("Connection problems with URI " + baseUri + " ...skipping", e);
-		continue;
+                getLogger().warn("Connection problems with URI " + baseUri + " ...skipping", e);
             }
-	    throw new ConfigurationException("Configuration for bucket " + bucketToFind + " was not found.");
+            throw new ConfigurationException("Configuration for bucket " + bucketToFind + " was not found.");
         }
     }
 

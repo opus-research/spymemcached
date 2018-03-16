@@ -78,7 +78,7 @@ define "spymemcached" do
                "junit:junit:jar:4.4", "org.jboss.netty:netty:jar:3.1.5.GA",
                "org.springframework:spring-beans:jar:3.0.3.RELEASE",
                "org.codehaus.jettison:jettison:jar:1.1",
-               "commons-codec:commons-codec:jar:1.5",
+               "commons-codec:commons-codec:jar:1.4",
                "org.easymock:easymock:jar:2.4",
                "org.easymock:easymockclassextension:jar:2.4",
                "junit-addons:junit-addons:jar:1.4",

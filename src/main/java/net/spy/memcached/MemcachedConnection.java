@@ -93,14 +93,9 @@ public class MemcachedConnection extends SpyThread {
   private static final int EXCESSIVE_EMPTY = 0x1000000;
 
   /**
-   * The default wakeup delay if not overriden by a system property.
+   * The default wakeup delay if not overridden by a system property.
    */
   private static final int DEFAULT_WAKEUP_DELAY = 1000;
-
-  /**
-   * By default, do not bound the retry queue.
-   */
-  private static final int DEFAULT_RETRY_QUEUE_SIZE = -1;
 
   /**
    * If an operation gets cloned more than this ceiling, cancel it for
@@ -246,11 +241,6 @@ public class MemcachedConnection extends SpyThread {
   private final int wakeupDelay;
 
   /**
-   * Optionally bound the retry queue if set via system property.
-   */
-  private final int retryQueueSize;
-
-  /**
    * Construct a {@link MemcachedConnection}.
    *
    * @param bufSize the size of the buffer used for reading from the server.
@@ -288,10 +278,6 @@ public class MemcachedConnection extends SpyThread {
 
     wakeupDelay = Integer.parseInt( System.getProperty("net.spy.wakeupDelay",
       Integer.toString(DEFAULT_WAKEUP_DELAY)));
-
-    retryQueueSize = Integer.parseInt(System.getProperty("net.spy.retryQueueSize",
-        Integer.toString(DEFAULT_RETRY_QUEUE_SIZE)));
-    getLogger().info("Setting retryQueueSize to " + retryQueueSize);
 
     List<MemcachedNode> connections = createConnections(a);
     locator = f.createLocator(connections);
@@ -423,7 +409,7 @@ public class MemcachedConnection extends SpyThread {
     handleInputQueue();
     getLogger().debug("Done dealing with queue.");
 
-    long delay = 1000;
+    long delay = wakeupDelay;
     if (!reconnectQueue.isEmpty()) {
       long now = System.currentTimeMillis();
       long then = reconnectQueue.firstKey();
@@ -727,18 +713,15 @@ public class MemcachedConnection extends SpyThread {
    * @param node th enode to read write from.
    * @throws IOException if an error occurs during read/write.
    */
-  private void handleReadsAndWrites(final SelectionKey sk,
-    final MemcachedNode node) throws IOException {
-    if (sk.isValid()) {
-      if (sk.isReadable()) {
-        handleReads(node);
+  private void handleReadsAndWrites(final SelectionKey sk, final MemcachedNode node) throws IOException {
+      if (sk.isValid() && sk.isReadable()) {
+          handleReads(node);
       }
-      if (sk.isWritable()) {
-        handleWrites(node);
-      }
-    }
-  }
 
+      if (sk.isValid() && sk.isWritable()) {
+          handleWrites(node);
+      }
+  }
   /**
    * Finish the connect phase and potentially verify its liveness.
    *
@@ -895,7 +878,7 @@ public class MemcachedConnection extends SpyThread {
       assert op == currentOp : "Expected to pop " + currentOp + " got "
         + op;
 
-      retryOperation(currentOp);
+      retryOps.add(currentOp);
       metrics.markMeter(OVERALL_RESPONSE_RETRY_METRIC);
     }
   }
@@ -1501,18 +1484,9 @@ public class MemcachedConnection extends SpyThread {
   /**
    * Add a operation to the retry queue.
    *
-   * If the retry queue size is bounded and the size of the queue is reaching
-   * that boundary, the operation is cancelled rather than added to the
-   * retry queue.
-   *
    * @param op the operation to retry.
    */
   public void retryOperation(Operation op) {
-    if (retryQueueSize >= 0 && retryOps.size() > retryQueueSize) {
-      if (!op.isCancelled()) {
-        op.cancel();
-      }
-    }
     retryOps.add(op);
   }
 

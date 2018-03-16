@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
+ * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,25 +22,25 @@
 
 package net.spy.memcached.ops;
 
-import net.spy.memcached.CASResponse;
-
 /**
- * OperationStatus subclass for indicating CAS status.
+ * Replica get operation.
  */
-public class CASOperationStatus extends OperationStatus {
-
-  private final CASResponse casResponse;
-
-  public CASOperationStatus(boolean success, String msg, CASResponse cres,
-    StatusCode code) {
-    super(success, msg, code);
-    casResponse = cres;
-  }
+public interface ReplicaGetsOperation extends KeyedOperation {
 
   /**
-   * Get the CAS response indicated here.
+   * Operation callback for the replica get request.
    */
-  public CASResponse getCASResponse() {
-    return casResponse;
+  interface Callback extends OperationCallback {
+    /**
+     * Callback for each result from a replica get.
+     *
+     * @param key the key that was retrieved
+     * @param flags the flags for this value
+     * @param cas the cas value
+     * @param data the data stored under this key
+     */
+    void gotData(String key, int flags, long cas, byte[] data);
   }
+
+  int getReplicaIndex();
 }

@@ -975,18 +975,11 @@ public class MemcachedConnection extends SpyThread {
       if (op instanceof KeyedOperation) {
         KeyedOperation ko = (KeyedOperation) op;
         int added = 0;
-        for (Operation newop : opFact.clone(ko)) {
-          if (newop instanceof KeyedOperation) {
-            KeyedOperation newKeyedOp = (KeyedOperation) newop;
-            for (String k : newKeyedOp.getKeys()) {
-              addOperation(k, newop);
-            }
-          } else {
-            newop.cancel();
-            getLogger().warn("Could not redistribute cloned non-keyed " +
-              "operation", newop);
+        for (String k : ko.getKeys()) {
+          for (Operation newop : opFact.clone(ko)) {
+            addOperation(k, newop);
+            added++;
           }
-          added++;
         }
         assert added > 0 : "Didn't add any new operations when redistributing";
       } else {

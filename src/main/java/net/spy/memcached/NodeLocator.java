@@ -6,7 +6,7 @@ import java.util.Iterator;
 /**
  * Interface for locating a node by hash value.
  */
-public interface NodeLocator {
+public interface NodeLocator<T> {
 
 	/**
 	 * Get the primary location for the given key.
@@ -14,7 +14,7 @@ public interface NodeLocator {
 	 * @param k the object key
 	 * @return the QueueAttachment containing the primary storage for a key
 	 */
-	MemcachedNode getPrimary(String k);
+	MemcachedNode<T> getPrimary(String k);
 
 	/**
 	 * Get an iterator over the sequence of nodes that make up the backup
@@ -23,15 +23,15 @@ public interface NodeLocator {
 	 * @param k the object key
 	 * @return the sequence of backup nodes.
 	 */
-	Iterator<MemcachedNode> getSequence(String k);
+	Iterator<MemcachedNode<T>> getSequence(String k);
 
 	/**
 	 * Get all memcached nodes.  This is useful for broadcasting messages.
 	 */
-	Collection<MemcachedNode> getAll();
+	Collection<MemcachedNode<T>> getAll();
 
 	/**
 	 * Create a read-only copy of this NodeLocator.
 	 */
-	NodeLocator getReadonlyCopy();
+	NodeLocator<T> getReadonlyCopy();
 }

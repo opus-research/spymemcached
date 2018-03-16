@@ -17,7 +17,7 @@ import net.spy.memcached.vbucket.config.Config;
 /**
  * Builder for more easily configuring a ConnectionFactory.
  */
-public class ConnectionFactoryBuilder {
+public class ConnectionFactoryBuilder<T> {
 
 	private OperationQueueFactory opQueueFactory;
 	private OperationQueueFactory readQueueFactory;
@@ -50,7 +50,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the operation queue factory.
 	 */
-	public ConnectionFactoryBuilder setOpQueueFactory(OperationQueueFactory q) {
+	public ConnectionFactoryBuilder<T> setOpQueueFactory(OperationQueueFactory q) {
 		opQueueFactory = q;
 		return this;
 	}
@@ -58,7 +58,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the read queue factory.
 	 */
-	public ConnectionFactoryBuilder setReadOpQueueFactory(OperationQueueFactory q) {
+	public ConnectionFactoryBuilder<T> setReadOpQueueFactory(OperationQueueFactory q) {
 		readQueueFactory = q;
 		return this;
 	}
@@ -66,7 +66,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the write queue factory.
 	 */
-	public ConnectionFactoryBuilder setWriteOpQueueFactory(OperationQueueFactory q) {
+	public ConnectionFactoryBuilder<T> setWriteOpQueueFactory(OperationQueueFactory q) {
 		writeQueueFactory = q;
 		return this;
 	}
@@ -75,7 +75,7 @@ public class ConnectionFactoryBuilder {
 	 * Set the maximum amount of time (in milliseconds) a client is willing to
 	 * wait for space to become available in an output queue.
 	 */
-	public ConnectionFactoryBuilder setOpQueueMaxBlockTime(long t) {
+	public ConnectionFactoryBuilder<T> setOpQueueMaxBlockTime(long t) {
 		opQueueMaxBlockTime = t;
 		return this;
 	}
@@ -83,7 +83,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the default transcoder.
 	 */
-	public ConnectionFactoryBuilder setTranscoder(Transcoder<Object> t) {
+	public ConnectionFactoryBuilder<T> setTranscoder(Transcoder<Object> t) {
 		transcoder = t;
 		return this;
 	}
@@ -91,7 +91,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the failure mode.
 	 */
-	public ConnectionFactoryBuilder setFailureMode(FailureMode fm) {
+	public ConnectionFactoryBuilder<T> setFailureMode(FailureMode fm) {
 		failureMode = fm;
 		return this;
 	}
@@ -99,7 +99,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the initial connection observers (will observe initial connection).
 	 */
-	public ConnectionFactoryBuilder setInitialObservers(
+	public ConnectionFactoryBuilder<T> setInitialObservers(
 			Collection<ConnectionObserver> obs) {
 		initialObservers = obs;
 		return this;
@@ -113,7 +113,7 @@ public class ConnectionFactoryBuilder {
 	 *
 	 * @see MemcachedNode
 	 */
-	public ConnectionFactoryBuilder setOpFact(OperationFactory f) {
+	public ConnectionFactoryBuilder<T> setOpFact(OperationFactory f) {
 		opFact = f;
 		return this;
 	}
@@ -121,7 +121,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the default operation timeout in milliseconds.
 	 */
-	public ConnectionFactoryBuilder setOpTimeout(long t) {
+	public ConnectionFactoryBuilder<T> setOpTimeout(long t) {
 		opTimeout = t;
 		return this;
 	}
@@ -129,7 +129,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the daemon state of the IO thread (defaults to true).
 	 */
-	public ConnectionFactoryBuilder setDaemon(boolean d) {
+	public ConnectionFactoryBuilder<T> setDaemon(boolean d) {
 		isDaemon = d;
 		return this;
 	}
@@ -137,7 +137,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set to false if the default operation optimization is not desirable.
 	 */
-	public ConnectionFactoryBuilder setShouldOptimize(boolean o) {
+	public ConnectionFactoryBuilder<T> setShouldOptimize(boolean o) {
 		shouldOptimize = o;
 		return this;
 	}
@@ -145,7 +145,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the read buffer size.
 	 */
-	public ConnectionFactoryBuilder setReadBufferSize(int to) {
+	public ConnectionFactoryBuilder<T> setReadBufferSize(int to) {
 		readBufSize = to;
 		return this;
 	}
@@ -153,7 +153,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the hash algorithm.
 	 */
-	public ConnectionFactoryBuilder setHashAlg(HashAlgorithm to) {
+	public ConnectionFactoryBuilder<T> setHashAlg(HashAlgorithm to) {
 		hashAlg = to;
 		return this;
 	}
@@ -161,7 +161,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set to true if you'd like to enable the Nagle algorithm.
 	 */
-	public ConnectionFactoryBuilder setUseNagleAlgorithm(boolean to) {
+	public ConnectionFactoryBuilder<T> setUseNagleAlgorithm(boolean to) {
 		useNagle = to;
 		return this;
 	}
@@ -169,7 +169,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Convenience method to specify the protocol to use.
 	 */
-	public ConnectionFactoryBuilder setProtocol(Protocol prot) {
+	public ConnectionFactoryBuilder<T> setProtocol(Protocol prot) {
 		switch(prot) {
 			case TEXT:
 				opFact = new AsciiOperationFactory();
@@ -185,7 +185,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the locator type.
 	 */
-	public ConnectionFactoryBuilder setLocatorType(Locator l) {
+	public ConnectionFactoryBuilder<T> setLocatorType(Locator l) {
 		locator = l;
 		return this;
 	}
@@ -193,7 +193,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the maximum reconnect delay.
 	 */
-	public ConnectionFactoryBuilder setMaxReconnectDelay(long to) {
+	public ConnectionFactoryBuilder<T> setMaxReconnectDelay(long to) {
 		assert to > 0 : "Reconnect delay must be a positive number";
 		maxReconnectDelay = to;
 		return this;
@@ -202,7 +202,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the auth descriptor to enable authentication on new connections.
 	 */
-	public ConnectionFactoryBuilder setAuthDescriptor(AuthDescriptor to) {
+	public ConnectionFactoryBuilder<T> setAuthDescriptor(AuthDescriptor to) {
 		authDescriptor = to;
 		return this;
 	}
@@ -210,7 +210,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Set the maximum timeout exception threshold
 	 */
-	public ConnectionFactoryBuilder setTimeoutExceptionThreshold(int to) {
+	public ConnectionFactoryBuilder<T> setTimeoutExceptionThreshold(int to) {
 		assert to > 1 : "Minimum timeout exception threshold is 2";
 		if (to > 1) {
 			timeoutExceptionThreshold = to -2;
@@ -229,7 +229,7 @@ public class ConnectionFactoryBuilder {
 	/**
 	 * Get the ConnectionFactory set up with the provided parameters.
 	 */
-	public ConnectionFactory build() {
+	public ConnectionFactory<Operation> build() {
 		return new DefaultConnectionFactory() {
 
 			@Override
@@ -253,14 +253,14 @@ public class ConnectionFactoryBuilder {
 			}
 
 			@Override
-			public NodeLocator createLocator(List<MemcachedNode> nodes) {
+			public NodeLocator<Operation> createLocator(List<MemcachedNode<Operation>> nodes) {
 				switch(locator) {
 					case ARRAY_MOD:
-						return new ArrayModNodeLocator(nodes, getHashAlg());
+						return new ArrayModNodeLocator<Operation>(nodes, getHashAlg());
 					case CONSISTENT:
-						return new KetamaNodeLocator(nodes, getHashAlg());
+						return new KetamaNodeLocator<Operation>(nodes, getHashAlg());
                     case VBUCKET:
-                        return new VBucketNodeLocator(nodes, getVBucketConfig());
+                        return new VBucketNodeLocator<Operation>(nodes, getVBucketConfig());
 					default: throw new IllegalStateException(
 							"Unhandled locator type: " + locator);
 				}

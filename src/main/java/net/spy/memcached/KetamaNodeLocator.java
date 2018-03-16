@@ -21,14 +21,14 @@ import net.spy.memcached.util.KetamaNodeLocatorConfiguration;
  *
  * @see <a href="http://www.last.fm/user/RJ/journal/2007/04/10/392555/">RJ's blog post</a>
  */
-public final class KetamaNodeLocator<T> extends SpyObject implements NodeLocator<T> {
+public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 
 
-	private volatile TreeMap<Long, MemcachedNode<T>> ketamaNodes;
-	final Collection<MemcachedNode<T>> allNodes;
+	private volatile TreeMap<Long, MemcachedNode> ketamaNodes;
+	final Collection<MemcachedNode> allNodes;
 
 	final HashAlgorithm hashAlg;
-	final KetamaNodeLocatorConfiguration<T> config;
+	final KetamaNodeLocatorConfiguration config;
 
 
 	/**
@@ -37,8 +37,8 @@ public final class KetamaNodeLocator<T> extends SpyObject implements NodeLocator
 	 * @param nodes The List of nodes to use in the Ketama consistent hash continuum
 	 * @param alg The hash algorithm to use when choosing a node in the Ketama consistent hash continuum
 	 */
-	public KetamaNodeLocator(List<MemcachedNode<T>> nodes, HashAlgorithm alg) {
-        this(nodes, alg, new DefaultKetamaNodeLocatorConfiguration<T>());
+	public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg) {
+        this(nodes, alg, new DefaultKetamaNodeLocatorConfiguration());
 	}
 
 	/**
@@ -48,7 +48,7 @@ public final class KetamaNodeLocator<T> extends SpyObject implements NodeLocator
 	 * @param alg The hash algorithm to use when choosing a node in the Ketama consistent hash continuum
 	 * @param conf
 	 */
-	public KetamaNodeLocator(List<MemcachedNode<T>> nodes, HashAlgorithm alg, KetamaNodeLocatorConfiguration<T> conf) {
+	public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg, KetamaNodeLocatorConfiguration conf) {
 		super();
 		allNodes = nodes;
 		hashAlg = alg;
@@ -58,8 +58,8 @@ public final class KetamaNodeLocator<T> extends SpyObject implements NodeLocator
 
     }
 
-	private KetamaNodeLocator(TreeMap<Long, MemcachedNode<T>> smn,
-			Collection<MemcachedNode<T>> an, HashAlgorithm alg, KetamaNodeLocatorConfiguration<T> conf) {
+	private KetamaNodeLocator(TreeMap<Long, MemcachedNode> smn,
+			Collection<MemcachedNode> an, HashAlgorithm alg, KetamaNodeLocatorConfiguration conf) {
 		super();
 		ketamaNodes=smn;
 		allNodes=an;
@@ -67,12 +67,12 @@ public final class KetamaNodeLocator<T> extends SpyObject implements NodeLocator
         config=conf;
 	}
 
-	public Collection<MemcachedNode<T>> getAll() {
+	public Collection<MemcachedNode> getAll() {
 		return allNodes;
 	}
 
-	public MemcachedNode<T> getPrimary(final String k) {
-		MemcachedNode<T> rv=getNodeForKey(hashAlg.hash(k));
+	public MemcachedNode getPrimary(final String k) {
+		MemcachedNode rv=getNodeForKey(hashAlg.hash(k));
 		assert rv != null : "Found no node for key " + k;
 		return rv;
 	}
@@ -81,12 +81,12 @@ public final class KetamaNodeLocator<T> extends SpyObject implements NodeLocator
 		return getKetamaNodes().lastKey();
 	}
 
-	MemcachedNode<T> getNodeForKey(long hash) {
-		final MemcachedNode<T> rv;
+	MemcachedNode getNodeForKey(long hash) {
+		final MemcachedNode rv;
 		if(!ketamaNodes.containsKey(hash)) {
 			// Java 1.6 adds a ceilingKey method, but I'm still stuck in 1.5
 			// in a lot of places, so I'm doing this myself.
-			SortedMap<Long, MemcachedNode<T>> tailMap=getKetamaNodes().tailMap(hash);
+			SortedMap<Long, MemcachedNode> tailMap=getKetamaNodes().tailMap(hash);
 			if(tailMap.isEmpty()) {
 				hash=getKetamaNodes().firstKey();
 			} else {
@@ -97,34 +97,34 @@ public final class KetamaNodeLocator<T> extends SpyObject implements NodeLocator
 		return rv;
 	}
 
-	public Iterator<MemcachedNode<T>> getSequence(String k) {
+	public Iterator<MemcachedNode> getSequence(String k) {
 		// Seven searches gives us a 1 in 2^7 chance of hitting the
 		// same dead node all of the time.
-		return new KetamaIterator<T>(k, 7, getKetamaNodes(), hashAlg);
+		return new KetamaIterator(k, 7, getKetamaNodes(), hashAlg);
 	}
 
-	public NodeLocator<T> getReadonlyCopy() {
-		TreeMap<Long, MemcachedNode<T>> smn=new TreeMap<Long, MemcachedNode<T>>(
+	public NodeLocator getReadonlyCopy() {
+		TreeMap<Long, MemcachedNode> smn=new TreeMap<Long, MemcachedNode>(
 			getKetamaNodes());
-		Collection<MemcachedNode<T>> an=
-			new ArrayList<MemcachedNode<T>>(allNodes.size());
+		Collection<MemcachedNode> an=
+			new ArrayList<MemcachedNode>(allNodes.size());
 
 		// Rewrite the values a copy of the map.
-		for(Map.Entry<Long, MemcachedNode<T>> me : smn.entrySet()) {
-			me.setValue(new MemcachedNodeROImpl<T>(me.getValue()));
+		for(Map.Entry<Long, MemcachedNode> me : smn.entrySet()) {
+			me.setValue(new MemcachedNodeROImpl(me.getValue()));
 		}
 		// Copy the allNodes collection.
-		for(MemcachedNode<T> n : allNodes) {
-			an.add(new MemcachedNodeROImpl<T>(n));
+		for(MemcachedNode n : allNodes) {
+			an.add(new MemcachedNodeROImpl(n));
 		}
 
-		return new KetamaNodeLocator<T>(smn, an, hashAlg, config);
+		return new KetamaNodeLocator(smn, an, hashAlg, config);
 	}
 
     /**
      * @return the ketamaNodes
      */
-    protected TreeMap<Long, MemcachedNode<T>> getKetamaNodes() {
+    protected TreeMap<Long, MemcachedNode> getKetamaNodes() {
 	return ketamaNodes;
     }
 
@@ -133,10 +133,10 @@ public final class KetamaNodeLocator<T> extends SpyObject implements NodeLocator
      *
      * @param nodes a List of MemcachedNodes for this KetamaNodeLocator to use in its continuum
      */
-    protected void setKetamaNodes(List<MemcachedNode<T>> nodes) {
-	TreeMap<Long, MemcachedNode<T>> newNodeMap = new TreeMap<Long, MemcachedNode<T>>();
+    protected void setKetamaNodes(List<MemcachedNode> nodes) {
+	TreeMap<Long, MemcachedNode> newNodeMap = new TreeMap<Long, MemcachedNode>();
 	int numReps= config.getNodeRepetitions();
-	for(MemcachedNode<T> node : nodes) {
+	for(MemcachedNode node : nodes) {
 		// Ketama does some special work with md5 where it reuses chunks.
 		if(hashAlg == HashAlgorithm.KETAMA_HASH) {
 			for(int i=0; i<numReps / 4; i++) {

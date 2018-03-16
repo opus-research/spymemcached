@@ -55,26 +55,26 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	// If true, optimization will collapse multiple sequential get ops
 	private final boolean shouldOptimize;
 	private Selector selector=null;
-	private final NodeLocator<Operation> locator;
+	private final NodeLocator locator;
 	private final FailureMode failureMode;
 	// maximum amount of time to wait between reconnect attempts
 	private final long maxDelay;
 	private int emptySelects=0;
 	private final int bufSize;
-	private final ConnectionFactory<Operation> connectionFactory;
+	private final ConnectionFactory connectionFactory;
 	// AddedQueue is used to track the QueueAttachments for which operations
 	// have recently been queued.
-	private final ConcurrentLinkedQueue<MemcachedNode<Operation>> addedQueue;
+	private final ConcurrentLinkedQueue<MemcachedNode> addedQueue;
 	// reconnectQueue contains the attachments that need to be reconnected
 	// The key is the time at which they are eligible for reconnect
-	private final SortedMap<Long, MemcachedNode<Operation>> reconnectQueue;
+	private final SortedMap<Long, MemcachedNode> reconnectQueue;
 
 	private final Collection<ConnectionObserver> connObservers =
 		new ConcurrentLinkedQueue<ConnectionObserver>();
 	private final OperationFactory opFact;
 	private final int timeoutExceptionThreshold;
         private final Collection<Operation> retryOps;
-	private final ConcurrentLinkedQueue<MemcachedNode<Operation>> nodesToShutdown;
+	private final ConcurrentLinkedQueue<MemcachedNode> nodesToShutdown;
 
 	/**
 	 * Construct a memcached connection.
@@ -85,13 +85,13 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	 *
 	 * @throws IOException if a connection attempt fails early
 	 */
-	public MemcachedConnection(int bufSize, ConnectionFactory<Operation> f,
+	public MemcachedConnection(int bufSize, ConnectionFactory f,
 			List<InetSocketAddress> a, Collection<ConnectionObserver> obs,
 			FailureMode fm, OperationFactory opfactory)
 		throws IOException {
 		connObservers.addAll(obs);
-		reconnectQueue=new TreeMap<Long, MemcachedNode<Operation>>();
-		addedQueue=new ConcurrentLinkedQueue<MemcachedNode<Operation>>();
+		reconnectQueue=new TreeMap<Long, MemcachedNode>();
+		addedQueue=new ConcurrentLinkedQueue<MemcachedNode>();
 		failureMode = fm;
 		shouldOptimize = f.shouldOptimize();
 		maxDelay = f.getMaxReconnectDelay();
@@ -99,21 +99,20 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		timeoutExceptionThreshold = f.getTimeoutExceptionThreshold();
 		selector=Selector.open();
 		retryOps = new ArrayList<Operation>();
-		nodesToShutdown = new ConcurrentLinkedQueue<MemcachedNode<Operation>>();
+		nodesToShutdown = new ConcurrentLinkedQueue<MemcachedNode>();
 		this.bufSize = bufSize;
 		this.connectionFactory = f;
-		List<MemcachedNode<Operation>> connections = createConnections(a);
+		List<MemcachedNode> connections = createConnections(a);
 		locator=f.createLocator(connections);
 		}
 
-	private List<MemcachedNode<Operation>> createConnections(final Collection<InetSocketAddress> a)
+	private List<MemcachedNode> createConnections(final Collection<InetSocketAddress> a)
 		throws IOException {
-		List<MemcachedNode<Operation>> connections=
-			new ArrayList<MemcachedNode<Operation>>(a.size());
+		List<MemcachedNode> connections=new ArrayList<MemcachedNode>(a.size());
 		for(SocketAddress sa : a) {
 			SocketChannel ch=SocketChannel.open();
 			ch.configureBlocking(false);
-			MemcachedNode<Operation> qa=this.connectionFactory.createMemcachedNode(sa, ch, bufSize);
+			MemcachedNode qa=this.connectionFactory.createMemcachedNode(sa, ch, bufSize);
 			int ops=0;
 			ch.socket().setTcpNoDelay(!this.connectionFactory.useNagleAlgorithm());
 			// Initially I had attempted to skirt this by queueing every
@@ -167,10 +166,10 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 			}
 
 			// split current nodes to "odd nodes" and "stay nodes"
-			ArrayList<MemcachedNode<Operation>> oddNodes = new ArrayList<MemcachedNode<Operation>>();
-			ArrayList<MemcachedNode<Operation>> stayNodes = new ArrayList<MemcachedNode<Operation>>();
+			ArrayList<MemcachedNode> oddNodes = new ArrayList<MemcachedNode>();
+			ArrayList<MemcachedNode> stayNodes = new ArrayList<MemcachedNode>();
 			ArrayList<InetSocketAddress> stayServers = new ArrayList<InetSocketAddress>();
-			for (MemcachedNode<Operation> current : locator.getAll()) {
+			for (MemcachedNode current : locator.getAll()) {
 				if (newServerAddresses.contains(current.getSocketAddress())) {
 					stayNodes.add(current);
 					stayServers.add((InetSocketAddress) current.getSocketAddress());
@@ -183,15 +182,15 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 			newServers.removeAll(stayServers);
 
 			// create a collection of new nodes
-			List<MemcachedNode<Operation>> newNodes = createConnections(newServers);
+			List<MemcachedNode> newNodes = createConnections(newServers);
 
 			// merge stay nodes with new nodes
-			List<MemcachedNode<Operation>> mergedNodes = new ArrayList<MemcachedNode<Operation>>();
+			List<MemcachedNode> mergedNodes = new ArrayList<MemcachedNode>();
 			mergedNodes.addAll(stayNodes);
 			mergedNodes.addAll(newNodes);
 
 			// call update locator with new nodes list and vbucket config
-			((VBucketNodeLocator<Operation>) locator).updateLocator(mergedNodes, bucket.getConfig());
+			((VBucketNodeLocator) locator).updateLocator(mergedNodes, bucket.getConfig());
 
 			// schedule shutdown for the oddNodes
 			nodesToShutdown.addAll(oddNodes);
@@ -201,7 +200,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	}
 
 	private boolean selectorsMakeSense() {
-		for(MemcachedNode<Operation> qa : locator.getAll()) {
+		for(MemcachedNode qa : locator.getAll()) {
 			if(qa.getSk() != null && qa.getSk().isValid()) {
 				if(qa.getChannel().isConnected()) {
 					int sops=qa.getSk().interestOps();
@@ -264,7 +263,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 						getLogger().info("%s has a ready op, handling IO", sk);
 						handleIO(sk);
 					} else {
-						lostConnection((MemcachedNode<Operation>)sk.attachment());
+						lostConnection((MemcachedNode)sk.attachment());
 					}
 				}
 				assert emptySelects < EXCESSIVE_EMPTY
@@ -285,7 +284,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 
 		// see if any connections blew up with large number of timeouts
 		for(SelectionKey sk : selector.keys()) {
-			MemcachedNode<Operation> mn = (MemcachedNode<Operation>)sk.attachment();
+			MemcachedNode mn = (MemcachedNode)sk.attachment();
 			if (mn.getContinuousTimeout() > timeoutExceptionThreshold)
 			{
 				getLogger().warn("%s exceeded continuous timeout threshold", sk);
@@ -301,7 +300,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
         retryOps.clear();
 
         // try to shutdown odd nodes
-        for (MemcachedNode<Operation> qa : nodesToShutdown) {
+        for (MemcachedNode qa : nodesToShutdown) {
             if (!addedQueue.contains(qa)) {
                 nodesToShutdown.remove(qa);
                 Collection<Operation> notCompletedOperations = qa.destroyInputQueue();
@@ -325,12 +324,12 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		if(!addedQueue.isEmpty()) {
 			getLogger().debug("Handling queue");
 			// If there's stuff in the added queue.  Try to process it.
-			Collection<MemcachedNode<Operation>> toAdd=new HashSet<MemcachedNode<Operation>>();
+			Collection<MemcachedNode> toAdd=new HashSet<MemcachedNode>();
 			// Transfer the queue into a hashset.  There are very likely more
 			// additions than there are nodes.
-			Collection<MemcachedNode<Operation>> todo=new HashSet<MemcachedNode<Operation>>();
+			Collection<MemcachedNode> todo=new HashSet<MemcachedNode>();
 			try {
-				MemcachedNode<Operation> qa=null;
+				MemcachedNode qa=null;
 				while((qa=addedQueue.remove()) != null) {
 					todo.add(qa);
 				}
@@ -339,7 +338,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 			}
 
 			// Now process the queue.
-			for(MemcachedNode<Operation> qa : todo) {
+			for(MemcachedNode qa : todo) {
 				boolean readyForIO=false;
 				if(qa.isActive()) {
 					if(qa.getCurrentWriteOp() != null) {
@@ -384,7 +383,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		return connObservers.remove(obs);
 	}
 
-	private void connected(MemcachedNode<Operation> qa) {
+	private void connected(MemcachedNode qa) {
 		assert qa.getChannel().isConnected() : "Not connected.";
 		int rt = qa.getReconnectCount();
 		qa.connected();
@@ -393,7 +392,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		}
 	}
 
-	private void lostConnection(MemcachedNode<Operation> qa) {
+	private void lostConnection(MemcachedNode qa) {
 		queueReconnect(qa);
 		for(ConnectionObserver observer : connObservers) {
 			observer.connectionLost(qa.getSocketAddress());
@@ -403,7 +402,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	// Handle IO for a specific selector.  Any IOException will cause a
 	// reconnect
 	private void handleIO(SelectionKey sk) {
-		MemcachedNode<Operation> qa=(MemcachedNode<Operation>)sk.attachment();
+		MemcachedNode qa=(MemcachedNode)sk.attachment();
 		try {
 			getLogger().debug(
 					"Handling IO for:  %s (r=%s, w=%s, c=%s, op=%s)",
@@ -462,7 +461,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		qa.fixupOps();
 	}
 
-	private void handleWrites(SelectionKey sk, MemcachedNode<Operation> qa)
+	private void handleWrites(SelectionKey sk, MemcachedNode qa)
 		throws IOException {
 		qa.fillWriteBuffer(shouldOptimize);
 		boolean canWriteMore=qa.getBytesRemainingToWrite() > 0;
@@ -473,7 +472,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		}
 	}
 
-	private void handleReads(SelectionKey sk, MemcachedNode<Operation> qa)
+	private void handleReads(SelectionKey sk, MemcachedNode qa)
 		throws IOException {
 		Operation currentOp = qa.getCurrentReadOp();
 		ByteBuffer rbuf=qa.getRbuf();
@@ -534,7 +533,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		return sb.toString();
 	}
 
-	private void queueReconnect(MemcachedNode<Operation> qa) {
+	private void queueReconnect(MemcachedNode qa) {
 		if(!shutDown) {
 			getLogger().warn("Closing, and reopening %s, attempt %d.",
 					qa, qa.getReconnectCount());
@@ -607,13 +606,13 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 
 	private void attemptReconnects() throws IOException {
 		final long now=System.currentTimeMillis();
-		final Map<MemcachedNode<Operation>, Boolean> seen=
-			new IdentityHashMap<MemcachedNode<Operation>, Boolean>();
-		final List<MemcachedNode<Operation>> rereQueue=new ArrayList<MemcachedNode<Operation>>();
+		final Map<MemcachedNode, Boolean> seen=
+			new IdentityHashMap<MemcachedNode, Boolean>();
+		final List<MemcachedNode> rereQueue=new ArrayList<MemcachedNode>();
 		SocketChannel ch = null;
-		for(Iterator<MemcachedNode<Operation>> i=
+		for(Iterator<MemcachedNode> i=
 				reconnectQueue.headMap(now).values().iterator(); i.hasNext();) {
-			final MemcachedNode<Operation> qa=i.next();
+			final MemcachedNode qa=i.next();
 			i.remove();
 			try {
 				if(!seen.containsKey(qa)) {
@@ -655,7 +654,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
             }
 		}
 		// Requeue any fast-failed connects.
-		for(MemcachedNode<Operation> n : rereQueue) {
+		for(MemcachedNode n : rereQueue) {
 			queueReconnect(n);
 		}
 	}
@@ -663,7 +662,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	/**
 	 * Get the node locator used by this connection.
 	 */
-	NodeLocator<Operation> getLocator() {
+	NodeLocator getLocator() {
 		return locator;
 	}
 
@@ -674,17 +673,17 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	 * @param o the operation
 	 */
 	public void addOperation(final String key, final Operation o) {
-		MemcachedNode<Operation> placeIn=null;
-		MemcachedNode<Operation> primary = locator.getPrimary(key);
+		MemcachedNode placeIn=null;
+		MemcachedNode primary = locator.getPrimary(key);
 		if(primary.isActive() || failureMode == FailureMode.Retry) {
 			placeIn=primary;
 		} else if(failureMode == FailureMode.Cancel) {
 			o.cancel();
 		} else {
 			// Look for another node in sequence that is ready.
-			for(Iterator<MemcachedNode<Operation>> i=locator.getSequence(key);
+			for(Iterator<MemcachedNode> i=locator.getSequence(key);
 				placeIn == null && i.hasNext(); ) {
-				MemcachedNode<Operation> n=i.next();
+				MemcachedNode n=i.next();
 				if(n.isActive()) {
 					placeIn=n;
 				}
@@ -703,13 +702,13 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		if(placeIn != null) {
 			// add the vbucketIndex to the operation
 			if (locator instanceof VBucketNodeLocator) {
-				VBucketNodeLocator<Operation> vbucketLocator = (VBucketNodeLocator<Operation>) locator;
+				VBucketNodeLocator vbucketLocator = (VBucketNodeLocator) locator;
 				int vbucketIndex = vbucketLocator.getVBucketIndex(key);
 				if (o instanceof VBucketAware) {
 					VBucketAware vbucketAwareOp = (VBucketAware) o;
 					vbucketAwareOp.setVBucket(vbucketIndex);
 					if (!vbucketAwareOp.getNotMyVbucketNodes().isEmpty()) {
-						MemcachedNode<Operation> alternative = vbucketLocator.
+						MemcachedNode alternative = vbucketLocator.
 						getAlternative(key, vbucketAwareOp.getNotMyVbucketNodes());
 							if (alternative != null) {
 								placeIn = alternative;
@@ -724,7 +723,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 			}
 	}
 
-	public void insertOperation(final MemcachedNode<Operation> node, final Operation o) {
+	public void insertOperation(final MemcachedNode node, final Operation o) {
 		o.setHandlingNode(node);
 		o.initialize();
 		node.insertOp(o);
@@ -734,7 +733,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		getLogger().debug("Added %s to %s", o, node);
 	}
 
-	public void addOperation(final MemcachedNode<Operation> node, final Operation o) {
+	public void addOperation(final MemcachedNode node, final Operation o) {
 		o.setHandlingNode(node);
 		o.initialize();
 		node.addOp(o);
@@ -744,10 +743,10 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		getLogger().debug("Added %s to %s", o, node);
 	}
 
-	public void addOperations(final Map<MemcachedNode<Operation>, Operation> ops) {
+	public void addOperations(final Map<MemcachedNode, Operation> ops) {
 
-		for(Map.Entry<MemcachedNode<Operation>, Operation> me : ops.entrySet()) {
-			final MemcachedNode<Operation> node=me.getKey();
+		for(Map.Entry<MemcachedNode, Operation> me : ops.entrySet()) {
+			final MemcachedNode node=me.getKey();
 			Operation o=me.getValue();
 			o.setHandlingNode(node);
 			o.initialize();
@@ -761,17 +760,17 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	/**
 	 * Broadcast an operation to all nodes.
 	 */
-	public CountDownLatch broadcastOperation(BroadcastOpFactory<Operation> of) {
+	public CountDownLatch broadcastOperation(BroadcastOpFactory of) {
 		return broadcastOperation(of, locator.getAll());
 	}
 
 	/**
 	 * Broadcast an operation to a specific collection of nodes.
 	 */
-	public CountDownLatch broadcastOperation(final BroadcastOpFactory<Operation> of,
-			Collection<MemcachedNode<Operation>> nodes) {
+	public CountDownLatch broadcastOperation(final BroadcastOpFactory of,
+			Collection<MemcachedNode> nodes) {
 		final CountDownLatch latch=new CountDownLatch(locator.getAll().size());
-		for(MemcachedNode<Operation> node : nodes) {
+		for(MemcachedNode node : nodes) {
 			Operation op = of.newOp(node, latch);
 			op.initialize();
 			node.addOp(op);
@@ -790,7 +789,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		shutDown=true;
 		Selector s=selector.wakeup();
 		assert s == selector : "Wakeup returned the wrong selector.";
-		for(MemcachedNode<Operation> qa : locator.getAll()) {
+		for(MemcachedNode qa : locator.getAll()) {
 			if(qa.getChannel() != null) {
 				qa.getChannel().close();
 				qa.setSk(null);
@@ -810,7 +809,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	public String toString() {
 		StringBuilder sb=new StringBuilder();
 		sb.append("{MemcachedConnection to");
-		for(MemcachedNode<Operation> qa : locator.getAll()) {
+		for(MemcachedNode qa : locator.getAll()) {
 			sb.append(" ");
 			sb.append(qa.getSocketAddress());
 		}
@@ -847,7 +846,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
             if (op == null || op.isTimedOutUnsent()) {
                 return; // op may be null in some cases, e.g. flush
             }
-            MemcachedNode<Operation> node = op.getHandlingNode();
+            MemcachedNode node = op.getHandlingNode();
             if (node == null) {
                 LoggerFactory.getLogger(MemcachedConnection.class).warn("handling node for operation is not set");
             }

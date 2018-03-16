@@ -72,14 +72,14 @@ public interface Operation {
 	/**
 	 * Get the node that should've been handling this operation.
 	 */
-	MemcachedNode<Operation> getHandlingNode();
+	MemcachedNode getHandlingNode();
 
 	/**
 	 * Set a reference to the node that will be/is handling this operation.
 	 *
 	 * @param to a memcached node
 	 */
-	void setHandlingNode(MemcachedNode<Operation> to);
+	void setHandlingNode(MemcachedNode to);
 
 	/**
 	 * Mark this operation as one which has exceeded its timeout value.

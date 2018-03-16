@@ -119,12 +119,6 @@ public class DefaultConnectionFactory extends SpyObject implements
    */
   public static final MetricType DEFAULT_METRIC_TYPE = MetricType.OFF;
 
-  /**
-   * The time to wait for the authentication to complete when a operation
-   * is written in milliseconds.
-   */
-  public static final long DEFAULT_AUTH_WAIT_TIME = 1000;
-
   protected final int opQueueLen;
   private final int readBufSize;
   private final HashAlgorithm hashAlg;
@@ -176,9 +170,7 @@ public class DefaultConnectionFactory extends SpyObject implements
           createWriteOperationQueue(),
           createOperationQueue(),
           getOpQueueMaxBlockTime(),
-          getOperationTimeout(),
-          getAuthWaitTime(),
-          this);
+          getOperationTimeout());
     } else if (of instanceof BinaryOperationFactory) {
       boolean doAuth = false;
       if (getAuthDescriptor() != null) {
@@ -190,9 +182,7 @@ public class DefaultConnectionFactory extends SpyObject implements
           createOperationQueue(),
           getOpQueueMaxBlockTime(),
           doAuth,
-          getOperationTimeout(),
-          getAuthWaitTime(),
-          this);
+          getOperationTimeout());
     } else {
       throw new IllegalStateException("Unhandled operation factory type " + of);
     }
@@ -269,14 +259,6 @@ public class DefaultConnectionFactory extends SpyObject implements
     return DEFAULT_OP_QUEUE_MAX_BLOCK_TIME;
   }
 
-  /**
-   * @return the time to wait for the authentication to complete when a
-   * operation is written in milliseconds.
-   */
-  @Override
-  public long getAuthWaitTime() {
-    return DEFAULT_AUTH_WAIT_TIME;
-  }
 
   /**
    * Returns the stored {@link ExecutorService} for listeners.

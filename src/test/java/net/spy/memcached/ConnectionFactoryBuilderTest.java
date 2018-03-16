@@ -103,8 +103,6 @@ public class ConnectionFactoryBuilderTest extends BaseMockCase {
     assertFalse(f.useNagleAlgorithm());
     assertEquals(f.getOpQueueMaxBlockTime(),
         DefaultConnectionFactory.DEFAULT_OP_QUEUE_MAX_BLOCK_TIME);
-    assertEquals(f.getAuthWaitTime(),
-      DefaultConnectionFactory.DEFAULT_AUTH_WAIT_TIME);
   }
 
   public void testModifications() throws Exception {
@@ -138,9 +136,7 @@ public class ConnectionFactoryBuilderTest extends BaseMockCase {
         .setWriteOpQueueFactory(wQueueFactory).setReadBufferSize(19)
         .setTranscoder(new WhalinTranscoder()).setUseNagleAlgorithm(true)
         .setLocatorType(Locator.CONSISTENT).setOpQueueMaxBlockTime(19)
-        .setAuthDescriptor(anAuthDescriptor)
-        .setAuthWaitTime(3000)
-        .build();
+        .setAuthDescriptor(anAuthDescriptor).build();
 
     assertEquals(4225, f.getOperationTimeout());
     assertEquals(19, f.getReadBufSize());
@@ -158,7 +154,6 @@ public class ConnectionFactoryBuilderTest extends BaseMockCase {
     assertTrue(f.useNagleAlgorithm());
     assertEquals(f.getOpQueueMaxBlockTime(), 19);
     assertSame(anAuthDescriptor, f.getAuthDescriptor());
-    assertEquals(f.getAuthWaitTime(), 3000);
 
     MemcachedNode n = new MockMemcachedNode(
         InetSocketAddress.createUnresolved("localhost",

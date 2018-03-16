@@ -503,7 +503,6 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
                     getLogger().debug(
                             "Reschedule read op due to NOT_MY_VBUCKET error: %s ",
                             currentOp);
-                    ((VBucketAware) currentOp).addNotMyVbucketNode(currentOp.getHandlingNode());
                     Operation op=qa.removeCurrentReadOp();
                     assert op == currentOp
                     : "Expected to pop " + currentOp + " got " + op;
@@ -702,25 +701,16 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		if(placeIn != null) {
 			// add the vbucketIndex to the operation
 			if (locator instanceof VBucketNodeLocator) {
-				VBucketNodeLocator vbucketLocator = (VBucketNodeLocator) locator;
-				int vbucketIndex = vbucketLocator.getVBucketIndex(key);
+				int vbucketIndex = ((VBucketNodeLocator) locator).getVBucketIndex(key);
 				if (o instanceof VBucketAware) {
-					VBucketAware vbucketAwareOp = (VBucketAware) o;
-					vbucketAwareOp.setVBucket(vbucketIndex);
-					if (!vbucketAwareOp.getNotMyVbucketNodes().isEmpty()) {
-						MemcachedNode alternative = vbucketLocator.
-						getAlternative(key, vbucketAwareOp.getNotMyVbucketNodes());
-							if (alternative != null) {
-								placeIn = alternative;
-							}
-					}
+					((VBucketAware) o).setVBucket(vbucketIndex);
 				}
 			}
 			addOperation(placeIn, o);
-			} else {
-				assert o.isCancelled() : "No node found for "
-					+ key + " (and not immediately cancelled)";
-			}
+		} else {
+			assert o.isCancelled() : "No node found for "
+				+ key + " (and not immediately cancelled)";
+		}
 	}
 
 	public void insertOperation(final MemcachedNode node, final Operation o) {

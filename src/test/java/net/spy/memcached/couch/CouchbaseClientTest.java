@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHttpResponse;
 import org.codehaus.jettison.json.JSONObject;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -18,6 +22,15 @@ import org.junit.Test;
 import net.spy.memcached.TestConfig;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
+import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.protocol.couchdb.DocsOperation.DocsCallback;
+import net.spy.memcached.protocol.couchdb.DocsOperationImpl;
+import net.spy.memcached.protocol.couchdb.HttpOperation;
+import net.spy.memcached.protocol.couchdb.NoDocsOperation.NoDocsCallback;
+import net.spy.memcached.protocol.couchdb.NoDocsOperationImpl;
+import net.spy.memcached.protocol.couchdb.ReducedOperation.ReducedCallback;
+import net.spy.memcached.protocol.couchdb.ReducedOperationImpl;
+import net.spy.memcached.protocol.couchdb.RowError;
 import net.spy.memcached.protocol.couchdb.RowWithDocs;
 import net.spy.memcached.protocol.couchdb.ViewResponseNoDocs;
 import net.spy.memcached.protocol.couchdb.Query;
@@ -80,7 +93,7 @@ public class CouchbaseClientTest {
 		}
 		c.asyncHttpPut(docUri, view);
 		c.shutdown();
-		Thread.sleep(15000);
+		Thread.sleep(5000);
 	}
 
 	@Before
@@ -139,7 +152,7 @@ public class CouchbaseClientTest {
 			future.getStatus().getMessage();
 	}
 
-	@Test
+	//@Test
 	public void testViewNoDocs() throws Exception {
 		Query query = new Query();
 		View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
@@ -187,4 +200,108 @@ public class CouchbaseClientTest {
 		assert false : ("No view exists and this query still happened");
 	}
 
+	@Test
+	public void testViewDocsWithErrors() throws Exception {
+		HttpOperation op = new DocsOperationImpl(null, new DocsCallback() {
+			@Override
+			public void receivedStatus(OperationStatus status) {
+				assert status.isSuccess();
+			}
+			@Override
+			public void complete() {
+				// Do nothing
+			}
+			@Override
+			public void gotData(ViewResponseWithDocs response) {
+				assert response.getErrors().size() == 1;
+				Iterator<RowError> row = response.getErrors().iterator();
+				assert row.next().getFrom().equals("http://10.2.1.14:5984/_view_merge/" +
+						"?startkey=%22Mike%22");
+				assert response.size() == 5;
+			}
+		});
+		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
+		String entityString = "{\"total_rows\":6,\"rows\":[{\"error\":true,\"from\":" +
+				"\"http://10.2.1.14:5984/_view_merge/?startkey=%22Mike%22\",\"reason\"" +
+				":\"{\\\"error\\\":\\\"not_found\\\",\\\"reason\\\":\\\"missing\\\"}\"" +
+				"},{\"id\":\"PerryKrug:vs:AaronMiller\",\"key\":\"PerryKrug:vs:" +
+				"AaronMiller\",\"value\":null},{\"id\":\"PerryKrug:vs:BobWiederhold\"," +
+				"\"key\":\"PerryKrug:vs:BobWiederhold\",\"value\":null},{\"id\":" +
+				"\"PerryKrug:vs:DaleHarvey\",\"key\":\"PerryKrug:vs:DaleHarvey\",\"value" +
+				"\":null},{\"id\":\"PerryKrug:vs:DamienKatz\",\"key\":\"PerryKrug:vs:" +
+				"DamienKatz\",\"value\":null},{\"id\":\"PerryKrug:vs:DustinSallings\",\"key" +
+				"\":\"PerryKrug:vs:DustinSallings\",\"value\":null}]}";
+		StringEntity entity = new StringEntity(entityString);
+		response.setEntity(entity);
+		op.handleResponse(response);
+	}
+
+	@Test
+	public void testViewNoDocsWithErrors() throws Exception {
+		HttpOperation op = new NoDocsOperationImpl(null, new NoDocsCallback() {
+			@Override
+			public void receivedStatus(OperationStatus status) {
+				assert status.isSuccess();
+			}
+			@Override
+			public void complete() {
+				// Do nothing
+			}
+			@Override
+			public void gotData(ViewResponseNoDocs response) {
+				assert response.getErrors().size() == 1;
+				Iterator<RowError> row = response.getErrors().iterator();
+				assert row.next().getFrom().equals("http://10.2.1.14:5984/_view_merge/" +
+						"?startkey=%22Mike%22");
+				assert response.size() == 5;
+			}
+		});
+		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
+		String entityString = "{\"total_rows\":6,\"rows\":[{\"error\":true,\"from\":" +
+				"\"http://10.2.1.14:5984/_view_merge/?startkey=%22Mike%22\",\"reason\"" +
+				":\"{\\\"error\\\":\\\"not_found\\\",\\\"reason\\\":\\\"missing\\\"}\"" +
+				"},{\"id\":\"PerryKrug:vs:AaronMiller\",\"key\":\"PerryKrug:vs:" +
+				"AaronMiller\",\"value\":null},{\"id\":\"PerryKrug:vs:BobWiederhold\"," +
+				"\"key\":\"PerryKrug:vs:BobWiederhold\",\"value\":null},{\"id\":" +
+				"\"PerryKrug:vs:DaleHarvey\",\"key\":\"PerryKrug:vs:DaleHarvey\",\"value" +
+				"\":null},{\"id\":\"PerryKrug:vs:DamienKatz\",\"key\":\"PerryKrug:vs:" +
+				"DamienKatz\",\"value\":null},{\"id\":\"PerryKrug:vs:DustinSallings\",\"key" +
+				"\":\"PerryKrug:vs:DustinSallings\",\"value\":null}]}";
+		StringEntity entity = new StringEntity(entityString);
+		response.setEntity(entity);
+		op.handleResponse(response);
+	}
+
+	@Test
+	public void testViewReducedWithErrors() throws Exception {
+		HttpOperation op = new ReducedOperationImpl(null, new ReducedCallback() {
+			@Override
+			public void receivedStatus(OperationStatus status) {
+				assert status.isSuccess();
+			}
+			@Override
+			public void complete() {
+				// Do nothing
+			}
+			@Override
+			public void gotData(ViewResponseReduced response) {
+				assert response.getErrors().size() == 1;
+				Iterator<RowError> row = response.getErrors().iterator();
+				assert row.next().getFrom().equals("http://10.2.1.14:5984/_view_merge/" +
+						"?startkey=%22Mike%22");
+				assert response.size() == 5;
+			}
+		});
+		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
+		String entityString = "{\"total_rows\":6,\"rows\":[{\"error\":true,\"from\":" +
+				"\"http://10.2.1.14:5984/_view_merge/?startkey=%22Mike%22\",\"reason\"" +
+				":\"{\\\"error\\\":\\\"not_found\\\",\\\"reason\\\":\\\"missing\\\"}\"" +
+				"},{\"key\":\"PerryKrug:vs:AaronMiller\",\"value\":null},{\"key\":" +
+				"\"PerryKrug:vs:BobWiederhold\",\"value\":null},{\"key\":\"PerryKrug:" +
+				"vs:DaleHarvey\",\"value\":null},{\"key\":\"PerryKrug:vs:DamienKatz\"," +
+				"\"value\":null},{\"key\":\"PerryKrug:vs:DustinSallings\",\"value\":null}]}";
+		StringEntity entity = new StringEntity(entityString);
+		response.setEntity(entity);
+		op.handleResponse(response);
+	}
 }

@@ -61,12 +61,8 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 		assert iq != null : "No input queue";
 		socketAddress=sa;
 		setChannel(c);
-		// Since these buffers are allocated rarely (only on client creation
-		// or reconfigure), and are passed to Channel.read() and Channel.write(),
-		// use direct buffers to avoid
-		//   http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6214569
-		rbuf = ByteBuffer.allocateDirect(bufSize);
-		wbuf = ByteBuffer.allocateDirect(bufSize);
+		rbuf=ByteBuffer.allocate(bufSize);
+		wbuf=ByteBuffer.allocate(bufSize);
 		getWbuf().clear();
 		readQ=rq;
 		writeQ=wq;
@@ -160,34 +156,56 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 	public final void fillWriteBuffer(boolean shouldOptimize) {
 		if(toWrite == 0 && readQ.remainingCapacity() > 0) {
 			getWbuf().clear();
-			Operation o=getNextWritableOp();
+			Operation o=getCurrentWriteOp();
 			
-			while(o != null && toWrite < getWbuf().capacity()) {
-				synchronized(o) {
-					assert o.getState() == OperationState.WRITING;
-	
-					ByteBuffer obuf=o.getBuffer();
-					assert obuf != null : "Didn't get a write buffer from " + o;
-					int bytesToCopy=Math.min(getWbuf().remaining(),
-							obuf.remaining());
-					byte b[]=new byte[bytesToCopy];
-					obuf.get(b);
-					getWbuf().put(b);
-					getLogger().debug("After copying stuff from %s: %s",
-							o, getWbuf());
-					if(!o.getBuffer().hasRemaining()) {
-						o.writeComplete();
-						transitionWriteItem();
-	
-						preparePending();
-						if(shouldOptimize) {
-							optimize();
-						}
-	
-						o=getNextWritableOp();
+			if (o != null && o.getState() == OperationState.WRITE_QUEUED) {
+				if (o.isCancelled()) {
+					getLogger().debug("Not writing cancelled op.");
+					Operation cancelledOp = removeCurrentWriteOp();
+					assert o == cancelledOp;
+					return;
+				} else if (o.isTimedOut(defaultOpTimeout)) {
+					getLogger().debug("Not writing timed out op.");
+					Operation timedOutOp = removeCurrentWriteOp();
+					assert o == timedOutOp;
+					return;
+				} else {
+					o.writing();
+					if (!(o instanceof TapAckOperationImpl)) {
+						readQ.add(o);
 					}
-					toWrite += bytesToCopy;
 				}
+			}
+			while(o != null && toWrite < getWbuf().capacity()) {
+				assert o.getState() == OperationState.WRITING;
+
+				ByteBuffer obuf=o.getBuffer();
+				assert obuf != null : "Didn't get a write buffer from " + o;
+				int bytesToCopy=Math.min(getWbuf().remaining(),
+						obuf.remaining());
+				byte b[]=new byte[bytesToCopy];
+				obuf.get(b);
+				getWbuf().put(b);
+				getLogger().debug("After copying stuff from %s: %s",
+						o, getWbuf());
+				if(!o.getBuffer().hasRemaining()) {
+					o.writeComplete();
+					transitionWriteItem();
+
+					preparePending();
+					if(shouldOptimize) {
+						optimize();
+					}
+
+					o=getCurrentWriteOp();
+					if (o != null) {
+						o.writing();
+						if (!(o instanceof TapAckOperationImpl)) {
+							readQ.add(o);
+						}
+					}
+				}
+				toWrite += bytesToCopy;
 			}
 			getWbuf().flip();
 			assert toWrite <= getWbuf().capacity()
@@ -198,31 +216,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 		} else {
 			getLogger().debug("Buffer is full, skipping");
 		}
-	}
-
-	private Operation getNextWritableOp() {
-		Operation o = getCurrentWriteOp();
-		while (o != null && o.getState() == OperationState.WRITE_QUEUED) {
-			synchronized(o) {
-				if (o.isCancelled()) {
-					getLogger().debug("Not writing cancelled op.");
-					Operation cancelledOp = removeCurrentWriteOp();
-					assert o == cancelledOp;
-				} else if (o.isTimedOut(defaultOpTimeout)) {
-					getLogger().debug("Not writing timed out op.");
-					Operation timedOutOp = removeCurrentWriteOp();
-					assert o == timedOutOp;
-				} else {
-					o.writing();
-					if (!(o instanceof TapAckOperationImpl)) {
-						readQ.add(o);
-					}
-					return o;
-				}
-				o = getCurrentWriteOp();
-			}
-		}
-		return o;
 	}
 
 	/* (non-Javadoc)

@@ -53,8 +53,4 @@ final class StatsOperationImpl extends OperationImpl
 		cb.receivedStatus(CANCELLED);
 	}
 
-	@Override
-	public String toString() {
-		return "Cmd: " + msg;
-	}
 }

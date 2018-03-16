@@ -128,8 +128,6 @@ public class MemcachedClient extends SpyThread
 
 	final AuthDescriptor authDescriptor;
 
-	private final ConnectionFactory connFactory;
-
 	private final AuthThreadMonitor authMonitor = new AuthThreadMonitor();
 	private volatile boolean reconfiguring = false;
 	private ConfigurationProvider configurationProvider;
@@ -178,7 +176,6 @@ public class MemcachedClient extends SpyThread
 			throw new IllegalArgumentException(
 				"Operation timeout must be positive.");
 		}
-		connFactory = cf;
 		tcService = new TranscodeService(cf.isDaemon());
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();
@@ -284,10 +281,10 @@ public class MemcachedClient extends SpyThread
 			cfb.setAuthDescriptor(ad);
 		}
 
-		connFactory = cfb.build();
+		cf = cfb.build();
 
 		List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getConfig().getServers());
-		if(connFactory == null) {
+		if(cf == null) {
 			throw new NullPointerException("Connection factory required");
 		}
 		if(addrs == null) {
@@ -297,23 +294,23 @@ public class MemcachedClient extends SpyThread
 			throw new IllegalArgumentException(
 			"You must have at least one server to connect to");
 		}
-		if(connFactory.getOperationTimeout() <= 0) {
+		if(cf.getOperationTimeout() <= 0) {
 			throw new IllegalArgumentException(
 				"Operation timeout must be positive.");
 		}
-		tcService = new TranscodeService(connFactory.isDaemon());
-		transcoder=connFactory.getDefaultTranscoder();
-		opFact=connFactory.getOperationFactory();
+		tcService = new TranscodeService(cf.isDaemon());
+		transcoder=cf.getDefaultTranscoder();
+		opFact=cf.getOperationFactory();
 		assert opFact != null : "Connection factory failed to make op factory";
-		conn=connFactory.createConnection(addrs);
+		conn=cf.createConnection(addrs);
 		assert conn != null : "Connection factory failed to make a connection";
-		operationTimeout = connFactory.getOperationTimeout();
-		authDescriptor = connFactory.getAuthDescriptor();
+		operationTimeout = cf.getOperationTimeout();
+		authDescriptor = cf.getAuthDescriptor();
 		if(authDescriptor != null) {
 			addObserver(this);
 		}
 		setName("Memcached IO over " + conn);
-		setDaemon(connFactory.isDaemon());
+		setDaemon(cf.isDaemon());
 		this.configurationProvider.subscribe(bucketName, this);
 		start();
 	}
@@ -1317,6 +1314,9 @@ public class MemcachedClient extends SpyThread
 				@SuppressWarnings("synthetic-access")
 				public void receivedStatus(OperationStatus status) {
 					rv.setStatus(status);
+					if(!status.isSuccess()) {
+						getLogger().warn("Unsuccessful get:  %s", status);
+					}
 				}
 				public void gotData(String k, int flags, byte[] data) {
 					Transcoder<T> tc = tc_map.get(k);
@@ -2178,8 +2178,4 @@ public class MemcachedClient extends SpyThread
 		// Don't care.
 	}
 
-	@Override
-	public String toString() {
-		return connFactory.toString();
-	}
 }

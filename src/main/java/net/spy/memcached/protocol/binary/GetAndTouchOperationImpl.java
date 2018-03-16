@@ -34,8 +34,4 @@ public class GetAndTouchOperationImpl extends SingleKeyOperationImpl
 		getCallback().receivedStatus(STATUS_OK);
 	}
 
-	@Override
-	public String toString() {
-		return super.toString() + " Exp: " + exp;
-	}
 }

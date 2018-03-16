@@ -31,24 +31,11 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 	final KetamaNodeLocatorConfiguration config;
 
 
-	/**
-	 * Create a new KetamaNodeLocator using specified nodes and the specifed hash algorithm.
-	 *
-	 * @param nodes The List of nodes to use in the Ketama consistent hash continuum
-	 * @param alg The hash algorithm to use when choosing a node in the Ketama consistent hash continuum
-	 */
 	public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg) {
         this(nodes, alg, new DefaultKetamaNodeLocatorConfiguration());
 	}
 
-	/**
-	 * Create a new KetamaNodeLocator using specified nodes and the specifed hash algorithm and configuration.
-	 *
-	 * @param nodes The List of nodes to use in the Ketama consistent hash continuum
-	 * @param alg The hash algorithm to use when choosing a node in the Ketama consistent hash continuum
-	 * @param conf
-	 */
-	public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg, KetamaNodeLocatorConfiguration conf) {
+    public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg, KetamaNodeLocatorConfiguration conf) {
 		super();
 		allNodes = nodes;
 		hashAlg = alg;
@@ -126,11 +113,6 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 	return ketamaNodes;
     }
 
-    /**
-     * Setup the KetamaNodeLocator with the list of nodes it should use.
-     *
-     * @param nodes a List of MemcachedNodes for this KetamaNodeLocator to use in its continuum
-     */
     protected void setKetamaNodes(List<MemcachedNode> nodes) {
 	TreeMap<Long, MemcachedNode> newNodeMap = new TreeMap<Long, MemcachedNode>();
 	int numReps= config.getNodeRepetitions();

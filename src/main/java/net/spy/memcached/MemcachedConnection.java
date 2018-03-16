@@ -256,7 +256,7 @@ public class MemcachedConnection extends SpyThread {
     if (!shutDown && !reconnectQueue.isEmpty()) {
       attemptReconnects();
     }
-    // rehash any operations that are in retry state
+    // rehash operations that in retry state
     redistributeOperations(retryOps);
     retryOps.clear();
 

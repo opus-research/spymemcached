@@ -1,5 +1,6 @@
 package net.spy.memcached;
 
+
 /**
  * This test assumes a binary server is running on localhost:11211.
  */
@@ -84,20 +85,5 @@ public class BinaryClientTest extends ProtocolBaseCase {
 			Thread.sleep(2000);
 			assertFalse(client.touch("touchkey", 3).get().booleanValue());
 		}
-	}
-
-	@Override
-	protected void syncGetTimeoutsInitClient() throws Exception {
-		initClient(new BinaryConnectionFactory() {
-			@Override
-			public long getOperationTimeout() {
-				return 2;
-			}
-
-			@Override
-			public int getTimeoutExceptionThreshold() {
-				return 1000000;
-			}
-		});
 	}
 }

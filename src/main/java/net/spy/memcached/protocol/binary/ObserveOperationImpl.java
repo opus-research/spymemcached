@@ -24,7 +24,7 @@
 
 package net.spy.memcached.protocol.binary;
 
-import net.spy.memcached.ops.ObserveResponse;
+import net.spy.memcached.ObserveResponse;
 import net.spy.memcached.ops.ObserveOperation;
 import net.spy.memcached.ops.OperationCallback;
 

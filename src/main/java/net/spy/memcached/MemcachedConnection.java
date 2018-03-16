@@ -633,7 +633,7 @@ public class MemcachedConnection extends SpyThread {
     return locator;
   }
 
-  public void enqueueOperation(final String key, final Operation o) {
+  public void enqueueOperation(String key, Operation o) {
     StringUtils.validateKey(key);
     checkState();
     addOperation(key, o);

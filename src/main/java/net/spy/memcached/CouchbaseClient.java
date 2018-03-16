@@ -39,10 +39,10 @@ import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.couch.DocsOperationImpl;
-import net.spy.memcached.protocol.couch.ViewFetcherOperation;
-import net.spy.memcached.protocol.couch.ViewFetcherOperationImpl;
-import net.spy.memcached.protocol.couch.ViewsFetcherOperation;
-import net.spy.memcached.protocol.couch.ViewsFetcherOperationImpl;
+import net.spy.memcached.protocol.couch.GetViewOperation.GetViewCallback;
+import net.spy.memcached.protocol.couch.GetViewOperationImpl;
+import net.spy.memcached.protocol.couch.GetViewsOperation.GetViewsCallback;
+import net.spy.memcached.protocol.couch.GetViewsOperationImpl;
 import net.spy.memcached.protocol.couch.HttpOperation;
 import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
 import net.spy.memcached.protocol.couch.Query;
@@ -85,13 +85,15 @@ public class CouchbaseClient extends MembaseClient
       propsFileExists = false;
     }
     if (!propsFileExists) {
-      MODE_ERROR = "Can't find config.properties. Setting viewmode "
-          + "to production mode";
-      MODE_PREFIX = PROD_PREFIX;
+      MODE_ERROR =
+          "Can't find config.properties. Setting viewmode "
+              + "to development mode";
+      MODE_PREFIX = DEV_PREFIX;
     } else if (viewmode == null) {
-      MODE_ERROR = "viewmode doesn't exist in config.properties. "
-              + "Setting viewmode to production mode";
-      MODE_PREFIX = PROD_PREFIX;
+      MODE_ERROR =
+          "viewmode doesn't exist in config.properties. "
+              + "Setting viewmode to development mode";
+      MODE_PREFIX = DEV_PREFIX;
     } else if (viewmode.equals(MODE_PRODUCTION)) {
       MODE_ERROR = "viewmode set to production mode";
       MODE_PREFIX = PROD_PREFIX;
@@ -99,9 +101,8 @@ public class CouchbaseClient extends MembaseClient
       MODE_ERROR = "viewmode set to development mode";
       MODE_PREFIX = DEV_PREFIX;
     } else {
-      MODE_ERROR = "unknown value \"" + viewmode + "\" for property viewmode"
-          + " Setting to production mode";
-      MODE_PREFIX = PROD_PREFIX;
+      MODE_ERROR = "unknown value \"" + viewmode + "\" for property viewmode";
+      MODE_PREFIX = DEV_PREFIX;
     }
   }
 
@@ -152,8 +153,8 @@ public class CouchbaseClient extends MembaseClient
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new ViewFetcherOperationImpl(request, bucketName, designDocumentName,
-            viewName, new ViewFetcherOperation.ViewFetcherCallback() {
+        new GetViewOperationImpl(request, bucketName, designDocumentName,
+            viewName, new GetViewCallback() {
               private View view = null;
 
               @Override
@@ -192,8 +193,8 @@ public class CouchbaseClient extends MembaseClient
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-    final HttpOperation op = new ViewsFetcherOperationImpl(request, bucketName,
-        designDocumentName, new ViewsFetcherOperation.ViewsFetcherCallback() {
+    final HttpOperation op = new GetViewsOperationImpl(request, bucketName,
+        designDocumentName, new GetViewsCallback() {
           private List<View> views = null;
 
           @Override

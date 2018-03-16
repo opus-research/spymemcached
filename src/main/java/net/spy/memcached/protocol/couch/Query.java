@@ -35,6 +35,7 @@ public class Query {
   private static final String ENDKEYDOCID = "endkey_docid";
   private static final String GROUP = "group";
   private static final String GROUPLEVEL = "group_level";
+  private static final String INCLUDEDOCS = "include_docs";
   private static final String INCLUSIVEEND = "inclusive_end";
   private static final String KEY = "key";
   private static final String LIMIT = "limit";
@@ -44,7 +45,6 @@ public class Query {
   private static final String STARTKEY = "startkey";
   private static final String STARTKEYDOCID = "startkey_docid";
   private static final String UPDATESEQ = "update_seq";
-  private boolean includedocs = false;
 
   private Map<String, Object> args;
 
@@ -58,7 +58,8 @@ public class Query {
   }
 
   public boolean willIncludeDocs() {
-    return includedocs;
+    return (args.containsKey(INCLUDEDOCS))
+      ? ((Boolean)args.get(INCLUDEDOCS)).booleanValue() : false;
   }
 
   public Query setDescending(boolean descending) {
@@ -83,7 +84,7 @@ public class Query {
   }
 
   public Query setIncludeDocs(boolean includedocs) {
-    this.includedocs = includedocs;
+    args.put(INCLUDEDOCS, new Boolean(includedocs));
     return this;
   }
 

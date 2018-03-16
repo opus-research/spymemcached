@@ -16,7 +16,6 @@ import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
-import net.spy.memcached.protocol.binary.TapAckOperationImpl;
 
 /**
  * Represents a node with the memcached cluster, along with buffering and
@@ -175,8 +174,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject
 				// at a larger design problem that may need to be taken care
 				// if in the bowels of the client.
 				// In practice, readQ should be small, however.
-				// Also don't add Tap Acks to the readQ since there won't be a response
-				if(!readQ.contains(o) && !(o instanceof TapAckOperationImpl)) {
+				if(!readQ.contains(o)) {
 					readQ.add(o);
 				}
 

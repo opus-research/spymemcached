@@ -19,11 +19,17 @@ public class HttpFuture<T> extends SpyObject implements Future<T>{
     private OperationStatus status;
     private HttpOperation op;
 
+    private volatile boolean completed;
+
     public HttpFuture(CountDownLatch latch, long timeout) {
         super();
         this.objRef = new AtomicReference<T>(null);
         this.latch = latch;
         this.timeout = timeout;
+    }
+
+    public boolean isCompleted() {
+        return this.completed;
     }
 
 	public boolean cancel(boolean c) {

@@ -21,6 +21,7 @@ import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.couchdb.DocsOperation.DocsCallback;
 import net.spy.memcached.protocol.couchdb.DocsOperationImpl;
 import net.spy.memcached.protocol.couchdb.HttpOperation;
+import net.spy.memcached.protocol.couchdb.HttpOperationImpl;
 import net.spy.memcached.protocol.couchdb.NoDocsOperation;
 import net.spy.memcached.protocol.couchdb.NoDocsOperationImpl;
 import net.spy.memcached.protocol.couchdb.Query;
@@ -80,7 +81,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 			new HttpFuture<View>(couchLatch, operationTimeout);
 
 		final HttpRequest request = new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-		final HttpOperation op = new ViewOperationImpl(request, bucketName,
+		final HttpOperationImpl op = new ViewOperationImpl(request, bucketName,
 				designDocumentName, viewName, new ViewCallback() {
 			View view = null;
 			@Override
@@ -115,7 +116,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 			new HttpFuture<List<View>>(couchLatch, operationTimeout);
 
 		final HttpRequest request = new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-		final HttpOperation op = new ViewsOperationImpl(request, bucketName,
+		final HttpOperationImpl op = new ViewsOperationImpl(request, bucketName,
 				designDocumentName, new ViewsCallback() {
 			List<View> views = null;
 			@Override
@@ -171,7 +172,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 	}
 
 	/**
-	 * Queries a Couchbase view by calling its map function. This type
+	 * Query's a Couchbase view by calling it's map function. This type
 	 * of query will return the view result along with all of the
 	 * documents for each row in the query.
 	 *
@@ -180,7 +181,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 	 * @return a Future containing the results of the query.
 	 */
 	public ViewFuture query(View view, Query query) {
-		String queryString = query.toString();
+		String queryString =query.toString();
 		String params = (queryString.length() > 0) ? "&reduce=false" : "?reduce=false";
 
 		String uri = view.getURI() + queryString + params;
@@ -188,7 +189,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 		final ViewFuture crv = new ViewFuture(couchLatch, operationTimeout);
 
 		final HttpRequest request = new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-		final HttpOperation op = new DocsOperationImpl(request, new DocsCallback() {
+		final HttpOperationImpl op = new DocsOperationImpl(request, new DocsCallback() {
 			ViewResponseWithDocs vr = null;
 			@Override
 			public void receivedStatus(OperationStatus status) {
@@ -214,7 +215,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 	}
 
 	/**
-	 * Queries a Couchbase view by calling it's map function. This type
+	 * Query's a Couchbase view by calling it's map function. This type
 	 * of query will return the view result but will not get the
 	 * documents associated with each row of the query.
 	 *
@@ -223,7 +224,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 	 * @return a Future containing the results of the query.
 	 */
 	public HttpFuture<ViewResponseNoDocs> queryAndExcludeDocs(View view, Query query) {
-		String queryString = query.toString();
+		String queryString =query.toString();
 		String params = (queryString.length() > 0) ? "&reduce=false" : "?reduce=false";
 		params += "&include_docs=false";
 
@@ -254,7 +255,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 	}
 
 	/**
-	 * Queries a Couchbase view by calling it's map function and then
+	 * Query's a Couchbase view by calling it's map function and then
 	 * the views reduce function.
 	 *
 	 * @param view the view to run the query against.
@@ -271,7 +272,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 			new HttpFuture<ViewResponseReduced>(couchLatch, operationTimeout);
 
 		final HttpRequest request = new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-		final HttpOperation op = new ReducedOperationImpl(request, new ReducedCallback() {
+		final HttpOperationImpl op = new ReducedOperationImpl(request, new ReducedCallback() {
 			ViewResponseReduced vr = null;
 			@Override
 			public void receivedStatus(OperationStatus status) {

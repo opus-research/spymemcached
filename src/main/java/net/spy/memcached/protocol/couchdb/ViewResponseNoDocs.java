@@ -2,13 +2,18 @@ package net.spy.memcached.protocol.couchdb;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 public class ViewResponseNoDocs implements ViewResponse<RowNoDocs> {
 
 	Collection<RowNoDocs> rows;
 
-	public ViewResponseNoDocs(final Collection<RowNoDocs> r) {
-		rows = r;
+	public ViewResponseNoDocs() {
+		rows = new LinkedList<RowNoDocs>();
+	}
+
+	public void add(RowNoDocs r) {
+		rows.add(r);
 	}
 
 	public int size() {

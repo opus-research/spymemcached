@@ -29,9 +29,9 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.tapmessage.RequestMessage;
+import net.spy.memcached.tapmessage.TapFlag;
 import net.spy.memcached.tapmessage.TapMagic;
 import net.spy.memcached.tapmessage.TapOpcode;
-import net.spy.memcached.tapmessage.TapRequestFlag;
 
 /**
  * Implementation of a tap backfill operation.
@@ -52,8 +52,8 @@ public class TapBackfillOperationImpl extends TapOperationImpl implements
     RequestMessage message = new RequestMessage();
     message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
     message.setOpcode(TapOpcode.REQUEST);
-    message.setFlags(TapRequestFlag.BACKFILL);
-    message.setFlags(TapRequestFlag.SUPPORT_ACK);
+    message.setFlags(TapFlag.BACKFILL);
+    message.setFlags(TapFlag.SUPPORT_ACK);
     if (id != null) {
       message.setName(id);
     } else {

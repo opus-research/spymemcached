@@ -36,29 +36,29 @@ public class MessageBuilder {
 
   public void doBackfill(long date) {
     message.setBackfill(date);
-    message.setFlags(TapRequestFlag.BACKFILL);
+    message.setFlags(TapFlag.BACKFILL);
   }
 
   public void doDump() {
-    message.setFlags(TapRequestFlag.DUMP);
+    message.setFlags(TapFlag.DUMP);
   }
 
   public void specifyVbuckets(short[] vbucketlist) {
     message.setVbucketlist(vbucketlist);
-    message.setFlags(TapRequestFlag.LIST_VBUCKETS);
+    message.setFlags(TapFlag.LIST_VBUCKETS);
   }
 
   public void supportAck() {
-    message.setFlags(TapRequestFlag.SUPPORT_ACK);
+    message.setFlags(TapFlag.SUPPORT_ACK);
   }
 
   public void keysOnly() {
-    message.setFlags(TapRequestFlag.KEYS_ONLY);
+    message.setFlags(TapFlag.KEYS_ONLY);
   }
 
   public void takeoverVbuckets(short[] vbucketlist) {
     message.setVbucketlist(vbucketlist);
-    message.setFlags(TapRequestFlag.TAKEOVER_VBUCKETS);
+    message.setFlags(TapFlag.TAKEOVER_VBUCKETS);
   }
 
   public RequestMessage getMessage() {

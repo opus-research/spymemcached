@@ -35,7 +35,7 @@ public class RequestMessage extends BaseMessage{
   private boolean hasBackfill;
   private boolean hasVBucketList;
   private boolean hasFlags;
-  private List<TapRequestFlag> flagList;
+  private List<TapFlag> flagList;
   private short[] vblist;
   private String name;
   private long backfilldate;
@@ -44,7 +44,7 @@ public class RequestMessage extends BaseMessage{
    * Create a tap request message. These messages are used to start tap streams.
    */
   public RequestMessage() {
-    flagList = new LinkedList<TapRequestFlag>();
+    flagList = new LinkedList<TapFlag>();
     vblist = new short[0];
     name = UUID.randomUUID().toString();
     backfilldate = -1;
@@ -58,19 +58,19 @@ public class RequestMessage extends BaseMessage{
    *
    * @param f The flags to use for this tap stream.
    */
-  public void setFlags(TapRequestFlag f) {
+  public void setFlags(TapFlag f) {
     if (!flagList.contains(f)) {
       if (!hasFlags) {
         hasFlags = true;
         extralength += 4;
         totalbody += 4;
       }
-      if (f.equals(TapRequestFlag.BACKFILL)) {
+      if (f.equals(TapFlag.BACKFILL)) {
         hasBackfill = true;
         totalbody += 8;
       }
-      if (f.equals(TapRequestFlag.LIST_VBUCKETS)
-        || f.equals(TapRequestFlag.TAKEOVER_VBUCKETS)) {
+      if (f.equals(TapFlag.LIST_VBUCKETS)
+        || f.equals(TapFlag.TAKEOVER_VBUCKETS)) {
         hasVBucketList = true;
         totalbody += 2;
       }
@@ -83,7 +83,7 @@ public class RequestMessage extends BaseMessage{
    *
    * @return An int value of flags set for this tap message.
    */
-  public List<TapRequestFlag> getFlags() {
+  public List<TapFlag> getFlags() {
     return flagList;
   }
 

@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2011 Couchbase, Inc.
+ * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,82 +21,72 @@
  * IN THE SOFTWARE.
  */
 
-
 package net.spy.memcached.internal;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import net.spy.memcached.ops.Operation;
-import net.spy.memcached.ops.OperationStatus;
-
 /**
- * Future returned for GET operations.
  *
- * Not intended for general use.
- *
- * @param <T> Type of object returned from the get
  */
-public class GetFuture<T> extends AbstractListenableFuture<T, GetFutureListener> implements Future<T> {
+public class DummyListenableFuture<T> extends AbstractListenableFuture<T, GenericFutureListener> {
 
-  private final OperationFuture<Future<T>> rv;
+  private boolean done;
+  private boolean cancelled = false;
 
-  public GetFuture(CountDownLatch l, long opTimeout, String key,
-    ExecutorService service) {
+  private T content = null;
+
+  public DummyListenableFuture(boolean alreadyDone, ExecutorService service) {
     super(service);
-    this.rv = new OperationFuture<Future<T>>(key, l, opTimeout, service);
-  }
-
-  public boolean cancel(boolean ign) {
-    boolean result = rv.cancel(ign);
-    notifyListeners();
-    return result;
-  }
-
-  public T get() throws InterruptedException, ExecutionException {
-    Future<T> v = rv.get();
-    return v == null ? null : v.get();
-  }
-
-  public T get(long duration, TimeUnit units) throws InterruptedException,
-      TimeoutException, ExecutionException {
-    Future<T> v = rv.get(duration, units);
-    return v == null ? null : v.get();
-  }
-
-  public OperationStatus getStatus() {
-    return rv.getStatus();
-  }
-
-  public void set(Future<T> d, OperationStatus s) {
-    rv.set(d, s);
-    notifyListeners();
-  }
-
-  public void setOperation(Operation to) {
-    rv.setOperation(to);
-  }
-
-  public boolean isCancelled() {
-    return rv.isCancelled();
-  }
-
-  public boolean isDone() {
-    return rv.isDone();
+    this.done = alreadyDone;
   }
 
   @Override
-  public GetFuture<T> addListener(GetFutureListener listener) {
+  public boolean cancel(boolean bln) {
+    cancelled = true;
+    notifyListeners();
+    return true;
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return cancelled;
+  }
+
+  @Override
+  public boolean isDone() {
+    return done;
+  }
+
+  @Override
+  public T get() throws InterruptedException, ExecutionException {
+    try {
+      return get(1, TimeUnit.SECONDS);
+    } catch (TimeoutException ex) {
+      return null;
+    }
+  }
+
+  @Override
+  public T get(long l, TimeUnit tu) throws InterruptedException, ExecutionException, TimeoutException {
+    return content;
+  }
+
+  public void set(T content) {
+    notifyListeners();
+    this.content = content;
+  }
+
+  @Override
+  public DummyListenableFuture<T> addListener(GenericFutureListener listener) {
     super.addToListeners((GenericFutureListener) listener);
     return this;
   }
 
   @Override
-  public GetFuture<T> removeListener(GetFutureListener listener) {
+  public DummyListenableFuture<T> removeListener(GenericFutureListener listener) {
     super.removeFromListeners((GenericFutureListener) listener);
     return this;
   }

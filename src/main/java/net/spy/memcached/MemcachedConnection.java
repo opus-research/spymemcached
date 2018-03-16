@@ -699,7 +699,7 @@ public class MemcachedConnection extends SpyThread {
       lostConnection(node);
     } catch (Exception e) {
       node.setupForAuth();
-      getLogger().info("Reconnecting due to exception on %s", node, e);
+      getLogger().info("Reconnecting due to exceptcheckion on %s", node, e);
       lostConnection(node);
     }
     node.fixupOps();
@@ -713,18 +713,15 @@ public class MemcachedConnection extends SpyThread {
    * @param node th enode to read write from.
    * @throws IOException if an error occurs during read/write.
    */
-  private void handleReadsAndWrites(final SelectionKey sk,
-    final MemcachedNode node) throws IOException {
-    if (sk.isValid()) {
-      if (sk.isReadable()) {
-        handleReads(node);
+  private void handleReadsAndWrites(final SelectionKey sk, final MemcachedNode node) throws IOException {
+      if (sk.isValid() && sk.isReadable()) {
+          handleReads(node);
       }
-      if (sk.isWritable()) {
-        handleWrites(node);
-      }
-    }
-  }
 
+      if (sk.isValid() && sk.isWritable()) {
+          handleWrites(node);
+      }
+  }
   /**
    * Finish the connect phase and potentially verify its liveness.
    *

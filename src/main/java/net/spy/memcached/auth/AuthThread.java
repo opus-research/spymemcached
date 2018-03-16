@@ -18,10 +18,10 @@ public class AuthThread extends SpyThread {
 	private final MemcachedConnection conn;
 	private final AuthDescriptor authDescriptor;
 	private final OperationFactory opFact;
-	private final MemcachedNode node;
+	private final MemcachedNode<Operation> node;
 
 	public AuthThread(MemcachedConnection c, OperationFactory o,
-			AuthDescriptor a, MemcachedNode n) {
+			AuthDescriptor a, MemcachedNode<Operation> n) {
 		conn = c;
 		opFact = o;
 		authDescriptor = a;

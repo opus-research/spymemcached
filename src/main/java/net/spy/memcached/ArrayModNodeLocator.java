@@ -9,9 +9,9 @@ import java.util.List;
  * NodeLocator implementation for dealing with simple array lookups using a
  * modulus of the hash code and node list length.
  */
-public final class ArrayModNodeLocator implements NodeLocator {
+public final class ArrayModNodeLocator<T> implements NodeLocator<T> {
 
-	final MemcachedNode[] nodes;
+	final MemcachedNode<T>[] nodes;
 
 	private final HashAlgorithm hashAlg;
 
@@ -22,36 +22,36 @@ public final class ArrayModNodeLocator implements NodeLocator {
 	 * @param n the array of nodes
 	 * @param alg the hash algorithm
 	 */
-	public ArrayModNodeLocator(List<MemcachedNode> n, HashAlgorithm alg) {
+	public ArrayModNodeLocator(List<MemcachedNode<T>> n, HashAlgorithm alg) {
 		super();
 		nodes=n.toArray(new MemcachedNode[n.size()]);
 		hashAlg=alg;
 	}
 
-	private ArrayModNodeLocator(MemcachedNode[] n, HashAlgorithm alg) {
+	private ArrayModNodeLocator(MemcachedNode<T>[] n, HashAlgorithm alg) {
 		super();
 		nodes=n;
 		hashAlg=alg;
 	}
 
-	public Collection<MemcachedNode> getAll() {
+	public Collection<MemcachedNode<T>> getAll() {
 		return Arrays.asList(nodes);
 	}
 
-	public MemcachedNode getPrimary(String k) {
+	public MemcachedNode<T> getPrimary(String k) {
 		return nodes[getServerForKey(k)];
 	}
 
-	public Iterator<MemcachedNode> getSequence(String k) {
+	public Iterator<MemcachedNode<T>> getSequence(String k) {
 		return new NodeIterator(getServerForKey(k));
 	}
 
-	public NodeLocator getReadonlyCopy() {
-		MemcachedNode[] n=new MemcachedNode[nodes.length];
+	public NodeLocator<T> getReadonlyCopy() {
+		MemcachedNode<T>[] n=new MemcachedNode[nodes.length];
 		for(int i=0; i<nodes.length; i++) {
-			n[i] = new MemcachedNodeROImpl(nodes[i]);
+			n[i] = new MemcachedNodeROImpl<T>(nodes[i]);
 		}
-		return new ArrayModNodeLocator(n, hashAlg);
+		return new ArrayModNodeLocator<T>(n, hashAlg);
 	}
 
 	private int getServerForKey(String key) {
@@ -62,7 +62,7 @@ public final class ArrayModNodeLocator implements NodeLocator {
 		return rv;
 	}
 
-	class NodeIterator implements Iterator<MemcachedNode> {
+	class NodeIterator implements Iterator<MemcachedNode<T>> {
 
 		private final int start;
 		private int next=0;
@@ -89,7 +89,7 @@ public final class ArrayModNodeLocator implements NodeLocator {
 			}
 		}
 
-		public MemcachedNode next() {
+		public MemcachedNode<T> next() {
 			try {
 				return nodes[next];
 			} finally {

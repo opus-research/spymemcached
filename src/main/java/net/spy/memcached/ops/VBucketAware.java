@@ -6,7 +6,7 @@ import java.util.Collection;
 
 public interface VBucketAware {
     void setVBucket(int vbucket);
-    Collection<MemcachedNode> getNotMyVbucketNodes();
-    void addNotMyVbucketNode(MemcachedNode node);
-    void setNotMyVbucketNodes(Collection<MemcachedNode> nodes);
+    Collection<MemcachedNode<Operation>> getNotMyVbucketNodes();
+    void addNotMyVbucketNode(MemcachedNode<Operation> node);
+    void setNotMyVbucketNodes(Collection<MemcachedNode<Operation>> nodes);
 }

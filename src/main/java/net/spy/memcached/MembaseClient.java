@@ -121,7 +121,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	 * @throws ConfigurationException if the configuration provided by the
 	 *         server has issues or is not compatible
 	 */
-	protected MembaseClient(MembaseConnectionFactory cf, boolean subscribe) 
+	protected MembaseClient(MembaseConnectionFactory cf, boolean subscribe)
 			throws IOException, ConfigurationException {
 		super(cf, AddrUtil.getAddresses(cf.getVBucketConfig().getServers()));
 		if (subscribe) {

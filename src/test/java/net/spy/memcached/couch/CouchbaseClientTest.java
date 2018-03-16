@@ -23,22 +23,22 @@ import net.spy.memcached.TestConfig;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.protocol.couch.DocsOperation.DocsCallback;
-import net.spy.memcached.protocol.couch.DocsOperationImpl;
-import net.spy.memcached.protocol.couch.HttpOperation;
-import net.spy.memcached.protocol.couch.NoDocsOperation.NoDocsCallback;
-import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
-import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
-import net.spy.memcached.protocol.couch.ReducedOperationImpl;
-import net.spy.memcached.protocol.couch.RowError;
-import net.spy.memcached.protocol.couch.RowWithDocs;
-import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
-import net.spy.memcached.protocol.couch.Query;
-import net.spy.memcached.protocol.couch.ViewResponseReduced;
-import net.spy.memcached.protocol.couch.RowReduced;
-import net.spy.memcached.protocol.couch.RowNoDocs;
-import net.spy.memcached.protocol.couch.View;
-import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
+import net.spy.memcached.protocol.couchdb.DocsOperation.DocsCallback;
+import net.spy.memcached.protocol.couchdb.DocsOperationImpl;
+import net.spy.memcached.protocol.couchdb.HttpOperation;
+import net.spy.memcached.protocol.couchdb.NoDocsOperation.NoDocsCallback;
+import net.spy.memcached.protocol.couchdb.NoDocsOperationImpl;
+import net.spy.memcached.protocol.couchdb.ReducedOperation.ReducedCallback;
+import net.spy.memcached.protocol.couchdb.ReducedOperationImpl;
+import net.spy.memcached.protocol.couchdb.RowError;
+import net.spy.memcached.protocol.couchdb.RowWithDocs;
+import net.spy.memcached.protocol.couchdb.ViewResponseNoDocs;
+import net.spy.memcached.protocol.couchdb.Query;
+import net.spy.memcached.protocol.couchdb.ViewResponseReduced;
+import net.spy.memcached.protocol.couchdb.RowReduced;
+import net.spy.memcached.protocol.couchdb.RowNoDocs;
+import net.spy.memcached.protocol.couchdb.View;
+import net.spy.memcached.protocol.couchdb.ViewResponseWithDocs;
 
 public class CouchbaseClientTest {
 	protected TestingClient client = null;
@@ -78,15 +78,13 @@ public class CouchbaseClientTest {
 		List<URI> uris = new LinkedList<URI>();
 		uris.add(URI.create(SERVER_URI));
 		TestingClient c = new TestingClient(uris, "default", "");
-		String docUri = "/default/_design/" + TestingClient.MODE_PREFIX
-			+ DESIGN_DOC_W_REDUCE;
+		String docUri = "/default/_design/" + DESIGN_DOC_W_REDUCE;
 		String view = "{\"language\":\"javascript\",\"views\":{\""
 				+ VIEW_NAME_W_REDUCE + "\":{\"map\":\"function (doc) {  "
 				+ "emit(doc._id, 1)}\",\"reduce\":\"_sum\" }}}";
 		c.asyncHttpPut(docUri, view);
 
-		docUri = "/default/_design/" + TestingClient.MODE_PREFIX
-			+ DESIGN_DOC_WO_REDUCE;
+		docUri = "/default/_design/" + DESIGN_DOC_WO_REDUCE;
 		view = "{\"language\":\"javascript\",\"views\":{\""
 				+ VIEW_NAME_WO_REDUCE + "\":{\"map\":\"function (doc) {  "
 				+ "emit(doc._id, 1)}\"}}}";
@@ -121,17 +119,14 @@ public class CouchbaseClientTest {
 		List<URI> uris = new LinkedList<URI>();
 		uris.add(URI.create(SERVER_URI));
 		TestingClient c = new TestingClient(uris, "default", "");
-		String json = c.asyncHttpGet("/default/_design/" + TestingClient.MODE_PREFIX
-				+ DESIGN_DOC_W_REDUCE).get();
+		String json = c.asyncHttpGet("/default/_design/" + DESIGN_DOC_W_REDUCE).get();
 		String rev = (new JSONObject(json)).getString("_rev");
-		c.asyncHttpDelete("/default/_design/" + TestingClient.MODE_PREFIX
-				+ DESIGN_DOC_W_REDUCE + "?rev=" + rev).get();
+		c.asyncHttpDelete("/default/_design/" + DESIGN_DOC_W_REDUCE + "?rev=" + rev).get();
 
-		json = c.asyncHttpGet("/default/_design/" + TestingClient.MODE_PREFIX
-				+ DESIGN_DOC_WO_REDUCE).get();
+		json = c.asyncHttpGet("/default/_design/" + DESIGN_DOC_WO_REDUCE).get();
+		System.out.println(json);
 		rev = (new JSONObject(json)).getString("_rev");
-		c.asyncHttpDelete("/default/_design/" + TestingClient.MODE_PREFIX
-				+ DESIGN_DOC_WO_REDUCE + "?rev=" + rev).get();
+		c.asyncHttpDelete("/default/_design/" + DESIGN_DOC_WO_REDUCE + "?rev=" + rev).get();
 	}
 
 	private static String generateDoc(String type, String small, String large) {
@@ -218,24 +213,18 @@ public class CouchbaseClientTest {
 			}
 			@Override
 			public void gotData(ViewResponseWithDocs response) {
-				assert response.getErrors().size() == 1;
+				assert response.getErrors().size() == 2;
 				Iterator<RowError> row = response.getErrors().iterator();
-				assert row.next().getFrom().equals("http://10.2.1.14:5984/_view_merge/" +
-						"?startkey=%22Mike%22");
-				assert response.size() == 5;
+				assert row.next().getFrom().equals("127.0.0.1:5984");
+				assert response.size() == 0;
 			}
 		});
 		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
-		String entityString = "{\"total_rows\":6,\"rows\":[{\"error\":true,\"from\":" +
-				"\"http://10.2.1.14:5984/_view_merge/?startkey=%22Mike%22\",\"reason\"" +
-				":\"{\\\"error\\\":\\\"not_found\\\",\\\"reason\\\":\\\"missing\\\"}\"" +
-				"},{\"id\":\"PerryKrug:vs:AaronMiller\",\"key\":\"PerryKrug:vs:" +
-				"AaronMiller\",\"value\":null},{\"id\":\"PerryKrug:vs:BobWiederhold\"," +
-				"\"key\":\"PerryKrug:vs:BobWiederhold\",\"value\":null},{\"id\":" +
-				"\"PerryKrug:vs:DaleHarvey\",\"key\":\"PerryKrug:vs:DaleHarvey\",\"value" +
-				"\":null},{\"id\":\"PerryKrug:vs:DamienKatz\",\"key\":\"PerryKrug:vs:" +
-				"DamienKatz\",\"value\":null},{\"id\":\"PerryKrug:vs:DustinSallings\",\"key" +
-				"\":\"PerryKrug:vs:DustinSallings\",\"value\":null}]}";
+		String entityString = "{\"total_rows\":0,\"rows\":[],\"errors\": [{\"from\":" +
+				"\"127.0.0.1:5984\",\"reason\":\"Design document `_design/testfoobar" +
+				"` missing in database `test_db_b`.\"},{\"from\":\"http://localhost:5984" +
+				"/_view_merge/\",\"reason\":\"Design document `_design/testfoobar`" +
+				" missing in database `test_db_c`.\"}]}";
 		StringEntity entity = new StringEntity(entityString);
 		response.setEntity(entity);
 		op.handleResponse(response);
@@ -254,24 +243,18 @@ public class CouchbaseClientTest {
 			}
 			@Override
 			public void gotData(ViewResponseNoDocs response) {
-				assert response.getErrors().size() == 1;
+				assert response.getErrors().size() == 2;
 				Iterator<RowError> row = response.getErrors().iterator();
-				assert row.next().getFrom().equals("http://10.2.1.14:5984/_view_merge/" +
-						"?startkey=%22Mike%22");
-				assert response.size() == 5;
+				assert row.next().getFrom().equals("127.0.0.1:5984");
+				assert response.size() == 0;
 			}
 		});
 		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
-		String entityString = "{\"total_rows\":6,\"rows\":[{\"error\":true,\"from\":" +
-				"\"http://10.2.1.14:5984/_view_merge/?startkey=%22Mike%22\",\"reason\"" +
-				":\"{\\\"error\\\":\\\"not_found\\\",\\\"reason\\\":\\\"missing\\\"}\"" +
-				"},{\"id\":\"PerryKrug:vs:AaronMiller\",\"key\":\"PerryKrug:vs:" +
-				"AaronMiller\",\"value\":null},{\"id\":\"PerryKrug:vs:BobWiederhold\"," +
-				"\"key\":\"PerryKrug:vs:BobWiederhold\",\"value\":null},{\"id\":" +
-				"\"PerryKrug:vs:DaleHarvey\",\"key\":\"PerryKrug:vs:DaleHarvey\",\"value" +
-				"\":null},{\"id\":\"PerryKrug:vs:DamienKatz\",\"key\":\"PerryKrug:vs:" +
-				"DamienKatz\",\"value\":null},{\"id\":\"PerryKrug:vs:DustinSallings\",\"key" +
-				"\":\"PerryKrug:vs:DustinSallings\",\"value\":null}]}";
+		String entityString = "{\"total_rows\":0,\"rows\":[],\"errors\": [{\"from\":" +
+				"\"127.0.0.1:5984\",\"reason\":\"Design document `_design/testfoobar" +
+				"` missing in database `test_db_b`.\"},{\"from\":\"http://localhost:5984" +
+				"/_view_merge/\",\"reason\":\"Design document `_design/testfoobar`" +
+				" missing in database `test_db_c`.\"}]}";
 		StringEntity entity = new StringEntity(entityString);
 		response.setEntity(entity);
 		op.handleResponse(response);
@@ -290,21 +273,18 @@ public class CouchbaseClientTest {
 			}
 			@Override
 			public void gotData(ViewResponseReduced response) {
-				assert response.getErrors().size() == 1;
+				assert response.getErrors().size() == 2;
 				Iterator<RowError> row = response.getErrors().iterator();
-				assert row.next().getFrom().equals("http://10.2.1.14:5984/_view_merge/" +
-						"?startkey=%22Mike%22");
-				assert response.size() == 5;
+				assert row.next().getFrom().equals("127.0.0.1:5984");
+				assert response.size() == 0;
 			}
 		});
 		HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, 200, "");
-		String entityString = "{\"total_rows\":6,\"rows\":[{\"error\":true,\"from\":" +
-				"\"http://10.2.1.14:5984/_view_merge/?startkey=%22Mike%22\",\"reason\"" +
-				":\"{\\\"error\\\":\\\"not_found\\\",\\\"reason\\\":\\\"missing\\\"}\"" +
-				"},{\"key\":\"PerryKrug:vs:AaronMiller\",\"value\":null},{\"key\":" +
-				"\"PerryKrug:vs:BobWiederhold\",\"value\":null},{\"key\":\"PerryKrug:" +
-				"vs:DaleHarvey\",\"value\":null},{\"key\":\"PerryKrug:vs:DamienKatz\"," +
-				"\"value\":null},{\"key\":\"PerryKrug:vs:DustinSallings\",\"value\":null}]}";
+		String entityString = "{\"total_rows\":0,\"rows\":[],\"errors\": [{\"from\":" +
+				"\"127.0.0.1:5984\",\"reason\":\"Design document `_design/testfoobar" +
+				"` missing in database `test_db_b`.\"},{\"from\":\"http://localhost:5984" +
+				"/_view_merge/\",\"reason\":\"Design document `_design/testfoobar`" +
+				" missing in database `test_db_c`.\"}]}";
 		StringEntity entity = new StringEntity(entityString);
 		response.setEntity(entity);
 		op.handleResponse(response);

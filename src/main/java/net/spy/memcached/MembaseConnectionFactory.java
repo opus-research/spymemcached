@@ -51,7 +51,7 @@ public class MembaseConnectionFactory extends BinaryConnectionFactory {
 	private final ConfigurationProvider configurationProvider;
 	private final Config vbConfig;
 	private final String bucketName;
-	
+
 	public MembaseConnectionFactory(final List<URI> baseList,
 			final String bucketName, final String usr, final String pwd) throws IOException {
 		//ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder(cf);

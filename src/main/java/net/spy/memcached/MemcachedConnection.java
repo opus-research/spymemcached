@@ -906,18 +906,18 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 	@Override
 	public void run() {
 		while(running) {
-            if (!reconfiguring) {
-                try {
-                    handleIO();
-                } catch (IOException e) {
-                    logRunException(e);
-                } catch (CancelledKeyException e) {
-                    logRunException(e);
-                } catch (ClosedSelectorException e) {
-                    logRunException(e);
-                } catch (IllegalStateException e) {
-                    logRunException(e);
-                }
+			if (!reconfiguring) {
+				try {
+					handleIO();
+				} catch (IOException e) {
+					logRunException(e);
+				} catch (CancelledKeyException e) {
+					logRunException(e);
+				} catch (ClosedSelectorException e) {
+					logRunException(e);
+				} catch (IllegalStateException e) {
+					logRunException(e);
+				}
 			}
 		}
 		getLogger().info("Shut down memcached client");

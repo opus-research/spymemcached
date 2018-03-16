@@ -9,10 +9,6 @@ import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.VBucketAware;
 
-/**
- * Binary operations that contain multiple keys and are VBucket aware
- * operations should extend this class.
- */
 abstract class MultiKeyOperationImpl extends OperationImpl
 		implements VBucketAware, KeyedOperation {
 	protected final Map<String, Short> vbmap = new HashMap<String, Short>();
@@ -37,9 +33,12 @@ abstract class MultiKeyOperationImpl extends OperationImpl
 		notMyVbucketNodes = nodes;
 	}
 
-	public void setVBucket(String k, short vb) {
-		assert vbmap.containsKey(k) : "Key " + k + " not contained in operation";
-		vbmap.put(k, new Short(vb));
+	public boolean setVBucket(String k, short vb) {
+		if (vbmap.containsKey(k)) {
+			vbmap.put(k, new Short(vb));
+			return true;
+		}
+		return false;
 	}
 
 	public short getVBucket(String k) {

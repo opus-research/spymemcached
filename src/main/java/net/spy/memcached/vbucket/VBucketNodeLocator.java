@@ -22,7 +22,7 @@ import net.spy.memcached.vbucket.config.ConfigDifference;
  */
 public class VBucketNodeLocator extends SpyObject implements NodeLocator {
 
-    private final AtomicReference<TotalConfig> fullConfig;
+    private AtomicReference<TotalConfig> fullConfig;
 
     /**
      * Construct a VBucketNodeLocator over the given JSON configuration string.

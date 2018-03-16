@@ -1,0 +1,35 @@
+<!--
+   Author Couchbase <info@couchbase.com>
+   Copyright 2011 Couchbase, Inc.
+   All rights reserved.
+ -->
+
+<ivysettings>
+	<property name="repo.maven.org" value="http://www.ibiblio.org/maven2/"
+		override="false"/>
+	<property name="repo.dustin.maven.org"
+		value="http://bleu.west.spy.net/~dustin/m2repo/"
+		override="false"/>
+
+	<property name="maven2.pattern"
+		value="[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier])"/>
+	<property name="maven2.pattern.ext"  value="${maven2.pattern}.[ext]"/>
+
+	<property name="local-maven2-pattern"
+		value="${user.home}/.m2/repository/[organisation]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]"
+		override="false" />
+	<settings defaultResolver="default"/>
+	
+	<resolvers>
+		<chain name="default">
+			<ibiblio name="maven2" root="${repo.maven.org}"
+				pattern="${maven2.pattern.ext}" m2compatible="true"/>
+			<ibiblio name="dustin-maven" root="${repo.dustin.maven.org}"
+        		pattern="${maven2.pattern.ext}" m2compatible="true"/>
+			<filesystem name="local-maven2" m2compatible="true" >
+				<ivy pattern="${local-maven2-pattern}"/>
+				<artifact pattern="${local-maven2-pattern}"/>
+			</filesystem>
+		</chain>
+	</resolvers>
+</ivysettings>

@@ -285,7 +285,8 @@ public class ResponseMessage extends BaseMessage {
    */
   private Object deserialize() {
     SerializingTranscoder tc = new SerializingTranscoder();
-    CachedData d = new CachedData(this.getItemFlags(), this.getValue(), CachedData.MAX_SIZE);
+    CachedData d = new CachedData(this.getItemFlags(), this.getValue(),
+      CachedData.MAX_SIZE);
     Object rv = null;
     rv = tc.decode(d);
     return rv;

@@ -29,7 +29,7 @@ import net.spy.memcached.ops.SASLMechsOperation;
 class SASLMechsOperationImpl extends OperationImpl implements
     SASLMechsOperation {
 
-  private static final byte CMD = 0x20;
+  private static final int CMD = 0x20;
 
   public SASLMechsOperationImpl(OperationCallback cb) {
     super(CMD, generateOpaque(), cb);
@@ -43,10 +43,5 @@ class SASLMechsOperationImpl extends OperationImpl implements
   @Override
   protected void decodePayload(byte[] pl) {
     getCallback().receivedStatus(new OperationStatus(true, new String(pl)));
-  }
-
-  @Override
-  public String toString() {
-    return "SASL mechs operation";
   }
 }

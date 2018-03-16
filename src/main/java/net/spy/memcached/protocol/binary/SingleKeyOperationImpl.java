@@ -40,7 +40,7 @@ abstract class SingleKeyOperationImpl extends OperationImpl implements
 
   protected final String key;
 
-  protected SingleKeyOperationImpl(byte c, int o, String k,
+  protected SingleKeyOperationImpl(int c, int o, String k,
       OperationCallback cb) {
     super(c, o, cb);
     key = k;
@@ -72,10 +72,5 @@ abstract class SingleKeyOperationImpl extends OperationImpl implements
     assert k.equals(key) : (k + " doesn't match the key " + key
         + " for this operation");
     return vbucket;
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + " Key: " + key;
   }
 }

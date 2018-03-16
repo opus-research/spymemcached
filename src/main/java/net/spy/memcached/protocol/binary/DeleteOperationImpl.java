@@ -29,7 +29,7 @@ import net.spy.memcached.ops.OperationCallback;
 class DeleteOperationImpl extends SingleKeyOperationImpl implements
     DeleteOperation {
 
-  private static final byte CMD = 0x04;
+  private static final int CMD = 0x04;
 
   private final long cas;
 
@@ -45,10 +45,5 @@ class DeleteOperationImpl extends SingleKeyOperationImpl implements
   @Override
   public void initialize() {
     prepareBuffer(key, cas, EMPTY_BYTES);
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + " Cas: " + cas;
   }
 }

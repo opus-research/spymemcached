@@ -220,33 +220,6 @@ public class MemcachedClient extends SpyThread
 	public MemcachedClient(final List<URI> baseList,
 		final String bucketName,
 		final String usr, final String pwd) throws IOException, ConfigurationException {
-		this (baseList, bucketName, usr, pwd, true);
-	}
-
-	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server
-	 * where the username is different than the bucket name.
-	 *
-	 * To connect to the "default" special bucket for a given cluster, use an
-	 * empty string as the password.
-	 *
-	 * If a password has not been assigned to the bucket, it is typically an
-	 * empty string.
-	 *
-	 * @param baseList the URI list of one or more servers from the cluster
-	 * @param bucketName the bucket name in the cluster you wish to use
-	 * @param usr the username for the bucket; this nearly always be the same
-	 *        as the bucket name
-	 * @param pwd the password for the bucket
-	 * @param startIOThread whether the IO thread should be started from this
-	 *        function
-	 * @throws IOException if connections could not be made
-	 * @throws ConfigurationException if the configuration provided by the
-	 *         server has issues or is not compatible
-	 */
-	protected MemcachedClient(final List<URI> baseList, final String bucketName,
-			final String usr, final String pwd, boolean startIOThread)
-			throws IOException, ConfigurationException {
 		for (URI bu : baseList) {
 			if (!bu.isAbsolute()) {
 				throw new IllegalArgumentException("The base URI must be absolute");
@@ -306,9 +279,7 @@ public class MemcachedClient extends SpyThread
 		setName("Memcached IO over " + mconn);
 		setDaemon(cf.isDaemon());
 		this.configurationProvider.subscribe(bucketName, this);
-		if (startIOThread) {
-			start();
-		}
+		start();
 	}
 
 	/**

@@ -38,7 +38,7 @@ import net.spy.memcached.vbucket.ConfigurationException;
 /**
  * A VBucketMemcachedClientTest.
  */
-public class VBucketMembaseClientTest extends TestCase {
+public class VBucketMemcachedClientTest extends TestCase {
   public void testOps() throws Exception {
     MembaseClient mc = null;
     try {
@@ -46,13 +46,13 @@ public class VBucketMembaseClientTest extends TestCase {
       mc = new MembaseClient(Arrays.asList(base), "default", "Administrator",
           "password");
     } catch (IOException ex) {
-      Logger.getLogger(VBucketMembaseClientTest.class.getName()).log(
+      Logger.getLogger(VBucketMemcachedClientTest.class.getName()).log(
           Level.SEVERE, null, ex);
     } catch (ConfigurationException ex) {
-      Logger.getLogger(VBucketMembaseClientTest.class.getName()).log(
+      Logger.getLogger(VBucketMemcachedClientTest.class.getName()).log(
           Level.SEVERE, null, ex);
     } catch (URISyntaxException ex) {
-      Logger.getLogger(VBucketMembaseClientTest.class.getName()).log(
+      Logger.getLogger(VBucketMemcachedClientTest.class.getName()).log(
           Level.SEVERE, null, ex);
     }
 
@@ -69,7 +69,6 @@ public class VBucketMembaseClientTest extends TestCase {
       assert (res.equals(i.toString()));
     }
 
-    assert mc.flush().get().booleanValue();
     mc.shutdown(3, TimeUnit.SECONDS);
   }
 }

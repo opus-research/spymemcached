@@ -2193,7 +2193,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     String baseName = mconn.getName();
     mconn.setName(baseName + " - SHUTTING DOWN");
     boolean rv = true;
-    executorService.shutdown();
     try {
       // Conditionally wait
       if (timeout > 0) {

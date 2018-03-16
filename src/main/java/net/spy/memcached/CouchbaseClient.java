@@ -38,17 +38,19 @@ import java.util.concurrent.TimeUnit;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.protocol.couch.DocsOperation.DocsCallback;
 import net.spy.memcached.protocol.couch.DocsOperationImpl;
 import net.spy.memcached.protocol.couch.ViewFetcherOperation;
 import net.spy.memcached.protocol.couch.ViewFetcherOperationImpl;
 import net.spy.memcached.protocol.couch.ViewsFetcherOperation;
 import net.spy.memcached.protocol.couch.ViewsFetcherOperationImpl;
 import net.spy.memcached.protocol.couch.HttpOperation;
+import net.spy.memcached.protocol.couch.NoDocsOperation.NoDocsCallback;
 import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
 import net.spy.memcached.protocol.couch.Query;
+import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
 import net.spy.memcached.protocol.couch.ReducedOperationImpl;
 import net.spy.memcached.protocol.couch.View;
-import net.spy.memcached.protocol.couch.ViewOperation.ViewCallback;
 import net.spy.memcached.protocol.couch.ViewResponse;
 import net.spy.memcached.protocol.couch.ViewRow;
 import net.spy.memcached.vbucket.config.Bucket;
@@ -85,15 +87,13 @@ public class CouchbaseClient extends MembaseClient
       propsFileExists = false;
     }
     if (!propsFileExists) {
-      MODE_ERROR =
-          "Can't find config.properties. Setting viewmode "
-              + "to development mode";
-      MODE_PREFIX = DEV_PREFIX;
+      MODE_ERROR = "Can't find config.properties. Setting viewmode "
+          + "to production mode";
+      MODE_PREFIX = PROD_PREFIX;
     } else if (viewmode == null) {
-      MODE_ERROR =
-          "viewmode doesn't exist in config.properties. "
-              + "Setting viewmode to development mode";
-      MODE_PREFIX = DEV_PREFIX;
+      MODE_ERROR = "viewmode doesn't exist in config.properties. "
+              + "Setting viewmode to production mode";
+      MODE_PREFIX = PROD_PREFIX;
     } else if (viewmode.equals(MODE_PRODUCTION)) {
       MODE_ERROR = "viewmode set to production mode";
       MODE_PREFIX = PROD_PREFIX;
@@ -101,8 +101,9 @@ public class CouchbaseClient extends MembaseClient
       MODE_ERROR = "viewmode set to development mode";
       MODE_PREFIX = DEV_PREFIX;
     } else {
-      MODE_ERROR = "unknown value \"" + viewmode + "\" for property viewmode";
-      MODE_PREFIX = DEV_PREFIX;
+      MODE_ERROR = "unknown value \"" + viewmode + "\" for property viewmode"
+          + " Setting to production mode";
+      MODE_PREFIX = PROD_PREFIX;
     }
   }
 
@@ -270,7 +271,7 @@ public class CouchbaseClient extends MembaseClient
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-    final HttpOperation op = new DocsOperationImpl(request, new ViewCallback() {
+    final HttpOperation op = new DocsOperationImpl(request, new DocsCallback() {
       private ViewResponse vr = null;
 
       @Override
@@ -326,7 +327,7 @@ public class CouchbaseClient extends MembaseClient
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new NoDocsOperationImpl(request, new ViewCallback() {
+        new NoDocsOperationImpl(request, new NoDocsCallback() {
           private ViewResponse vr = null;
 
           @Override
@@ -370,7 +371,7 @@ public class CouchbaseClient extends MembaseClient
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new ReducedOperationImpl(request, new ViewCallback() {
+        new ReducedOperationImpl(request, new ReducedCallback() {
           private ViewResponse vr = null;
 
           @Override

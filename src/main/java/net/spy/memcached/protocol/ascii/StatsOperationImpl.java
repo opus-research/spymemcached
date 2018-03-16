@@ -23,7 +23,6 @@
 package net.spy.memcached.protocol.ascii;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
@@ -75,6 +74,6 @@ final class StatsOperationImpl extends OperationImpl implements StatsOperation {
 
   @Override
   public String toString() {
-    return "Cmd: " + Arrays.toString(msg);
+    return "Cmd: " + msg;
   }
 }

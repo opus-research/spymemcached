@@ -55,7 +55,9 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   private final BlockingQueue<Operation> readQ;
   private final BlockingQueue<Operation> inputQueue;
   private final long opQueueMaxBlockTime;
-  private AtomicInteger reconnectAttempt = new AtomicInteger(1);
+  // This has been declared volatile so it can be used as an availability
+  // indicator.
+  private volatile int reconnectAttempt = 1;
   private SocketChannel channel;
   private int toWrite = 0;
   protected Operation optimizedOp = null;
@@ -417,7 +419,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    * @see net.spy.memcached.MemcachedNode#isActive()
    */
   public final boolean isActive() {
-    return reconnectAttempt.get() == 0 && getChannel() != null
+    return reconnectAttempt == 0 && getChannel() != null
         && getChannel().isConnected();
   }
 
@@ -427,7 +429,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    * @see net.spy.memcached.MemcachedNode#reconnecting()
    */
   public final void reconnecting() {
-    reconnectAttempt.incrementAndGet();
+    reconnectAttempt++;
     continuousTimeout.set(0);
   }
 
@@ -437,7 +439,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    * @see net.spy.memcached.MemcachedNode#connected()
    */
   public final void connected() {
-    reconnectAttempt.set(0);
+    reconnectAttempt = 0;
     continuousTimeout.set(0);
   }
 
@@ -447,7 +449,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    * @see net.spy.memcached.MemcachedNode#getReconnectCount()
    */
   public final int getReconnectCount() {
-    return reconnectAttempt.get();
+    return reconnectAttempt;
   }
 
   /*

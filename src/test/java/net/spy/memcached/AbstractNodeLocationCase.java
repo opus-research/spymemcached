@@ -23,7 +23,6 @@
 
 package net.spy.memcached;
 
-import java.util.Arrays;
 import java.util.Iterator;
 
 import org.jmock.Mock;
@@ -49,8 +48,8 @@ public abstract class AbstractNodeLocationCase extends MockObjectTestCase {
       } catch (UnsupportedOperationException e) {
         // pass
       } catch (ArrayIndexOutOfBoundsException ex) {
-        throw new RuntimeException("Tried to access nodes["
-          + Arrays.toString(seq) + "[" + pos + "]] erroneously.", ex);
+        throw new RuntimeException("Tried to access nodes[" + seq + "[" + pos
+          + "]] erroneously.", ex);
       }
       pos++;
     }

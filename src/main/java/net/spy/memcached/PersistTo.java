@@ -26,39 +26,24 @@ package net.spy.memcached;
  * PersistTo codes for a Observe operation.
  */
 public enum PersistTo {
-
-  /**
-   * Don't wait for persistence on any nodes.
-   */
-  ZERO(0),
   /**
    * Persist to the Master. ONE implies MASTER.
    */
-  MASTER(1),
+  MASTER,
   /**
    * ONE implies MASTER.
    */
-  ONE(1),
+  ONE,
   /**
    * Persist to at least two nodes including Master.
    */
-  TWO(2),
+  TWO,
   /**
    * Persist to at least three nodes including Master.
    */
-  THREE(3),
+  THREE,
   /**
    * Persist to at least four nodes including Master.
    */
-  FOUR(4);
-
-  private final int value;
-
-  PersistTo(int val) {
-    value = val;
-  }
-
-  public int getValue() {
-    return value;
-  }
+  FOUR
 }

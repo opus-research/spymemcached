@@ -55,7 +55,6 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
   protected OperationFactory ofact = null;
   protected OperationCallback genericCallback;
   protected StoreOperation.Callback storeCallback;
-  protected DeleteOperation.Callback deleteCallback;
   private byte[] testData;
 
   @Override
@@ -83,18 +82,6 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
         fail("Unexpected status:  " + status);
       }
     };
-    deleteCallback = new DeleteOperation.Callback() {
-      public void complete() {
-        fail("Unexpected invocation");
-      }
-
-      public void gotData(long cas) {
-      }
-
-      public void receivedStatus(OperationStatus status) {
-        fail("Unexpected status:  " + status);
-      }
-    };
     testData = new byte[64];
     new Random().nextBytes(testData);
   }
@@ -105,11 +92,11 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
   protected abstract OperationFactory getOperationFactory();
 
   public void testDeleteOperationCloning() {
-    DeleteOperation op = ofact.delete(TEST_KEY, deleteCallback);
+    DeleteOperation op = ofact.delete(TEST_KEY, genericCallback);
 
     DeleteOperation op2 = cloneOne(DeleteOperation.class, op);
     assertEquals(TEST_KEY, op2.getKeys().iterator().next());
-    assertDeleteCallback(op2);
+    assertCallback(op2);
   }
 
   public void testCASOperationCloning() {
@@ -285,10 +272,6 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
 
   protected void assertStoreCallback(Operation op) {
     assertSame(storeCallback, op.getCallback());
-  }
-
-  protected void assertDeleteCallback(Operation op) {
-    assertSame(deleteCallback, op.getCallback());
   }
 
   private void assertBytes(byte[] bytes) {

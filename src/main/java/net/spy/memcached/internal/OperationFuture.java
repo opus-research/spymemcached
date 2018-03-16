@@ -198,26 +198,18 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
 
  /**
    * Get the CAS for this operation.
+   * If this is for an ASCII protocol configured client,
+   * the exception Un
    *
-   * @throws UnsupportedOperationException If this is for an ASCII protocol
-   * configured client.
-   * @return the CAS for this operation or null if unsuccessful.
+   * @return the CAS for this operation or null
+   * if unsuccessful.
    *
    */
   public Long getCas() {
-    if (cas == null) {
-      try {
-        get();
-      } catch (InterruptedException e) {
-        status = new OperationStatus(false, "Interrupted");
-        Thread.currentThread().isInterrupted();
-      } catch (ExecutionException e) {
-        getLogger().warn("Error getting cas of operation", e);
-      }
-    }
-    if (cas == null && status.isSuccess()) {
-      throw new UnsupportedOperationException("This operation doesn't return"
-          + "a cas value.");
+    if (isDone() && getStatus().isSuccess()
+            && (cas == null)) {
+      throw new UnsupportedOperationException("ASCII Protocol"
+              + " does not return a CAS value");
     }
     return cas;
   }

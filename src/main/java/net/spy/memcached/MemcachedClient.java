@@ -1861,13 +1861,9 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Boolean> rv = new OperationFuture<Boolean>(key,
         latch, operationTimeout);
-    DeleteOperation op = opFact.delete(key, new DeleteOperation.Callback() {
+    DeleteOperation op = opFact.delete(key, new OperationCallback() {
       public void receivedStatus(OperationStatus s) {
         rv.set(s.isSuccess(), s);
-      }
-
-      public void gotData(long cas) {
-        rv.setCas(cas);
       }
 
       public void complete() {
@@ -2102,14 +2098,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       if (authDescriptor.authThresholdReached()) {
         this.shutdown();
       }
-      MemcachedNode node = findNode(sa);
-      if (node != null) {
-          authMonitor.authConnection(mconn, opFact, authDescriptor, node);
-      }
-      else {
-          getLogger().warn("Could not find a connection to node \"" + sa + "\""
-            + " to authenticate against.");
-      }
+      authMonitor.authConnection(mconn, opFact, authDescriptor, findNode(sa));
     }
   }
 

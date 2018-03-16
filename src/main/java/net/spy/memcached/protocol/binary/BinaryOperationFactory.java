@@ -67,7 +67,7 @@ import net.spy.memcached.tapmessage.TapOpcode;
 public class BinaryOperationFactory extends BaseOperationFactory {
 
   public DeleteOperation
-  delete(String key, DeleteOperation.Callback operationCallback) {
+  delete(String key, OperationCallback operationCallback) {
     return new DeleteOperationImpl(key, operationCallback);
   }
 
@@ -102,10 +102,6 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 
   public GetsOperation gets(String key, GetsOperation.Callback cb) {
     return new GetsOperationImpl(key, cb);
-  }
-
-  public StatsOperation keyStats(String key, StatsOperation.Callback cb) {
-    return new KeyStatsOperationImpl(key, cb);
   }
 
   public MutatorOperation mutate(Mutator m, String key, long by, long def,

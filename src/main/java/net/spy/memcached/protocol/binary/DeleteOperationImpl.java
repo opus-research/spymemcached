@@ -24,6 +24,7 @@
 package net.spy.memcached.protocol.binary;
 
 import net.spy.memcached.ops.DeleteOperation;
+import net.spy.memcached.ops.OperationCallback;
 
 class DeleteOperationImpl extends SingleKeyOperationImpl implements
     DeleteOperation {
@@ -32,11 +33,11 @@ class DeleteOperationImpl extends SingleKeyOperationImpl implements
 
   private final long cas;
 
-  public DeleteOperationImpl(String k, DeleteOperation.Callback cb) {
+  public DeleteOperationImpl(String k, OperationCallback cb) {
     this(k, 0, cb);
   }
 
-  public DeleteOperationImpl(String k, long c, DeleteOperation.Callback cb) {
+  public DeleteOperationImpl(String k, long c, OperationCallback cb) {
     super(CMD, generateOpaque(), k, cb);
     cas = c;
   }
@@ -44,12 +45,6 @@ class DeleteOperationImpl extends SingleKeyOperationImpl implements
   @Override
   public void initialize() {
     prepareBuffer(key, cas, EMPTY_BYTES);
-  }
-
-  @Override
-  protected void decodePayload(byte[] pl) {
-    super.decodePayload(pl);
-    ((DeleteOperation.Callback) getCallback()).gotData(responseCas);
   }
 
   @Override

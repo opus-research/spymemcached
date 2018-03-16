@@ -373,8 +373,7 @@ public class MemcachedConnection extends SpyThread {
             handleWrites(sk, qa);
           }
         } else {
-          assert !channel.isConnected() : "Could not finish "
-                  + "connect on channel";
+          assert !channel.isConnected() : "connected";
         }
       } else {
         if (sk.isValid() && sk.isReadable()) {
@@ -436,13 +435,7 @@ public class MemcachedConnection extends SpyThread {
     }
     ByteBuffer rbuf = qa.getRbuf();
     final SocketChannel channel = qa.getChannel();
-    if ((channel == null) || (!channel.isConnected())) {
-        getLogger().warn("Channel is not connected for key " + sk
-                + " on node \"" + qa + "\".  Client will attempt to"
-          + " reconnect.");
-        return;
-    }
-    int read = channel.read(rbuf);
+    int read = (channel != null? channel.read(rbuf) : 0);
     if (read < 0) {
       if (currentOp instanceof TapOperation) {
         // If were doing tap then we won't throw an exception
@@ -516,8 +509,6 @@ public class MemcachedConnection extends SpyThread {
         qa.getChannel().socket().close();
       } catch (IOException e) {
         getLogger().warn("IOException trying to close a socket", e);
-        getLogger().fatal("Retry won't be attempted on node \"" + qa + "\". "
-          + "Client is in an unexpected state and should be terminated.");
       }
       if (qa.getSk() != null) {
         qa.getSk().cancel();

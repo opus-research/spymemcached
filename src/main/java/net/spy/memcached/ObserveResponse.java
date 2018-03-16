@@ -77,7 +77,4 @@ public enum ObserveResponse {
     }
   }
 
-  public byte getResponse() {
-    return value;
-  }
 }

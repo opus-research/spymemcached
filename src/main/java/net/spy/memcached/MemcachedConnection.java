@@ -106,8 +106,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		locator=f.createLocator(connections);
 		}
 
-	private List<MemcachedNode> createConnections(final Collection<InetSocketAddress> a)
-		throws IOException {
+	private List<MemcachedNode> createConnections(final Collection<InetSocketAddress> a) throws IOException {
 		List<MemcachedNode> connections=new ArrayList<MemcachedNode>(a.size());
 		for(SocketAddress sa : a) {
 			SocketChannel ch=SocketChannel.open();
@@ -140,14 +139,14 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 
 	public void reconfigure(Bucket bucket) {
 		try {
-			if (!(locator instanceof VBucketNodeLocator)) {
-				return;
+			if (!(this.locator instanceof VBucketNodeLocator)) {
+			    return;
 			}
 
 			// get a new collection of addresses from the received config
 			List<String> servers = bucket.getVbuckets().getServers();
-			HashSet<SocketAddress> newServerAddresses = new HashSet<SocketAddress>();
-			ArrayList<InetSocketAddress> newServers = new ArrayList<InetSocketAddress>();
+			Collection<SocketAddress> newServerAddresses = new HashSet<SocketAddress>();
+			List<InetSocketAddress> newServers = new ArrayList<InetSocketAddress>();
 			for (String server : servers) {
 				int finalColon = server.lastIndexOf(':');
 				if (finalColon < 1) {
@@ -166,10 +165,10 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 			}
 
 			// split current nodes to "odd nodes" and "stay nodes"
-			ArrayList<MemcachedNode> oddNodes = new ArrayList<MemcachedNode>();
-			ArrayList<MemcachedNode> stayNodes = new ArrayList<MemcachedNode>();
-			ArrayList<InetSocketAddress> stayServers = new ArrayList<InetSocketAddress>();
-			for (MemcachedNode current : locator.getAll()) {
+			Collection<MemcachedNode> oddNodes = new ArrayList<MemcachedNode>();
+			Collection<MemcachedNode> stayNodes = new ArrayList<MemcachedNode>();
+			Collection<InetSocketAddress> stayServers = new ArrayList<InetSocketAddress>();
+			for (MemcachedNode current : this.locator.getAll()) {
 				if (newServerAddresses.contains(current.getSocketAddress())) {
 					stayNodes.add(current);
 					stayServers.add((InetSocketAddress) current.getSocketAddress());
@@ -190,7 +189,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 			mergedNodes.addAll(newNodes);
 
 			// call update locator with new nodes list and vbucket config
-			((VBucketNodeLocator) locator).updateLocator(mergedNodes, bucket.getVbuckets());
+			((VBucketNodeLocator) this.locator).updateLocator(mergedNodes, bucket.getVbuckets());
 
 			// schedule shutdown for the oddNodes
 			nodesToShutdown.addAll(oddNodes);
@@ -503,6 +502,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
                     getLogger().debug(
                             "Reschedule read op due to NOT_MY_VBUCKET error: %s ",
                             currentOp);
+                    ((VBucketAware) currentOp).addNotMyVbucketNode(currentOp.getHandlingNode());
                     Operation op=qa.removeCurrentReadOp();
                     assert op == currentOp
                     : "Expected to pop " + currentOp + " got " + op;
@@ -699,13 +699,22 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		assert o.isCancelled() || placeIn != null
 			: "No node found for key " + key;
 		if(placeIn != null) {
-			// add the vbucketIndex to the operation
-			if (locator instanceof VBucketNodeLocator) {
-				int vbucketIndex = ((VBucketNodeLocator) locator).getVBucketIndex(key);
-				if (o instanceof VBucketAware) {
-					((VBucketAware) o).setVBucket(vbucketIndex);
-				}
-			}
+            // add the vbucketIndex to the operation
+            if (locator instanceof VBucketNodeLocator) {
+                VBucketNodeLocator vbucketLocator = (VBucketNodeLocator) locator;
+                int vbucketIndex = vbucketLocator.getVBucketIndex(key);
+                if (o instanceof VBucketAware) {
+                    VBucketAware vbucketAwareOp = (VBucketAware) o;
+                    vbucketAwareOp.setVBucket(vbucketIndex);
+                    if (!vbucketAwareOp.getNotMyVbucketNodes().isEmpty()) {
+                        MemcachedNode alternative = vbucketLocator.
+                                getAlternative(key, vbucketAwareOp.getNotMyVbucketNodes());
+                        if (alternative != null) {
+                            placeIn = alternative;
+                        }
+                    }
+                }
+            }
 			addOperation(placeIn, o);
 		} else {
 			assert o.isCancelled() : "No node found for "

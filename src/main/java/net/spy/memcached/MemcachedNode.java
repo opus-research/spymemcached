@@ -190,4 +190,10 @@ public interface MemcachedNode {
 	 */
 	void setupForAuth();
 
+	/**
+	 * Count 'time out' exceptions to drop connections that fail perpetually
+	 * @param timedOut
+	 */
+	public void setContinuousTimeout(boolean timedOut);
+	public int getContinuousTimeout();
 }

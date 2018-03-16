@@ -1416,7 +1416,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     return rv;
   }
 
-  private long mutate(Mutator m, String key, int by, long def, int exp) {
+  private long mutate(Mutator m, String key, long by, long def, int exp) {
     final AtomicLong rv = new AtomicLong();
     final CountDownLatch latch = new CountDownLatch(1);
     addOp(key, opFact.mutate(m, key, by, def, exp, new OperationCallback() {
@@ -1458,7 +1458,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
-  public long incr(String key, int by) {
+  public long incr(String key, long by) {
     return mutate(Mutator.incr, key, by, 0, -1);
   }
 
@@ -1477,7 +1477,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
-  public long decr(String key, int by) {
+  public long decr(String key, long by) {
     return mutate(Mutator.decr, key, by, 0, -1);
   }
 
@@ -1498,7 +1498,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
-  public long incr(String key, int by, long def, int exp) {
+  public long incr(String key, long by, long def, int exp) {
     return mutateWithDefault(Mutator.incr, key, by, def, exp);
   }
 
@@ -1519,11 +1519,11 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
-  public long decr(String key, int by, long def, int exp) {
+  public long decr(String key, long by, long def, int exp) {
     return mutateWithDefault(Mutator.decr, key, by, def, exp);
   }
 
-  private long mutateWithDefault(Mutator t, String key, int by, long def,
+  private long mutateWithDefault(Mutator t, String key, long by, long def,
       int exp) {
     long rv = mutate(t, key, by, def, exp);
     // The ascii protocol doesn't support defaults, so I added them
@@ -1550,7 +1550,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     return rv;
   }
 
-  private OperationFuture<Long> asyncMutate(Mutator m, String key, int by,
+  private OperationFuture<Long> asyncMutate(Mutator m, String key, long by,
       long def, int exp) {
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Long> rv =
@@ -1578,7 +1578,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
-  public OperationFuture<Long> asyncIncr(String key, int by) {
+  public OperationFuture<Long> asyncIncr(String key, long by) {
     return asyncMutate(Mutator.incr, key, by, 0, -1);
   }
 
@@ -1591,7 +1591,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
-  public OperationFuture<Long> asyncDecr(String key, int by) {
+  public OperationFuture<Long> asyncDecr(String key, long by) {
     return asyncMutate(Mutator.decr, key, by, 0, -1);
   }
 
@@ -1607,7 +1607,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
-  public long incr(String key, int by, long def) {
+  public long incr(String key, long by, long def) {
     return mutateWithDefault(Mutator.incr, key, by, def, 0);
   }
 
@@ -1623,7 +1623,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @throws IllegalStateException in the rare circumstance where queue is too
    *           full to accept any more requests
    */
-  public long decr(String key, int by, long def) {
+  public long decr(String key, long by, long def) {
     return mutateWithDefault(Mutator.decr, key, by, def, 0);
   }
 

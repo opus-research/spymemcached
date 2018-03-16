@@ -37,7 +37,6 @@ import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.ops.TimedOutOperationStatus;
 
 /**
  * Base class for protocol-specific operation implementations.
@@ -49,8 +48,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
    */
   public static final OperationStatus CANCELLED =
       new CancelledOperationStatus();
-  public static final OperationStatus TIMED_OUT=
-      new TimedOutOperationStatus();
   private OperationState state = OperationState.WRITE_QUEUED;
   private ByteBuffer cmd = null;
   private boolean cancelled = false;
@@ -97,7 +94,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
   public final synchronized void cancel() {
     cancelled = true;
     wasCancelled();
-    callback.receivedStatus(CANCELLED);
     callback.complete();
   }
 
@@ -169,8 +165,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
     default:
       assert false;
     }
-    callback.receivedStatus(new OperationStatus(false,
-        exception.getMessage()));
     transitionState(OperationState.COMPLETE);
     throw exception;
   }
@@ -190,7 +184,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
   @Override
   public synchronized void timeOut() {
     timedout = true;
-    callback.receivedStatus(TIMED_OUT);
     callback.complete();
   }
 
@@ -206,7 +199,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
     if (elapsed - creationTime > ttlNanos) {
       timedOutUnsent = true;
       timedout = true;
-      callback.receivedStatus(TIMED_OUT);
       callback.complete();
     } else {
       // timedout would be false, but we cannot allow you to untimeout an

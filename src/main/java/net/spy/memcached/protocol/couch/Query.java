@@ -117,14 +117,10 @@ public class Query {
 	}
 
 	private String getArg(String key, Object value) {
-		if (value instanceof Boolean) {
-			return key + "=" + ((Boolean) value).toString();
-		} else if (value instanceof Integer) {
-			return key + "=" + ((Integer) value).toString();
-		} else if (value instanceof Stale) {
-			return key + "=" + ((Stale) value).toString();
-		} else {
+		if (key instanceof String) {
 			return key + "=\"" + value + "\"";
+		} else {
+			return key + "=" + String.valueOf(value);
 		}
 	}
 }

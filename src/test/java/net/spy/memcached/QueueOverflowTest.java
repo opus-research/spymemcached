@@ -26,6 +26,7 @@ package net.spy.memcached;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
@@ -140,15 +141,15 @@ public class QueueOverflowTest extends ClientBaseCase {
     } catch (IllegalStateException e) {
       // expected
     }
-    Thread.sleep(50);
-    for (Future<Object> f : c) {
-      try {
-          f.get(1, TimeUnit.SECONDS);
-      } catch (TimeoutException e) {
-        // OK, just want to make sure the client doesn't crash
-      } catch (ExecutionException e) {
-        // OK, at least we got one back.
+    try {
+      Thread.sleep(50);
+      for (Future<Object> f : c) {
+        assertTrue(Arrays.equals(b, (byte[]) f.get(5, TimeUnit.SECONDS)));
       }
+    } catch (TimeoutException e) {
+      // OK, just want to make sure the client doesn't crash
+    } catch (ExecutionException e) {
+      // OK, at least we got one back.
     }
     Thread.sleep(500);
     assertTrue(client.set("kx", 0, "woo").get(5, TimeUnit.SECONDS));

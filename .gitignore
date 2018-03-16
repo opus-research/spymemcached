@@ -7,5 +7,6 @@ reports/
 lib/ivy*
 build/
 junit*
+bin/
 *.iml
 *~

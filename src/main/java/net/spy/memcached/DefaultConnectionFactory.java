@@ -122,7 +122,7 @@ public class DefaultConnectionFactory extends SpyObject
 	public DefaultConnectionFactory() {
 		this(DEFAULT_OP_QUEUE_LEN, DEFAULT_READ_BUFFER_SIZE);
 	}
-	
+
 	public MemcachedNode createMemcachedNode(SocketAddress sa,
 			SocketChannel c, int bufSize) {
 

@@ -36,7 +36,6 @@ import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.ops.StatusCode;
 
 /**
  * Managed future for operations.
@@ -217,7 +216,7 @@ public class OperationFuture<T>
       try {
         get();
       } catch (InterruptedException e) {
-        status = new OperationStatus(false, "Interrupted", StatusCode.INTERRUPTED);
+        status = new OperationStatus(false, "Interrupted");
         Thread.currentThread().isInterrupted();
       } catch (ExecutionException e) {
         getLogger().warn("Error getting cas of operation", e);
@@ -242,7 +241,7 @@ public class OperationFuture<T>
       try {
         get();
       } catch (InterruptedException e) {
-        status = new OperationStatus(false, "Interrupted", StatusCode.INTERRUPTED);
+        status = new OperationStatus(false, "Interrupted");
         Thread.currentThread().isInterrupted();
       } catch (ExecutionException e) {
         getLogger().warn("Error getting status of operation", e);

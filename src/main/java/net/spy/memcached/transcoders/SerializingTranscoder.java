@@ -139,12 +139,12 @@ public class SerializingTranscoder extends BaseSerializingTranscoder
 		if(b.length > compressionThreshold) {
 			byte[] compressed=compress(b);
 			if(compressed.length < b.length) {
-				getLogger().debug("Compressed %s from %d to %d",
+				getLogger().info("Compressed %s from %d to %d",
 					o.getClass().getName(), b.length, compressed.length);
 				b=compressed;
 				flags |= COMPRESSED;
 			} else {
-				getLogger().warn(
+				getLogger().info(
 					"Compression increased the size of %s from %d to %d",
 					o.getClass().getName(), b.length, compressed.length);
 			}

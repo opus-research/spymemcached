@@ -43,12 +43,14 @@ import net.spy.memcached.protocol.couch.Query;
 import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
 import net.spy.memcached.protocol.couch.ReducedOperationImpl;
 import net.spy.memcached.protocol.couch.RowError;
+import net.spy.memcached.protocol.couch.RowNoDocs;
+import net.spy.memcached.protocol.couch.RowReduced;
+import net.spy.memcached.protocol.couch.RowWithDocs;
 import net.spy.memcached.protocol.couch.Stale;
 import net.spy.memcached.protocol.couch.View;
 import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
 import net.spy.memcached.protocol.couch.ViewResponseReduced;
 import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
-import net.spy.memcached.protocol.couch.ViewRow;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
@@ -181,11 +183,11 @@ public class CouchbaseClientTest {
     ViewResponseWithDocs response = future.get();
     assert future.getStatus().isSuccess() : future.getStatus();
 
-    Iterator<ViewRow> itr = response.iterator();
+    Iterator<RowWithDocs> itr = response.iterator();
     while (itr.hasNext()) {
-      ViewRow row = itr.next();
+      RowWithDocs row = itr.next();
       if (ITEMS.containsKey(row.getId())) {
-        assert ITEMS.get(row.getId()).equals(row.getDocument());
+        assert ITEMS.get(row.getId()).equals(row.getDoc());
       }
     }
     assert ITEMS.size() == response.size() : future.getStatus().getMessage();
@@ -200,9 +202,9 @@ public class CouchbaseClientTest {
     assert future.getStatus().isSuccess() : future.getStatus();
     ViewResponseNoDocs response = future.get();
 
-    Iterator<ViewRow> itr = response.iterator();
+    Iterator<RowNoDocs> itr = response.iterator();
     while (itr.hasNext()) {
-      ViewRow row = itr.next();
+      RowNoDocs row = itr.next();
       if (!ITEMS.containsKey(row.getId())) {
         assert false : ("Got an item that I shouldn't have gotten.");
       }
@@ -218,9 +220,9 @@ public class CouchbaseClientTest {
         client.asyncQueryAndReduce(view, query);
     ViewResponseReduced reduce = future.get();
 
-    Iterator<ViewRow> itr = reduce.iterator();
+    Iterator<RowReduced> itr = reduce.iterator();
     while (itr.hasNext()) {
-      ViewRow row = itr.next();
+      RowReduced row = itr.next();
       assert row.getKey() == null;
       assert Integer.valueOf(row.getValue()) == ITEMS.size()
           : future.getStatus();

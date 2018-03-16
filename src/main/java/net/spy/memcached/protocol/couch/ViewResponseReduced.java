@@ -29,12 +29,12 @@ import java.util.Iterator;
  * Holds the response of a view query where the map and reduce
  * function were called.
  */
-public class ViewResponseReduced implements ViewResponse {
+public class ViewResponseReduced implements ViewResponse<RowReduced> {
 
-  private final Collection<ViewRow> rows;
+  private final Collection<RowReduced> rows;
   private final Collection<RowError> errors;
 
-  public ViewResponseReduced(final Collection<ViewRow> r,
+  public ViewResponseReduced(final Collection<RowReduced> r,
       final Collection<RowError> e) {
     rows = r;
     errors = e;
@@ -49,14 +49,14 @@ public class ViewResponseReduced implements ViewResponse {
   }
 
   @Override
-  public Iterator<ViewRow> iterator() {
+  public Iterator<RowReduced> iterator() {
     return rows.iterator();
   }
 
   @Override
   public String toString() {
     StringBuilder s = new StringBuilder();
-    for (ViewRow r : rows) {
+    for (RowReduced r : rows) {
       s.append(r.getKey() + " : " + r.getValue() + "\n");
     }
     return s.toString();

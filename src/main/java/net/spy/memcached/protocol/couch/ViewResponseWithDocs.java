@@ -35,20 +35,20 @@ import java.util.TreeSet;
  * Holds the response of a view query where the map function was
  * called and the documents are included.
  */
-public class ViewResponseWithDocs implements ViewResponse,
+public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
     Map<String, Object> {
 
   private final Map<String, Object> map;
-  private final Collection<ViewRow> rows;
+  private final Collection<RowWithDocs> rows;
   private final Collection<RowError> errors;
 
-  public ViewResponseWithDocs(final Collection<ViewRow> r,
+  public ViewResponseWithDocs(final Collection<RowWithDocs> r,
       final Collection<RowError> e) {
     map = new HashMap<String, Object>();
     rows = r;
     errors = e;
-    for (ViewRow row : rows) {
-      map.put(row.getId(), row.getDocument());
+    for (RowWithDocs row : rows) {
+      map.put(row.getId(), row.getDoc());
     }
   }
 
@@ -61,16 +61,16 @@ public class ViewResponseWithDocs implements ViewResponse,
   }
 
   @Override
-  public Iterator<ViewRow> iterator() {
+  public Iterator<RowWithDocs> iterator() {
     return rows.iterator();
   }
 
   @Override
   public String toString() {
     StringBuilder s = new StringBuilder();
-    for (ViewRow r : rows) {
+    for (RowWithDocs r : rows) {
       s.append(r.getId() + " : " + r.getKey() + " : " + r.getValue() + " : "
-          + r.getDocument() + "\n");
+          + r.getDoc() + "\n");
     }
     return s.toString();
   }
@@ -93,7 +93,7 @@ public class ViewResponseWithDocs implements ViewResponse,
   @Override
   public Set<Entry<String, Object>> entrySet() {
     Set<Entry<String, Object>> set = new HashSet<Entry<String, Object>>();
-    for (ViewRow r : rows) {
+    for (RowWithDocs r : rows) {
       set.add(new ViewResponseEntry<String, Object>(r.getId(),
           map.get(r.getId())));
     }
@@ -113,7 +113,7 @@ public class ViewResponseWithDocs implements ViewResponse,
   @Override
   public Set<String> keySet() {
     Set<String> set = new TreeSet<String>();
-    for (ViewRow r : rows) {
+    for (RowWithDocs r : rows) {
       set.add(r.getId());
     }
     return null;
@@ -144,8 +144,8 @@ public class ViewResponseWithDocs implements ViewResponse,
   @Override
   public Collection<Object> values() {
     Collection<Object> values = new LinkedList<Object>();
-    for (ViewRow r : rows) {
-      values.add(r.getDocument());
+    for (RowWithDocs r : rows) {
+      values.add(r.getDoc());
     }
     return values;
   }

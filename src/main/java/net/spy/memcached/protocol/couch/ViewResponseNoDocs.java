@@ -29,12 +29,12 @@ import java.util.Iterator;
  * Holds the response of a view query where the map function was
  * called and the documents are excluded.
  */
-public class ViewResponseNoDocs implements ViewResponse {
+public class ViewResponseNoDocs implements ViewResponse<RowNoDocs> {
 
-  private final Collection<ViewRow> rows;
+  private final Collection<RowNoDocs> rows;
   private final Collection<RowError> errors;
 
-  public ViewResponseNoDocs(final Collection<ViewRow> r,
+  public ViewResponseNoDocs(final Collection<RowNoDocs> r,
       final Collection<RowError> e) {
     rows = r;
     errors = e;
@@ -49,14 +49,14 @@ public class ViewResponseNoDocs implements ViewResponse {
   }
 
   @Override
-  public Iterator<ViewRow> iterator() {
+  public Iterator<RowNoDocs> iterator() {
     return rows.iterator();
   }
 
   @Override
   public String toString() {
     StringBuilder s = new StringBuilder();
-    for (ViewRow r : rows) {
+    for (RowNoDocs r : rows) {
       s.append(r.getId() + " : " + r.getKey() + " : " + r.getValue() + "\n");
     }
     return s.toString();

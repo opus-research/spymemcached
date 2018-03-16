@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2011 Couchbase, Inc.
+ * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,30 +20,49 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.ops;
+package net.spy.memcached.tapmessage;
 
 import net.spy.memcached.MemcachedNode;
-import net.spy.memcached.tapmessage.ResponseMessage;
-import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.TapConnectionProvider;
+import net.spy.memcached.ops.OperationCallback;
 
 /**
- * Tap operation.
+ * An acknowledgment message used to tell the server we have received a
+ * series of messages.
  */
-public interface TapOperation extends Operation {
+public class TapAck {
+  private final TapConnectionProvider conn;
+  private final TapOpcode opcode;
+  private final int opaque;
+  private final MemcachedNode node;
+  private final OperationCallback cb;
 
-  /**
-   * Operation callback for the tap dump request.
-   */
-  interface Callback extends OperationCallback {
-    /**
-     * Callback for each result from a get.
-     *
-     * @param message the response message sent from the server
-     */
-    void gotData(ResponseMessage message);
-
-    void gotAck(MemcachedNode node, TapOpcode opcode, int opaque);
+  public TapAck(TapConnectionProvider conn, MemcachedNode node,
+      TapOpcode opcode, int opaque, OperationCallback cb) {
+    this.conn = conn;
+    this.node = node;
+    this.opcode = opcode;
+    this.opaque = opaque;
+    this.cb = cb;
   }
 
-  void streamClosed(OperationState state);
+  public TapConnectionProvider getConn() {
+    return conn;
+  }
+
+  public MemcachedNode getNode() {
+    return node;
+  }
+
+  public TapOpcode getOpcode() {
+    return opcode;
+  }
+
+  public int getOpaque() {
+    return opaque;
+  }
+
+  public OperationCallback getCallback() {
+    return cb;
+  }
 }

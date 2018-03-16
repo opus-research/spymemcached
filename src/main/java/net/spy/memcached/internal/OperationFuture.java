@@ -8,7 +8,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import net.spy.memcached.MemcachedConnection;
-import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
@@ -20,7 +19,7 @@ import net.spy.memcached.ops.OperationStatus;
  *
  * @param <T> Type of object returned from this future.
  */
-public class OperationFuture<T> extends SpyObject implements Future<T> {
+public class OperationFuture<T> implements Future<T> {
 
 	private final CountDownLatch latch;
 	private final AtomicReference<T> objRef;
@@ -103,7 +102,7 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
 				status = new OperationStatus(false, "Interrupted");
 				Thread.currentThread().isInterrupted();
 			} catch (ExecutionException e) {
-			    getLogger().warn("Error getting status of operation", e);
+
 			}
 		}
 		return status;

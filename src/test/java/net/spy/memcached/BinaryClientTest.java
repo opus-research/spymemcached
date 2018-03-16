@@ -2,8 +2,7 @@ package net.spy.memcached;
 
 
 /**
- * This test assumes a binary server is running on the host specified
- * on the command line or localhost:11211 by default.
+ * This test assumes a binary server is running on localhost:11211.
  */
 public class BinaryClientTest extends ProtocolBaseCase {
 
@@ -23,7 +22,7 @@ public class BinaryClientTest extends ProtocolBaseCase {
 
 	@Override
 	protected String getExpectedVersionSource() {
-		return "/" + TestConfig.IPV4_ADDR + ":11211";
+		return "/127.0.0.1:11211";
 	}
 
 	@Override

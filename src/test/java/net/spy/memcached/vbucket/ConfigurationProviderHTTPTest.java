@@ -1,7 +1,6 @@
 package net.spy.memcached.vbucket;
 
 import junit.framework.TestCase;
-import net.spy.memcached.TestConfig;
 import net.spy.memcached.vbucket.config.Bucket;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public class ConfigurationProviderHTTPTest extends TestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        List<URI> baseList = Arrays.asList(new URI("http://" + TestConfig.IPV4_ADDR + ":8091/pools"));
+        List<URI> baseList = Arrays.asList(new URI("http://localhost:8091/pools"));
         configProvider = new ConfigurationProviderHTTP(baseList, restUsr, restPwd);
         assertNotNull(configProvider);
     }

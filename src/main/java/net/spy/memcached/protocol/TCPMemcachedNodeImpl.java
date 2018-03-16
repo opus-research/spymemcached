@@ -199,18 +199,13 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           return;
         } else {
           o.writing();
+          if (!(o instanceof TapAckOperationImpl)) {
+            readQ.add(o);
+          }
         }
       }
       while (o != null && toWrite < getWbuf().capacity()) {
         assert o.getState() == OperationState.WRITING;
-        // This isn't the most optimal way to do this, but it hints
-        // at a larger design problem that may need to be taken care
-        // if in the bowels of the client.
-        // In practice, readQ should be small, however.
-        // Also don't add Tap Acks to the readQ since there won't be a response
-        if (!readQ.contains(o) && !(o instanceof TapAckOperationImpl)) {
-          readQ.add(o);
-        }
 
         ByteBuffer obuf = o.getBuffer();
         assert obuf != null : "Didn't get a write buffer from " + o;
@@ -231,6 +226,9 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           o = getCurrentWriteOp();
           if (o != null) {
             o.writing();
+            if (!(o instanceof TapAckOperationImpl)) {
+              readQ.add(o);
+            }
           }
         }
         toWrite += bytesToCopy;

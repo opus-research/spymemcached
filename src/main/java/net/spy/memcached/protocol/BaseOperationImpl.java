@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2012 Couchbase, Inc.
+ * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,7 @@ import java.util.HashSet;
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.CancelledOperationStatus;
+import net.spy.memcached.ops.ErrorCode;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationErrorType;
@@ -51,7 +52,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
       new CancelledOperationStatus();
   public static final OperationStatus TIMED_OUT=
       new TimedOutOperationStatus();
-  private volatile OperationState state = OperationState.WRITE_QUEUED;
+  private OperationState state = OperationState.WRITE_QUEUED;
   private ByteBuffer cmd = null;
   private boolean cancelled = false;
   private OperationException exception = null;
@@ -170,7 +171,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
       assert false;
     }
     callback.receivedStatus(new OperationStatus(false,
-        exception.getMessage()));
+        exception.getMessage(), ErrorCode.EXCEPTION, exception));
     transitionState(OperationState.COMPLETE);
     throw exception;
   }

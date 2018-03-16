@@ -69,20 +69,21 @@ public class MemcachedClientConstructorTest extends TestCase {
         e.getMessage());
   }
 
-  public void testEmptyConstructorWithConnect() throws Exception {
-    client = new MemcachedClient();
-    client.connect(new InetSocketAddress(
-            InetAddress.getByName(TestConfig.IPV4_ADDR),
-                TestConfig.PORT_NUMBER));
-    assertWorking();
-  }
-
   public void testVarargConstructor() throws Exception {
     client =
         new MemcachedClient(new InetSocketAddress(
             InetAddress.getByName(TestConfig.IPV4_ADDR),
                 TestConfig.PORT_NUMBER));
     assertWorking();
+  }
+
+  public void testEmptyVarargConstructor() throws Exception {
+    try {
+      client = new MemcachedClient();
+      fail("Expected illegal arg exception, got " + client);
+    } catch (IllegalArgumentException e) {
+      assertArgRequired(e);
+    }
   }
 
   public void testNulListConstructor() throws Exception {
@@ -156,6 +157,22 @@ public class MemcachedClientConstructorTest extends TestCase {
               + TestConfig.PORT_NUMBER));
     } catch (AssertionError e) {
       assertEquals("Connection factory failed to make op factory",
+          e.getMessage());
+    }
+  }
+
+  public void testConnFactoryWithoutConns() throws Exception {
+    try {
+      client = new MemcachedClient(new DefaultConnectionFactory() {
+        @Override
+        public MemcachedConnection createConnection(
+            List<InetSocketAddress> addrs) throws IOException {
+          return null;
+        }
+      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":"
+              + TestConfig.PORT_NUMBER));
+    } catch (AssertionError e) {
+      assertEquals("Connection factory failed to make a connection",
           e.getMessage());
     }
   }

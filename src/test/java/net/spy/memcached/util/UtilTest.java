@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
+ * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,27 +20,33 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.ops;
+package net.spy.memcached.util;
 
-import net.spy.memcached.CASResponse;
+import java.util.Collection;
+import java.util.LinkedList;
+
+import junit.framework.TestCase;
+
+import org.junit.Test;
 
 /**
- * OperationStatus subclass for indicating CAS status.
+ * Test various classes in the net.spy.memcached.util package.
  */
-public class CASOperationStatus extends OperationStatus {
-
-  private final CASResponse casResponse;
-
-  public CASOperationStatus(boolean success, String msg, CASResponse cres,
-    StatusCode code) {
-    super(success, msg, code);
-    casResponse = cres;
+public class UtilTest extends TestCase {
+  public void setup() {
+    // Empty
   }
 
-  /**
-   * Get the CAS response indicated here.
-   */
-  public CASResponse getCASResponse() {
-    return casResponse;
+  public void teardown() {
+    // Empty
+  }
+
+  @Test
+  public void testJoin() {
+    Collection<String> keys = new LinkedList<String>();
+    keys.add("key1");
+    keys.add("key2");
+    keys.add("key3");
+    assertEquals("key1,key2,key3", StringUtils.join(keys, ","));
   }
 }

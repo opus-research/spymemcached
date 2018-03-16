@@ -309,7 +309,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
             public void complete() {
               latch.countDown();
-              rv.signalComplete();
             }
           });
     rv.setOperation(op);
@@ -336,7 +335,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
           public void complete() {
             latch.countDown();
-            rv.signalComplete();
           }
         });
     rv.setOperation(op);
@@ -384,7 +382,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
       public void complete() {
         latch.countDown();
-        rv.signalComplete();
       }
     });
     rv.setOperation(op);
@@ -616,7 +613,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
             }
             public void complete() {
               latch.countDown();
-              rv.signalComplete();
             }
           });
     rv.setOperation(op);
@@ -991,7 +987,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
       public void complete() {
         latch.countDown();
-        rv.signalComplete();
       }
     });
     rv.setOperation(op);
@@ -1045,7 +1040,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
       public void complete() {
         latch.countDown();
-        rv.signalComplete();
       }
     });
     rv.setOperation(op);
@@ -1274,9 +1268,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
       public void complete() {
         latch.countDown();
-        if (latch.getCount() == 0) {
-          rv.signalComplete();
-        }
       }
     };
 
@@ -1441,7 +1432,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
           public void complete() {
             latch.countDown();
-            rv.signalComplete();
           }
 
           public void gotData(String k, int flags, long cas, byte[] data) {
@@ -1885,7 +1875,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
           public void complete() {
             latch.countDown();
-            rv.signalComplete();
           }
         });
     mconn.enqueueOperation(key, op);
@@ -2070,7 +2059,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
       public void complete() {
         latch.countDown();
-        rv.signalComplete();
       }
     };
 
@@ -2118,13 +2106,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
     return new OperationFuture<Boolean>(null, blatch, flushResult,
         operationTimeout, executorService) {
-
-      @Override
-      public void set(Boolean o, OperationStatus s) {
-        super.set(o, s);
-        notifyListeners();
-      }
-
       @Override
       public boolean cancel(boolean ign) {
         boolean rv = false;
@@ -2132,7 +2113,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
           op.cancel();
           rv |= op.getState() == OperationState.WRITE_QUEUED;
         }
-        notifyListeners();
         return rv;
       }
 

@@ -61,7 +61,6 @@ public class ConnectionFactoryBuilder {
   protected boolean isDaemon = false;
   protected boolean shouldOptimize = false;
   protected boolean useNagle = false;
-  protected boolean keepAlive = false;
   protected long maxReconnectDelay =
       DefaultConnectionFactory.DEFAULT_MAX_RECONNECT_DELAY;
 
@@ -220,11 +219,6 @@ public class ConnectionFactoryBuilder {
    */
   public ConnectionFactoryBuilder setUseNagleAlgorithm(boolean to) {
     useNagle = to;
-    return this;
-  }
-
-  public ConnectionFactoryBuilder setKeepAlive(boolean on) {
-    keepAlive = on;
     return this;
   }
 
@@ -404,10 +398,6 @@ public class ConnectionFactoryBuilder {
       @Override
       public boolean shouldOptimize() {
         return shouldOptimize;
-      }
-
-      public boolean getKeepAlive() {
-        return keepAlive;
       }
 
       @Override

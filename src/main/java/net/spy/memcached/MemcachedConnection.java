@@ -23,27 +23,6 @@
 
 package net.spy.memcached;
 
-import net.spy.memcached.compat.SpyThread;
-import net.spy.memcached.compat.log.Logger;
-import net.spy.memcached.compat.log.LoggerFactory;
-import net.spy.memcached.internal.OperationFuture;
-import net.spy.memcached.metrics.MetricCollector;
-import net.spy.memcached.metrics.MetricType;
-import net.spy.memcached.ops.GetOperation;
-import net.spy.memcached.ops.KeyedOperation;
-import net.spy.memcached.ops.NoopOperation;
-import net.spy.memcached.ops.Operation;
-import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.OperationException;
-import net.spy.memcached.ops.OperationState;
-import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.ops.TapOperation;
-import net.spy.memcached.ops.VBucketAware;
-import net.spy.memcached.protocol.binary.BinaryOperationFactory;
-import net.spy.memcached.protocol.binary.MultiGetOperationImpl;
-import net.spy.memcached.protocol.binary.TapAckOperationImpl;
-import net.spy.memcached.util.StringUtils;
-
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
@@ -66,12 +45,34 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import net.spy.memcached.compat.SpyThread;
+import net.spy.memcached.compat.log.Logger;
+import net.spy.memcached.compat.log.LoggerFactory;
+import net.spy.memcached.internal.OperationFuture;
+import net.spy.memcached.metrics.MetricCollector;
+import net.spy.memcached.metrics.MetricType;
+import net.spy.memcached.ops.GetOperation;
+import net.spy.memcached.ops.KeyedOperation;
+import net.spy.memcached.ops.NoopOperation;
+import net.spy.memcached.ops.Operation;
+import net.spy.memcached.ops.OperationCallback;
+import net.spy.memcached.ops.OperationException;
+import net.spy.memcached.ops.OperationState;
+import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.TapOperation;
+import net.spy.memcached.ops.VBucketAware;
+import net.spy.memcached.protocol.binary.BinaryOperationFactory;
+import net.spy.memcached.protocol.binary.MultiGetOperationImpl;
+import net.spy.memcached.protocol.binary.TapAckOperationImpl;
+import net.spy.memcached.util.StringUtils;
 
 /**
  * Main class for handling connections to a memcached cluster.
@@ -404,21 +405,19 @@ public class MemcachedConnection extends SpyThread {
     getLogger().debug("Selecting with delay of %sms", delay);
     assert selectorsMakeSense() : "Selectors don't make sense.";
     int selected = selector.select(delay);
-    //Set<SelectionKey> selectedKeys = selector.selectedKeys();
+    Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
-    if (selector.selectedKeys().isEmpty() && !shutDown) {
+    if (selectedKeys.isEmpty() && !shutDown) {
       handleEmptySelects();
     } else {
       getLogger().debug("Selected %d, selected %d keys", selected,
-        selector.selectedKeys().size());
+        selectedKeys.size());
       emptySelects = 0;
 
-      Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-      while(iterator.hasNext()) {
-        SelectionKey sk = iterator.next();
+      for (SelectionKey sk : selectedKeys) {
         handleIO(sk);
-        iterator.remove();
       }
+      selectedKeys.clear();
     }
 
     handleOperationalTasks();

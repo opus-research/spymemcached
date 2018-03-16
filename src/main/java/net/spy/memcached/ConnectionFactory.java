@@ -137,14 +137,4 @@ public interface ConnectionFactory {
 	 * Maximum number of timeout exception for shutdown connection
 	 */
 	int getTimeoutExceptionThreshold();
-
-	/**
-	 * Set the maximum number of front cache elements.
-	 */
-	int getMaxFrontCacheElements();
-
-	/**
-	 * Set front cache's expire time.
-	 */
-	int getFrontCacheExpireTime();
 }

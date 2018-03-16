@@ -71,9 +71,4 @@ final class StatsOperationImpl extends OperationImpl implements StatsOperation {
   protected void wasCancelled() {
     cb.receivedStatus(CANCELLED);
   }
-
-  @Override
-  public String toString() {
-    return "Cmd: " + msg;
-  }
 }

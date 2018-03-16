@@ -11,7 +11,6 @@ import java.util.TreeMap;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.util.DefaultKetamaNodeLocatorConfiguration;
 import net.spy.memcached.util.KetamaNodeLocatorConfiguration;
-import net.spy.memcached.vbucket.config.Config;
 
 /**
  * This is an implementation of the Ketama consistent hash strategy from
@@ -120,11 +119,6 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 		}
 
 		return new KetamaNodeLocator(smn, an, hashAlg, config);
-	}
-
-	@Override
-	public void updateLocator(List<MemcachedNode> nodes, Config conf) {
-		setKetamaNodes(nodes);
 	}
 
     /**

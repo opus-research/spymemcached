@@ -26,7 +26,7 @@ import net.spy.memcached.tapmessage.ResponseMessage;
 
 public class TapClient {
 	private boolean vBucketAware;
-	private BlockingQueue<Object> rqueue;
+	private BlockingQueue<ResponseMessage> rqueue;
 	private HashMap<Operation, TapConnectionProvider> omap;
 	private List<InetSocketAddress> addrs;
 	private List<URI> baseList;
@@ -60,7 +60,7 @@ public class TapClient {
 	 * @param addrs a list of addresses containing each node in the cluster.
 	 */
 	public TapClient(List<InetSocketAddress> addrs) {
-		this.rqueue = new LinkedBlockingQueue<Object>();
+		this.rqueue = new LinkedBlockingQueue<ResponseMessage>();
 		this.omap = new HashMap<Operation, TapConnectionProvider>();
 		this.vBucketAware = false;
 		this.addrs = addrs;
@@ -89,7 +89,7 @@ public class TapClient {
 				throw new IllegalArgumentException("The base URI must be absolute");
 			}
 		}
-		this.rqueue = new LinkedBlockingQueue<Object>();
+		this.rqueue = new LinkedBlockingQueue<ResponseMessage>();
 		this.omap = new HashMap<Operation, TapConnectionProvider>();
 		this.vBucketAware = true;
 		this.addrs = null;
@@ -120,19 +120,10 @@ public class TapClient {
 	 */
 	public ResponseMessage getNextMessage(long time, TimeUnit timeunit) {
 		try {
-			Object m = rqueue.poll(time, timeunit);
-			if (m == null) {
-				return null;
-			} else if (m instanceof ResponseMessage) {
-				return (ResponseMessage)m;
-			} else if (m instanceof TapAck) {
-				TapAck ack = (TapAck)m;
-				tapAck(ack.getConn(), ack.getOpcode(), ack.getOpaque(), ack.getCallback());
-				return null;
-			} else {
-				throw new RuntimeException("Unexpected tap message type");
-			}
+			messagesRead++;
+			return rqueue.poll(time, timeunit);
 		} catch (InterruptedException e) {
+			messagesRead--;
 			shutdown();
 			return null;
 		}
@@ -200,7 +191,7 @@ public class TapClient {
 				messagesRead++;
 			}
 			public void gotAck(TapOpcode opcode, int opaque) {
-				rqueue.add(new TapAck(conn, opcode, opaque, this));
+				tapAck(conn, opcode, opaque, this);
 			}
 			public void complete() {
 				latch.countDown();
@@ -267,7 +258,7 @@ public class TapClient {
 				messagesRead++;
 			}
 			public void gotAck(TapOpcode opcode, int opaque) {
-				rqueue.add(new TapAck(conn, opcode, opaque, this));
+				tapAck(conn, opcode, opaque, this);
 			}
 			public void complete() {
 				latch.countDown();
@@ -297,36 +288,6 @@ public class TapClient {
 		return op;
 	}
 
-	public Operation tapDump(final String id) throws IOException, ConfigurationException {
-		final TapConnectionProvider conn;
-		if (vBucketAware) {
-			conn = new TapConnectionProvider(baseList, bucketName, usr, pwd);
-		} else {
-			conn = new TapConnectionProvider(addrs);
-		}
-
-		final CountDownLatch latch=new CountDownLatch(1);
-		final Operation op=conn.opFact.tapDump(id, new TapOperation.Callback() {
-
-			public void receivedStatus(OperationStatus status) {
-			}
-			public void gotData(ResponseMessage tapMessage) {
-				rqueue.add(tapMessage);
-				messagesRead++;
-			}
-			public void gotAck(TapOpcode opcode, int opaque) {
-				rqueue.add(new TapAck(conn, opcode, opaque, this));
-			}
-			public void complete() {
-				latch.countDown();
-			}});
-		synchronized(omap) {
-			omap.put(op, conn);
-		}
-		conn.addOp(op);
-		return op;
-	}
-
 	private void tapAck(TapConnectionProvider conn, TapOpcode opcode, int opaque,
 			OperationCallback cb) {
 		final Operation op=conn.opFact.tapAck(opcode, opaque, cb);
@@ -353,35 +314,5 @@ public class TapClient {
 	 */
 	public long getMessagesRead() {
 		return messagesRead;
-	}
-}
-
-class TapAck {
-	private TapConnectionProvider conn;
-	private TapOpcode opcode;
-	private int opaque;
-	private OperationCallback cb;
-
-	public TapAck(TapConnectionProvider conn, TapOpcode opcode, int opaque, OperationCallback cb) {
-		this.conn = conn;
-		this.opcode = opcode;
-		this.opaque = opaque;
-		this.cb = cb;
-	}
-
-	public TapConnectionProvider getConn() {
-		return conn;
-	}
-
-	public TapOpcode getOpcode() {
-		return opcode;
-	}
-
-	public int getOpaque() {
-		return opaque;
-	}
-
-	public OperationCallback getCallback() {
-		return cb;
 	}
 }

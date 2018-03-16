@@ -1,12 +1,14 @@
 package net.spy.memcached.vbucket.config;
 
+import java.io.File;
+
 import org.codehaus.jettison.json.JSONObject;
 
 public interface ConfigFactory {
 
-    Config createConfigFromFile(String filename);
+    Config create(File file);
 
-    Config createConfigFromString(String data);
+    Config create(String data);
 
-    Config createConfigFromJSON(JSONObject jsonObject);
+    Config create(JSONObject jsonObject);
 }

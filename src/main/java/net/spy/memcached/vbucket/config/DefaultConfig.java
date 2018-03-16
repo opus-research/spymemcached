@@ -1,106 +1,97 @@
 package net.spy.memcached.vbucket.config;
 
-import net.spy.memcached.HashAlgorithm;
-
 import java.util.List;
+
+import net.spy.memcached.HashAlgorithm;
 
 public class DefaultConfig implements Config {
 
-    private HashAlgorithm hashAlgorithm = HashAlgorithm.NATIVE_HASH;
+    private final HashAlgorithm hashAlgorithm;
 
-    private int vbucketsCount;
+    private final int vbucketsCount;
 
-    private int mask;
+    private final int mask;
 
-    private int serversCount;
+    private final int serversCount;
 
-    private int replicasCount;
+    private final int replicasCount;
 
-    private List<String> servers;
+    private final List<String> servers;
 
-    private List<VBucket> vbuckets;
+    private final List<VBucket> vbuckets;
 
-    public DefaultConfig(HashAlgorithm hashAlgorithm, int serversCount, int replicasCount, int vbucketsCount) {
+    public DefaultConfig(HashAlgorithm hashAlgorithm, int serversCount,
+            int replicasCount, int vbucketsCount, List<String> servers,
+            List<VBucket> vbuckets) {
         this.hashAlgorithm = hashAlgorithm;
         this.serversCount = serversCount;
         this.replicasCount = replicasCount;
         this.vbucketsCount = vbucketsCount;
         this.mask = vbucketsCount - 1;
+        this.servers = servers;
+        this.vbuckets = vbuckets;
     }
 
+    @Override
     public int getReplicasCount() {
         return replicasCount;
     }
 
+    @Override
     public int getVbucketsCount() {
         return vbucketsCount;
     }
 
+    @Override
     public int getServersCount() {
         return serversCount;
     }
 
+    @Override
     public String getServer(int serverIndex) {
-        if (serverIndex > servers.size() - 1) {
-            throw new IllegalArgumentException("Server index is out of bounds, index = "
-                    + serverIndex + ", servers count = " + servers.size());
-        }
         return servers.get(serverIndex);
     }
 
+    @Override
     public int getVbucketByKey(String key) {
-        int digest = (int) hashAlgorithm.hash(key);
+        int digest = (int)hashAlgorithm.hash(key);
         return digest & mask;
     }
 
+    @Override
     public int getMaster(int vbucketIndex) {
-        if (vbucketIndex > vbuckets.size() - 1) {
-            throw new IllegalArgumentException("Vbucket index is out of bounds, index = "
-                    + vbucketIndex + ", vbuckets count = " + vbuckets.size());
-        }
-        return vbuckets.get(vbucketIndex).getServers()[0];
+        return vbuckets.get(vbucketIndex).getMaster();
     }
 
+    @Override
     public int getReplica(int vbucketIndex, int replicaIndex) {
-        if (vbucketIndex > vbuckets.size() - 1) {
-            throw new IllegalArgumentException("Vbucket index is out of bounds, index = "
-                    + vbucketIndex + ", vbuckets count = " + vbuckets.size());
-        }
-        return vbuckets.get(vbucketIndex).getServers()[replicaIndex + 1];
+        return vbuckets.get(vbucketIndex).getReplica(replicaIndex);
     }
 
+    @Override
     public int foundIncorrectMaster(int vbucket, int wrongServer) {
-        int mappedServer = this.vbuckets.get(vbucket).getServers()[0];
+        int mappedServer = this.vbuckets.get(vbucket).getMaster();
         int rv = mappedServer;
         if (mappedServer == wrongServer) {
             rv = (rv + 1) % this.serversCount;
-            this.vbuckets.get(vbucket).getServers()[0] = rv;
+            this.vbuckets.get(vbucket).setMaster(rv);
         }
         return rv;
     }
 
-    public void setServers(List<String> servers) {
-        this.servers = servers;
-    }
-
-    public void setVbuckets(List<VBucket> vbuckets) {
-        this.vbuckets = vbuckets;
-    }
-
+    @Override
     public List<String> getServers() {
         return servers;
     }
 
+    @Override
     public List<VBucket> getVbuckets() {
         return vbuckets;
     }
 
+    @Override
     public ConfigDifference compareTo(Config config) {
         ConfigDifference difference = new ConfigDifference();
-
-        // Compute the added and removed servers
-        //difference.setServersAdded(new ArrayList<String>(CollectionUtils.subtract(config.getServers(), this.getServers())));
-        //difference.setServersRemoved(new ArrayList<String>(CollectionUtils.subtract(this.getServers(), config.getServers())));
 
         // Verify the servers are equal in their positions
         if (this.serversCount == config.getServersCount()) {
@@ -120,7 +111,8 @@ public class DefaultConfig implements Config {
         if (this.vbucketsCount == config.getVbucketsCount()) {
             int vbucketsChanges = 0;
             for (int i = 0; i < this.vbucketsCount; i++) {
-                vbucketsChanges += (this.getMaster(i) == config.getMaster(i)) ? 0 : 1;
+                vbucketsChanges += (this.getMaster(i) == config.getMaster(i)) ? 0
+                        : 1;
             }
             difference.setVbucketsChanges(vbucketsChanges);
         } else {
@@ -130,9 +122,9 @@ public class DefaultConfig implements Config {
         return difference;
     }
 
+    @Override
     public HashAlgorithm getHashAlgorithm() {
         return hashAlgorithm;
     }
-
 
 }

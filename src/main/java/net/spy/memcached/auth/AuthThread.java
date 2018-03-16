@@ -23,6 +23,11 @@
 
 package net.spy.memcached.auth;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import net.spy.memcached.KeyUtil;
 import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.MemcachedNode;
@@ -32,11 +37,6 @@ import net.spy.memcached.compat.log.Level;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A thread that does SASL authentication.
@@ -55,18 +55,12 @@ public class AuthThread extends SpyThread {
    */
   public static final int AUTH_TOTAL_THRESHOLD = 1000;
 
-  /**
-   * The default timeout for each individual auth operation.
-   */
-  public static final int DEFAULT_AUTH_OP_TIMEOUT = 2500;
-
   public static final String MECH_SEPARATOR = " ";
 
   private final MemcachedConnection conn;
   private final AuthDescriptor authDescriptor;
   private final OperationFactory opFact;
   private final MemcachedNode node;
-  private final int opTimeout;
 
   public AuthThread(MemcachedConnection c, OperationFactory o,
       AuthDescriptor a, MemcachedNode n) {
@@ -74,10 +68,6 @@ public class AuthThread extends SpyThread {
     opFact = o;
     authDescriptor = a;
     node = n;
-
-    String authOpTimeout = System.getProperty("net.spy.authOpTimeout");
-    opTimeout = authOpTimeout == null
-      ? DEFAULT_AUTH_OP_TIMEOUT : Integer.parseInt(authOpTimeout);
     start();
   }
 
@@ -85,55 +75,51 @@ public class AuthThread extends SpyThread {
     final CountDownLatch listMechsLatch = new CountDownLatch(1);
     final AtomicReference<String> supportedMechs =
       new AtomicReference<String>();
-    while (supportedMechs.get() == null || supportedMechs.get().isEmpty()) {
-      Operation listMechsOp = opFact.saslMechs(new OperationCallback() {
-        @Override
-        public void receivedStatus(OperationStatus status) {
-          if (status.isSuccess()) {
-            supportedMechs.set(status.getMessage());
-            getLogger().debug(host() + " Received SASL supported mechs: "
-              + status.getMessage());
-          } else {
-            getLogger().warn(host() + " Received non-success response for SASL mechs: "
-              + status);
-          }
-        }
-
-        @Override
-        public void complete() {
-          listMechsLatch.countDown();
-        }
-
-      });
-
-      conn.insertOperation(node, listMechsOp);
-
-      try {
-        if (!conn.isShutDown()) {
-            if(!listMechsLatch.await(opTimeout, TimeUnit.MILLISECONDS)) {
-              getLogger().warn(host() + " Fetching SASL auth list took longer than "
-                + opTimeout + "ms. Retrying.");
-            }
+    Operation listMechsOp = opFact.saslMechs(new OperationCallback() {
+      @Override
+      public void receivedStatus(OperationStatus status) {
+        if(status.isSuccess()) {
+          supportedMechs.set(status.getMessage());
+          getLogger().debug("Received SASL supported mechs: "
+            + status.getMessage());
         } else {
-          done.set(true); // Connection is shutting down, tear.down.
+          getLogger().warn("Received non-success response for SASL mechs: "
+            + status);
         }
-      } catch (InterruptedException ex) {
-        getLogger().warn(host() + "Interrupted in Auth while waiting for SASL mechs.");
-        // we can be interrupted if we were in the
-        // process of auth'ing and the connection is
-        // lost or dropped due to bad auth
-        Thread.currentThread().interrupt();
-        if (listMechsOp != null) {
-          listMechsOp.cancel();
-        }
-        done.set(true); // If we were interrupted, tear down.
       }
 
-      if (supportedMechs.get() == null || supportedMechs.get().isEmpty()) {
-        getLogger().warn(host() + "Could not fetch SASL mechs list, retrying.");
+      @Override
+      public void complete() {
+        listMechsLatch.countDown();
       }
+
+    });
+
+    conn.insertOperation(node, listMechsOp);
+
+    try {
+      if (!conn.isShutDown()) {
+        listMechsLatch.await();
+      } else {
+        done.set(true); // Connection is shutting down, tear.down.
+      }
+    } catch(InterruptedException ex) {
+      getLogger().warn("Interrupted in Auth while waiting for SASL mechs.");
+      // we can be interrupted if we were in the
+      // process of auth'ing and the connection is
+      // lost or dropped due to bad auth
+      Thread.currentThread().interrupt();
+      if (listMechsOp != null) {
+        listMechsOp.cancel();
+      }
+      done.set(true); // If we were interrupted, tear down.
     }
-    return supportedMechs.get().split(MECH_SEPARATOR);
+
+    String supported = supportedMechs.get();
+    if (supported == null || supported.isEmpty()) {
+      return null;
+    }
+    return supported.split(MECH_SEPARATOR);
   }
 
   @Override
@@ -158,7 +144,7 @@ public class AuthThread extends SpyThread {
     getLogger().log(level, msg);
 
     if (supportedMechs == null || supportedMechs.length == 0) {
-      getLogger().warn(host() + " Authentication failed to " + node.getSocketAddress()
+      getLogger().warn("Authentication failed to " + node.getSocketAddress()
         + ", got empty SASL auth mech list.");
       throw new IllegalStateException("Got empty SASL auth mech list.");
     }
@@ -175,7 +161,7 @@ public class AuthThread extends SpyThread {
         @Override
         public void receivedStatus(OperationStatus val) {
           // If the status we found was null, we're done.
-          if (val.getMessage().isEmpty() && val.isSuccess()) {
+          if (val.getMessage().length() == 0) {
             done.set(true);
             node.authComplete();
             getLogger().info("Authenticated to " + node.getSocketAddress());
@@ -196,11 +182,7 @@ public class AuthThread extends SpyThread {
 
       try {
         if (!conn.isShutDown()) {
-          if(!latch.await(opTimeout, TimeUnit.MILLISECONDS)) {
-            getLogger().warn(host() + " SASL step took longer than " + opTimeout
-              + "ms. Retrying.");
-            continue;
-          }
+          latch.await();
         } else {
           done.set(true); // Connection is shutting down, tear.down.
         }
@@ -222,13 +204,6 @@ public class AuthThread extends SpyThread {
         level = mechsDiff
           >= AUTH_ROUNDTRIP_THRESHOLD ? Level.WARN : Level.DEBUG;
         getLogger().log(level, msg);
-      }
-
-      OperationStatus status = foundStatus.get();
-      // the found status was not successful, retry this operation
-      if (status != null && !status.isSuccess()) {
-        getLogger().warn(host() + " SASL Step failed, retrying: " + foundStatus.get());
-        continue;
       }
 
       // Get the new status to inspect it.
@@ -261,14 +236,4 @@ public class AuthThread extends SpyThread {
           authDescriptor.getCallback(), cb);
     }
   }
-
-  /**
-   * Returns the current hostname to authenticate against.
-   *
-   * @return the hostname.
-   */
-  private String host() {
-    return node.getSocketAddress().toString();
-  }
-
 }

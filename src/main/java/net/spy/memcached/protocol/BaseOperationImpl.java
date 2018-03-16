@@ -30,11 +30,9 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	protected OperationCallback callback = null;
 	private volatile MemcachedNode handlingNode = null;
         private boolean timedout;
-	private long creationTime;
 
 	public BaseOperationImpl() {
 		super();
-		creationTime = System.nanoTime();
 	}
 
 	/**

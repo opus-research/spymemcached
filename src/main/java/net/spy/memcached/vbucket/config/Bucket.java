@@ -8,9 +8,9 @@ import java.util.List;
  */
 public class Bucket {
     // Bucket name
-    private String name;
+    private final String name;
     // configuration config
-    private Config configuration;
+    private final Config configuration;
     // bucket's streaming uri
     private final URI streamingURI;
 
@@ -36,10 +36,6 @@ public class Bucket {
 
     public URI getStreamingURI() {
         return streamingURI;
-    }
-
-    public List<Node> getNodes() {
-        return nodes;
     }
 
     @Override

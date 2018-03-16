@@ -12,6 +12,7 @@ PROJECT_NAME = "spymemcached"
 
 TEST_SERVER_V4 = ENV['SPYMC_TEST_SERVER_V4'] || "127.0.0.1"
 TEST_SERVER_V6 = ENV['SPYMC_TEST_SERVER_V6'] || ENV['SPYMC_TEST_SERVER_V4'] || "::1"
+
 SERVER_TYPE=ENV['SPYMC_SERVER_TYPE'] || "memcached"
 
 puts "Using server at ipv4 #{TEST_SERVER_V4}"
@@ -64,8 +65,9 @@ define "spymemcached" do
               '*ConfigurationProviderHTTPTest'
   end
   test.using :fork=>:each, :properties=>{ 'server.address_v4'=>TEST_SERVER_V4,
-					'server.address_v6'=>TEST_SERVER_V6,
-					'server.type'=>SERVER_TYPE }
+               'server.address_v6'=>TEST_SERVER_V6,
+               'server.type'=>SERVER_TYPE }
+
   TREE_VER=tree_version
   puts "Tree version is #{TREE_VER}"
 
@@ -78,7 +80,7 @@ define "spymemcached" do
                "junit:junit:jar:4.4", "org.jboss.netty:netty:jar:3.1.5.GA",
                "org.springframework:spring-beans:jar:3.0.3.RELEASE",
                "org.codehaus.jettison:jettison:jar:1.1",
-               "commons-codec:commons-codec:jar:1.5",
+               "commons-codec:commons-codec:jar:1.4",
                "org.easymock:easymock:jar:2.4",
                "org.easymock:easymockclassextension:jar:2.4",
                "junit-addons:junit-addons:jar:1.4",

@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.protocol.ascii;
 
 import net.spy.memcached.ops.OperationCallback;
@@ -13,12 +7,12 @@ import net.spy.memcached.ops.OperationCallback;
  */
 public abstract class ExtensibleOperationImpl extends OperationImpl {
 
-  public ExtensibleOperationImpl() {
-    super();
-  }
+	public ExtensibleOperationImpl() {
+		super();
+	}
 
-  public ExtensibleOperationImpl(OperationCallback cb) {
-    super(cb);
-  }
+	public ExtensibleOperationImpl(OperationCallback cb) {
+		super(cb);
+	}
 
 }

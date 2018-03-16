@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.internal;
 
 import java.util.concurrent.CountDownLatch;
@@ -18,100 +12,99 @@ import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.couch.HttpOperation;
 
-/**
- * A future http response.
- */
-public class HttpFuture<T> extends SpyObject implements Future<T> {
-  private final AtomicReference<T> objRef;
-  private final CountDownLatch latch;
-  private final long timeout;
-  private OperationStatus status;
-  private HttpOperation op;
+public class HttpFuture<T> extends SpyObject implements Future<T>{
+	private final AtomicReference<T> objRef;
+	private final CountDownLatch latch;
+    private final long timeout;
+    private OperationStatus status;
+    private HttpOperation op;
 
-  public HttpFuture(CountDownLatch latch, long timeout) {
-    super();
-    this.objRef = new AtomicReference<T>(null);
-    this.latch = latch;
-    this.timeout = timeout;
-  }
-
-  public boolean cancel(boolean c) {
-    op.cancel();
-    return true;
-  }
-
-  @Override
-  public T get() throws InterruptedException, ExecutionException {
-    try {
-      return get(timeout, TimeUnit.MILLISECONDS);
-    } catch (TimeoutException e) {
-      status = new OperationStatus(false, "Timed out");
-      throw new RuntimeException("Timed out waiting for operation", e);
-    }
-  }
-
-  @Override
-  public T get(long duration, TimeUnit units) throws InterruptedException,
-      ExecutionException, TimeoutException {
-    if (!latch.await(duration, units)) {
-      if (op != null) {
-        op.timeOut();
-      }
-      status = new OperationStatus(false, "Timed out");
-      throw new TimeoutException("Timed out waiting for operation");
+    public HttpFuture(CountDownLatch latch, long timeout) {
+        super();
+        this.objRef = new AtomicReference<T>(null);
+        this.latch = latch;
+        this.timeout = timeout;
     }
 
-    if (op != null && op.hasErrored()) {
-      status = new OperationStatus(false, op.getException().getMessage());
-      throw new ExecutionException(op.getException());
-    }
+	public boolean cancel(boolean c) {
+		op.cancel();
+		return true;
+	}
 
-    if (op.isCancelled()) {
-      status = new OperationStatus(false, "Operation Cancelled");
-      throw new ExecutionException(new RuntimeException("Cancelled"));
-    }
+	@Override
+	public T get() throws InterruptedException, ExecutionException {
+		try {
+			return get(timeout, TimeUnit.MILLISECONDS);
+		} catch (TimeoutException e) {
+			status = new OperationStatus(false, "Timed out");
+			throw new RuntimeException(
+				"Timed out waiting for operation", e);
+		}
+	}
 
-    if (op != null && op.isTimedOut()) {
-      status = new OperationStatus(false, "Timed out");
-      throw new ExecutionException(new OperationTimeoutException(
-          "Operation timed out."));
-    }
+	@Override
+	public T get(long duration, TimeUnit units) throws InterruptedException,
+			ExecutionException, TimeoutException {
+		if(!latch.await(duration, units)) {
+			if (op != null) {
+				op.timeOut();
+			}
+			status = new OperationStatus(false, "Timed out");
+			throw new TimeoutException(
+					"Timed out waiting for operation");
+		}
 
-    return objRef.get();
-  }
+		if(op != null && op.hasErrored()) {
+			status = new OperationStatus(false, op.getException().getMessage());
+			throw new ExecutionException(op.getException());
+		}
 
-  public OperationStatus getStatus() {
-    if (status == null) {
-      try {
-        get();
-      } catch (InterruptedException e) {
-        status = new OperationStatus(false, "Interrupted");
-        Thread.currentThread().isInterrupted();
-      } catch (ExecutionException e) {
-        getLogger().warn("Error getting status of operation", e);
-      }
-    }
-    return status;
-  }
+		if(op.isCancelled()) {
+			status = new OperationStatus(false, "Operation Cancelled");
+			throw new ExecutionException(new RuntimeException("Cancelled"));
+		}
 
-  public void set(T oper, OperationStatus s) {
-    objRef.set(oper);
-    status = s;
-  }
+		if(op != null && op.isTimedOut()) {
+			status = new OperationStatus(false, "Timed out");
+            throw new ExecutionException(new OperationTimeoutException("Operation timed out."));
+		}
 
-  @Override
-  public boolean isDone() {
-    assert op != null : "No operation";
-    return latch.getCount() == 0 || op.isCancelled() || op.hasErrored();
-  }
+		return objRef.get();
+	}
 
-  public void setOperation(HttpOperation to) {
-    this.op = to;
-  }
+	public OperationStatus getStatus() {
+		if (status == null) {
+			try {
+				get();
+			} catch (InterruptedException e) {
+				status = new OperationStatus(false, "Interrupted");
+				Thread.currentThread().isInterrupted();
+			} catch (ExecutionException e) {
+			    getLogger().warn("Error getting status of operation", e);
+			}
+		}
+		return status;
+	}
 
-  @Override
-  public boolean isCancelled() {
-    assert op != null : "No operation";
-    return op.isCancelled();
-  }
+	public void set(T op, OperationStatus s) {
+		objRef.set(op);
+		status = s;
+	}
+
+	@Override
+	public boolean isDone() {
+		assert op != null : "No operation";
+		return latch.getCount() == 0 ||
+			op.isCancelled() || op.hasErrored();
+	}
+
+	public void setOperation(HttpOperation to) {
+		this.op = to;
+	}
+
+	@Override
+	public boolean isCancelled() {
+		assert op != null : "No operation";
+		return op.isCancelled();
+	}
 }

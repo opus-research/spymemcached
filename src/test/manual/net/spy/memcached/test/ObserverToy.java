@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached.test;
 
 import java.net.SocketAddress;
@@ -17,46 +11,44 @@ import net.spy.memcached.DefaultConnectionFactory;
 import net.spy.memcached.MemcachedClient;
 
 /**
- * This expects a server on port 11212 that's somewhat unstable so it can report
- * and what-not.
+ * This expects a server on port 11212 that's somewhat unstable so it can
+ * report and what-not.
  */
-public final class ObserverToy {
+public class ObserverToy {
+	public static void main(String args[]) throws Exception {
+		final ConnectionObserver obs = new ConnectionObserver() {
+			public void connectionEstablished(SocketAddress sa,
+					int reconnectCount) {
+				System.out.println("*** Established:  " + sa
+						+ " count=" + reconnectCount);
+			}
 
-  private ObserverToy() {
-    // Empty
-  }
+			public void connectionLost(SocketAddress sa) {
+				System.out.println("*** Lost connection:  " + sa);
+			}
 
-  public static void main(String[] args) throws Exception {
-    final ConnectionObserver obs = new ConnectionObserver() {
-      public void connectionEstablished(SocketAddress sa, int reconnectCount) {
-        System.out.println("*** Established:  " + sa + " count="
-            + reconnectCount);
-      }
+		};
 
-      public void connectionLost(SocketAddress sa) {
-        System.out.println("*** Lost connection:  " + sa);
-      }
+		MemcachedClient c = new MemcachedClient(
+			new DefaultConnectionFactory() {
 
-    };
+				@Override
+				public Collection<ConnectionObserver> getInitialObservers() {
+					return Collections.singleton(obs);
+				}
 
-    MemcachedClient c = new MemcachedClient(new DefaultConnectionFactory() {
+				@Override
+				public boolean isDaemon() {
+					return false;
+				}
 
-      @Override
-      public Collection<ConnectionObserver> getInitialObservers() {
-        return Collections.singleton(obs);
-      }
+			},
+			AddrUtil.getAddresses("localhost:11212"));
 
-      @Override
-      public boolean isDaemon() {
-        return false;
-      }
-
-    }, AddrUtil.getAddresses("localhost:11212"));
-
-    while (true) {
-      c.waitForQueues(1, TimeUnit.SECONDS);
-      Thread.sleep(1000);
-    }
-  }
+		while(true) {
+			c.waitForQueues(1, TimeUnit.SECONDS);
+			Thread.sleep(1000);
+		}
+	}
 
 }

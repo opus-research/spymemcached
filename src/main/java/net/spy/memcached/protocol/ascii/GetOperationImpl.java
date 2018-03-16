@@ -1,8 +1,4 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
+// Copyright (c) 2006  Dustin Sallings <dustin@spy.net>
 
 package net.spy.memcached.protocol.ascii;
 
@@ -17,13 +13,14 @@ import net.spy.memcached.ops.GetOperation;
  */
 class GetOperationImpl extends BaseGetOpImpl implements GetOperation {
 
-  private static final String CMD = "get";
+	private static final String CMD="get";
 
-  public GetOperationImpl(String key, GetOperation.Callback c) {
-    super(CMD, c, Collections.singleton(key));
-  }
+	public GetOperationImpl(String key, GetOperation.Callback c) {
+		super(CMD, c, Collections.singleton(key));
+	}
 
-  public GetOperationImpl(Collection<String> k, GetOperation.Callback c) {
-    super(CMD, c, new HashSet<String>(k));
-  }
+	public GetOperationImpl(Collection<String> k, GetOperation.Callback c) {
+		super(CMD, c, new HashSet<String>(k));
+	}
+
 }

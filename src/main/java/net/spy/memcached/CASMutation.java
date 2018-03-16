@@ -1,9 +1,3 @@
-/**
- * @author Couchbase <info@couchbase.com>
- * @copyright 2011 Couchbase, Inc.
- * All rights reserved.
- */
-
 package net.spy.memcached;
 
 /**
@@ -11,11 +5,11 @@ package net.spy.memcached;
  */
 public interface CASMutation<T> {
 
-  /**
-   * Get the new value to replace the current value.
-   * 
-   * @param current the current value in the cache
-   * @return the replacement value
-   */
-  T getNewValue(T current);
+	/**
+	 * Get the new value to replace the current value.
+	 *
+	 * @param current the current value in the cache
+	 * @return the replacement value
+	 */
+	T getNewValue(T current);
 }

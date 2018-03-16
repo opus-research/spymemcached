@@ -222,10 +222,10 @@ public class MemcachedConnection extends SpyThread {
           + Thread.interrupted());
       if (++emptySelects > DOUBLE_CHECK_EMPTY) {
         for (SelectionKey sk : selector.keys()) {
-          getLogger().debug("%s has %s, interested in %s", sk, sk.readyOps(),
+          getLogger().info("%s has %s, interested in %s", sk, sk.readyOps(),
               sk.interestOps());
           if (sk.readyOps() != 0) {
-            getLogger().debug("%s has a ready op, handling IO", sk);
+            getLogger().info("%s has a ready op, handling IO", sk);
             handleIO(sk);
           } else {
             lostConnection((MemcachedNode) sk.attachment());

@@ -47,9 +47,8 @@ public class BinaryMemcachedNodeImpl extends TCPMemcachedNodeImpl {
   public BinaryMemcachedNodeImpl(SocketAddress sa, SocketChannel c,
       int bufSize, BlockingQueue<Operation> rq, BlockingQueue<Operation> wq,
       BlockingQueue<Operation> iq, Long opQueueMaxBlockTimeNs,
-      boolean waitForAuth, long dt, long at) {
-    super(sa, c, bufSize, rq, wq, iq, opQueueMaxBlockTimeNs, waitForAuth, dt,
-      at);
+      boolean waitForAuth, long dt) {
+    super(sa, c, bufSize, rq, wq, iq, opQueueMaxBlockTimeNs, waitForAuth, dt);
   }
 
   @Override

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 
+import net.spy.memcached.internal.SyncRequest;
 import net.spy.memcached.ops.BaseOperationFactory;
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.ConcatenationOperation;
@@ -30,6 +31,7 @@ import net.spy.memcached.ops.SASLStepOperation;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
+import net.spy.memcached.ops.SyncOperation;
 import net.spy.memcached.ops.VersionOperation;
 import net.spy.memcached.ops.GetOperation.Callback;
 
@@ -76,6 +78,12 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 	public StatsOperation stats(String arg,
 			net.spy.memcached.ops.StatsOperation.Callback cb) {
 		return new StatsOperationImpl(arg, cb);
+	}
+
+	public SyncOperation sync(Collection<SyncRequest> keys, int replicaCount,
+			boolean persist, boolean mutation, boolean pandm,
+			OperationCallback cb) {
+		return new SyncOperationImpl(keys, replicaCount, persist, mutation, pandm, cb);
 	}
 
 	public StoreOperation store(StoreType storeType, String key, int flags,

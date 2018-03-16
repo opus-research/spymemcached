@@ -4,16 +4,26 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedSelectorException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import net.spy.memcached.internal.OperationFuture;
+import net.spy.memcached.internal.SyncFuture;
+import net.spy.memcached.internal.SyncRequest;
+import net.spy.memcached.internal.SyncResponse;
 import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.SyncOperation;
 import net.spy.memcached.transcoders.Transcoder;
 import net.spy.memcached.vbucket.ConfigurationException;
 import net.spy.memcached.vbucket.Reconfigurable;
@@ -163,6 +173,83 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	 */
 	public OperationFuture<CASValue<Object>> asyncGetAndLock(final String key, int exp) {
 		return asyncGetAndLock(key, exp, transcoder);
+	}
+
+	public SyncFuture<SyncResponse> asyncSync(Collection<SyncRequest> keys,
+			int replicaCount, boolean persist, boolean mutation, boolean pandm) {
+		final Collection<SyncResponse> m=new LinkedList<SyncResponse>();
+
+		// Break the syncs down into groups by key
+		final Map<MemcachedNode, Collection<SyncRequest>> chunks
+			= new HashMap<MemcachedNode, Collection<SyncRequest>>();
+		final NodeLocator locator=conn.getLocator();
+		Iterator<SyncRequest> key_iter=keys.iterator();
+		while (key_iter.hasNext()) {
+			SyncRequest request=key_iter.next();
+			String key=request.getKey();
+			validateKey(key);
+			final MemcachedNode primaryNode=locator.getPrimary(key);
+			MemcachedNode node=null;
+			if(primaryNode.isActive()) {
+				node=primaryNode;
+			} else {
+				for(Iterator<MemcachedNode> i=locator.getSequence(key);
+					node == null && i.hasNext();) {
+					MemcachedNode n=i.next();
+					if(n.isActive()) {
+						node=n;
+					}
+				}
+				if(node == null) {
+					node=primaryNode;
+				}
+			}
+			assert node != null : "Didn't find a node for " + key;
+			Collection<SyncRequest> ks=chunks.get(node);
+			if(ks == null) {
+				ks=new ArrayList<SyncRequest>();
+				chunks.put(node, ks);
+			}
+			ks.add(request);
+		}
+
+		final CountDownLatch latch=new CountDownLatch(chunks.size());
+		final Collection<Operation> ops=new ArrayList<Operation>(chunks.size());
+		final SyncFuture<SyncResponse> rv = new SyncFuture<SyncResponse>(m, ops, latch);
+
+		SyncOperation.Callback cb=new SyncOperation.Callback() {
+			@SuppressWarnings("synthetic-access")
+			public void receivedStatus(OperationStatus status) {
+				rv.setStatus(status);
+				if(!status.isSuccess()) {
+					getLogger().warn("Unsuccessful get:  %s", status);
+				}
+			}
+			@Override
+			public void gotData(SyncResponse s) {
+				m.add(s);
+			}
+			public void complete() {
+				latch.countDown();
+			}
+		};
+
+		// Now that we know how many servers it breaks down into, and the latch
+		// is all set up, convert all of these strings collections to operations
+		final Map<MemcachedNode, Operation> mops=
+			new HashMap<MemcachedNode, Operation>();
+
+		for(Map.Entry<MemcachedNode, Collection<SyncRequest>> me
+				: chunks.entrySet()) {
+			Operation op=opFact.sync(me.getValue(), replicaCount, persist, mutation,
+					pandm, cb);
+			mops.put(me.getKey(), op);
+			ops.add(op);
+		}
+		assert mops.size() == chunks.size();
+		checkState();
+		conn.addOperations(mops);
+		return rv;
 	}
 
 	/**

@@ -241,7 +241,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		handleInputQueue();
 		getLogger().debug("Done dealing with queue.");
 
-		long delay=10;
+		long delay=0;
 		if(!reconnectQueue.isEmpty()) {
 			long now=System.currentTimeMillis();
 			long then=reconnectQueue.firstKey();

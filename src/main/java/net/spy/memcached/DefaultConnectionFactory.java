@@ -146,9 +146,9 @@ public class DefaultConnectionFactory extends SpyObject
 	}
 
 	/* (non-Javadoc)
-	 * @see net.spy.memcached.ConnectionFactory#createMemcachedConnection(java.util.List)
+	 * @see net.spy.memcached.ConnectionFactory#createConnection(java.util.List)
 	 */
-	public MemcachedConnection createMemcachedConnection(List<InetSocketAddress> addrs)
+	public MemcachedConnection createConnection(List<InetSocketAddress> addrs)
 		throws IOException {
 		return new MemcachedConnection(getReadBufSize(), this, addrs,
 			getInitialObservers(), getFailureMode(), getOperationFactory());

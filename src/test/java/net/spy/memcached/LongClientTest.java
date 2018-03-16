@@ -23,9 +23,9 @@ public class LongClientTest extends ClientBaseCase {
 		client.shutdown();
 		initClient(new DefaultConnectionFactory(){
 			@Override
-			public MemcachedConnection createMemcachedConnection(
+			public MemcachedConnection createConnection(
 					List<InetSocketAddress> addrs) throws IOException {
-				MemcachedConnection rv = super.createMemcachedConnection(addrs);
+				MemcachedConnection rv = super.createConnection(addrs);
 				return rv;
 			}
 			@Override

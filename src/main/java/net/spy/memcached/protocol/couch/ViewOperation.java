@@ -2,10 +2,9 @@ package net.spy.memcached.protocol.couch;
 
 import net.spy.memcached.ops.OperationCallback;
 
-public interface ReducedOperation {
+public interface ViewOperation {
 
-	interface ReducedCallback extends OperationCallback {
+	interface ViewCallback extends OperationCallback {
 		void gotData(ViewResponse response);
 	}
-
 }

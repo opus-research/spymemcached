@@ -158,23 +158,4 @@ public interface Operation {
    * This can be used to calculate the roundtrip time of the operation.
    */
   long getWriteCompleteTimestamp();
-
-  /**
-   * Add the clone from this operation.
-   *
-   * @param op the cloned operation.
-   */
-  void addClone(Operation op);
-
-  /**
-   * Returns the number of times this operation has been cloned.
-   *
-   * @return the number of clones.
-   */
-  int getCloneCount();
-
-  /**
-   * Sets the clone count for this operation.
-   */
-  void setCloneCount(int count);
 }

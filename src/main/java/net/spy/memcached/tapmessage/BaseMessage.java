@@ -5,19 +5,21 @@ import java.nio.ByteBuffer;
 import net.spy.memcached.compat.SpyObject;
 
 /**
- * The BaseMessage implements the header of a tap message. This class cannot be instantiated.
- * Tap stream messages are created with the RequestMessage and ResponseMessage classes.
+ * The HeaderMessage implements the header of a tap message. This class cannot be instantiated.
+ * Tap stream messages are created with the RequestMessage and ResponseMessage classes. Users
+ * who want to take advantage of customizing their own tap messages should use the
+ * CustomTapStream class since it provides flexibility to create all valid tap messages.
  */
 public abstract class BaseMessage extends SpyObject {
-	private static final int MAGIC_OFFSET = 0;
-	private static final int OPCODE_OFFSET = 1;
-	private static final int KEYLENGTH_OFFSET = 2;
-	private static final int EXTRALENGTH_OFFSET = 4;
-	private static final int DATATYPE_OFFSET = 5;
-	private static final int VBUCKET_OFFSET = 6;
-	private static final int TOTALBODY_OFFSET = 8;
-	private static final int OPAQUE_OFFSET = 12;
-	private static final int CAS_OFFSET = 16;
+	protected static final int MAGIC_OFFSET = 0;
+	protected static final int OPCODE_OFFSET = 1;
+	protected static final int KEYLENGTH_OFFSET = 2;
+	protected static final int EXTRALENGTH_OFFSET = 4;
+	protected static final int DATATYPE_OFFSET = 5;
+	protected static final int VBUCKET_OFFSET = 6;
+	protected static final int TOTALBODY_OFFSET = 8;
+	protected static final int OPAQUE_OFFSET = 12;
+	protected static final int CAS_OFFSET = 16;
 	public static final int HEADER_LENGTH = 24;
 
 	protected TapMagic magic;
@@ -29,22 +31,6 @@ public abstract class BaseMessage extends SpyObject {
 	protected int totalbody;
 	protected int opaque;
 	protected long cas;
-
-	protected BaseMessage() {
-		// Empty
-	}
-
-	protected BaseMessage(byte[] b) {
-		magic = TapMagic.getMagicByByte(b[MAGIC_OFFSET]);
-		opcode = TapOpcode.getOpcodeByByte(b[OPCODE_OFFSET]);
-		keylength = decodeShort(b, KEYLENGTH_OFFSET);
-		extralength = b[EXTRALENGTH_OFFSET];
-		datatype = b[DATATYPE_OFFSET];
-		vbucket = decodeShort(b, VBUCKET_OFFSET);
-		totalbody = decodeInt(b, TOTALBODY_OFFSET);
-		opaque = decodeInt(b, OPAQUE_OFFSET);
-		cas = decodeLong(b, CAS_OFFSET);
-	}
 
 	/**
 	 * Sets the value of the tap messages magic field.
@@ -194,7 +180,10 @@ public abstract class BaseMessage extends SpyObject {
 	 * Creates a ByteBuffer representation of the message.
 	 * @return The ByteBuffer representation of the message.
 	 */
-	public abstract ByteBuffer getBytes();
+	public ByteBuffer getBytes() {
+		
+		return null;
+	}
 
 	protected short decodeShort(byte[] data, int i) {
 		return (short)((data[i] & 0xff) << 8 | (data[i + 1] & 0xff));

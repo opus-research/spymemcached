@@ -100,7 +100,6 @@ public class RequestMessage extends BaseMessage{
 	/**
 	 * Encodes the message into binary.
 	 */
-	@Override
 	public ByteBuffer getBytes() {
 		ByteBuffer bb = ByteBuffer.allocate(HEADER_LENGTH + getTotalbody());
 		bb.put(magic.magic);

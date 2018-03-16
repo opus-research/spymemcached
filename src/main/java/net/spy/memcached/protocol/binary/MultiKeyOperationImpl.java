@@ -1,7 +1,6 @@
 package net.spy.memcached.protocol.binary;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,11 +16,10 @@ import net.spy.memcached.util.StringUtils;
  */
 abstract class MultiKeyOperationImpl extends OperationImpl
 		implements VBucketAware, KeyedOperation {
-	protected final Map<String, Short> vbmap;
+	protected final Map<String, Short> vbmap = new HashMap<String, Short>();
 
 	protected MultiKeyOperationImpl(byte c, int o, OperationCallback cb) {
 		super(c, o, cb);
-		vbmap = Collections.synchronizedMap(new HashMap<String, Short>());
 	}
 
 	public Collection<String> getKeys() {
@@ -52,8 +50,6 @@ abstract class MultiKeyOperationImpl extends OperationImpl
 
 	@Override
 	public String toString() {
-		synchronized(vbmap) {
-			return super.toString() + " Keys: " + StringUtils.join(getKeys(), " ");
-		}
+		return super.toString() + " Keys: " + StringUtils.join(getKeys(), " ");
 	}
 }

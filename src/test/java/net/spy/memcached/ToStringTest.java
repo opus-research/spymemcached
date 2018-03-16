@@ -1,11 +1,13 @@
 package net.spy.memcached;
 
+import junit.framework.TestCase;
+
 /**
  * These tests test to make sure that we don't get null pointer
  * exceptions when calling toString methods on classes that have
  * custom toString() functions.
  */
-public class ToStringTest {
+public class ToStringTest extends TestCase {
 
 	public void testDefaultConnectionFactory() {
 		(new DefaultConnectionFactory()).toString();

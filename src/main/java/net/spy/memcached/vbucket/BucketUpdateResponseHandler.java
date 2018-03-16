@@ -25,7 +25,7 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
     private String lastResponse;
     private ChannelFuture receivedFuture;
     private CountDownLatch latch;
-    private StringBuilder partialResponse;
+    private StringBuffer partialResponse;
     private static final Logger LOGGER = Logger.getLogger(BucketUpdateResponseHandler.class.getName());
 
     @Override
@@ -33,7 +33,7 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
         ChannelFuture channelFuture = event.getFuture();
         setReceivedFuture(channelFuture);
         if (this.partialResponse == null) {
-            this.partialResponse = new StringBuilder();
+            this.partialResponse = new StringBuffer();
         }
         if (readingChunks) {
             HttpChunk chunk = (HttpChunk) event.getMessage();
@@ -108,6 +108,8 @@ public class BucketUpdateResponseHandler extends SimpleChannelUpstreamHandler {
      * @param lastResponse the lastResponse to set
      */
     private void setLastResponse(String lastResponse) {
+
+
         this.lastResponse = lastResponse;
     }
 

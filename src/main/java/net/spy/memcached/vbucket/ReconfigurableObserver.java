@@ -6,7 +6,7 @@ import java.util.Observer;
 import java.util.Observable;
 
 public class ReconfigurableObserver implements Observer {
-    private final Reconfigurable rec;
+    private Reconfigurable rec;
 
     public ReconfigurableObserver(Reconfigurable rec) {
         this.rec = rec;

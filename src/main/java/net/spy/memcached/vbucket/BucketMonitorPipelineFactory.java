@@ -16,7 +16,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 public class BucketMonitorPipelineFactory implements ChannelPipelineFactory {
 
     public ChannelPipeline getPipeline() {
-        ChannelPipeline pipeline = pipeline();
+        final ChannelPipeline pipeline = pipeline();
         pipeline.addLast("decoder", new HttpResponseDecoder());
         pipeline.addLast("encoder", new HttpRequestEncoder());
         pipeline.addLast("handler", new BucketUpdateResponseHandler());

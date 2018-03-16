@@ -8,7 +8,6 @@ import java.util.Collection;
 
 import junit.framework.TestCase;
 import net.spy.memcached.MockMemcachedNode;
-import net.spy.memcached.TestConfig;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.protocol.BaseOperationImpl;
 
@@ -17,7 +16,7 @@ public class CheckedOperationTimeoutExceptionTest extends TestCase {
 	public void testSingleOperation() {
 		Operation op = buildOp(11211);
 		assertEquals(CheckedOperationTimeoutException.class.getName()
-				+ ": test - failing node: " + TestConfig.IPV4_ADDR + ":11211",
+				+ ": test - failing node: localhost:11211",
 				new CheckedOperationTimeoutException("test", op).toString());
 	}
 
@@ -41,15 +40,14 @@ public class CheckedOperationTimeoutExceptionTest extends TestCase {
 		ops.add(buildOp(11211));
 		ops.add(buildOp(64212));
 		assertEquals(CheckedOperationTimeoutException.class.getName()
-				+ ": test - failing nodes: " + TestConfig.IPV4_ADDR + ":11211, "
-				+ TestConfig.IPV4_ADDR + ":64212",
+				+ ": test - failing nodes: localhost:11211, localhost:64212",
 				new CheckedOperationTimeoutException("test", ops).toString());
 	}
 
 	private TestOperation buildOp(int portNum) {
 		TestOperation op = new TestOperation();
 		MockMemcachedNode node = new MockMemcachedNode(
-				InetSocketAddress.createUnresolved(TestConfig.IPV4_ADDR, portNum));
+				InetSocketAddress.createUnresolved("localhost", portNum));
 		op.setHandlingNode(node);
 		return op;
 	}

@@ -7,7 +7,6 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import net.spy.memcached.internal.BulkFuture;
 import net.spy.memcached.transcoders.Transcoder;
 
 /**
@@ -80,15 +79,15 @@ public interface MemcachedClientIF {
 
 	Object get(String key) throws OperationTimeoutException;
 
-	<T> BulkFuture<Map<String, T>> asyncGetBulk(Collection<String> keys,
+	<T> Future<Map<String, T>> asyncGetBulk(Collection<String> keys,
 		Transcoder<T> tc);
 
-	BulkFuture<Map<String, Object>> asyncGetBulk(Collection<String> keys);
+	Future<Map<String, Object>> asyncGetBulk(Collection<String> keys);
 
-	<T> BulkFuture<Map<String, T>> asyncGetBulk(Transcoder<T> tc,
+	<T> Future<Map<String, T>> asyncGetBulk(Transcoder<T> tc,
 		String... keys);
 
-	BulkFuture<Map<String, Object>> asyncGetBulk(String... keys);
+	Future<Map<String, Object>> asyncGetBulk(String... keys);
 
 	<T> Map<String, T> getBulk(Collection<String> keys, Transcoder<T> tc)
 		throws OperationTimeoutException;

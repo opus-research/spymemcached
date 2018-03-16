@@ -58,7 +58,7 @@
       value="http://www.couchbase.org/code/couchbase/java" />
   <property name="ivy.pom.groupId" value="spy" />
   <property name="ivy.pom.description"
-   value = "A client library for memcached."/>
+   value = "A client library for Couchbase Server, Membase Server and memcached.  This client includes functionality for accessing Couchbase Views in Couchbase Server 2.0 or later as well as backwards compatibility with Membase Server and memcached." />
   <path id="test.classpath">
     <pathelement location="${build.classes}" />
     <fileset dir="${lib.dir}">
@@ -387,7 +387,7 @@
       <fileset dir="${src.dir}" />
       <fileset dir="${build.src.dir}" />
     </jar>
-    <jar jarfile="${build.dir}/${name}-test-${version}-sources.jar">
+    <jar jarfile="${build.dir}/${name}-${version}-test-sources.jar">
       <fileset dir="${test.dir}" />
     </jar>
   </target>
@@ -402,7 +402,7 @@
         <attribute name="Main-Class" value="net.spy.memcached.BuildInfo" />
       </manifest>
     </jar>
-    <jar jarfile="${build.dir}/${name}-test-${version}.jar" basedir="${build.test.classes}"/>
+    <jar jarfile="${build.dir}/${name}-${version}-test.jar" basedir="${build.test.classes}"/>
   </target>
 
   <target name="package" depends="jar,srcjar,docsjar"
@@ -476,16 +476,16 @@
       description="Install Spymemcached in local m2 repository">
     <artifact:pom id="spymemcached" file="${spymemcached.pom}" />
     <artifact:install file="${build.dir}/${name}-${version}.jar">
-      <pom refid="${name}" />
+      <pom refid="spymemcached" />
       <attach file="${build.dir}/${name}-${version}-sources.jar"
           classifier="sources" />
       <attach file="${build.dir}/${name}-${version}-javadoc.jar"
           classifier="javadocs" />
     </artifact:install>
     <artifact:pom id="spymemcached-test" file="${spymemcached-test.pom}" />
-      <artifact:install file="${build.dir}/${name}-test-${version}.jar">
-        <pom refid="${name}-test" />
-        <attach file="${build.dir}/${name}-test-${version}-sources.jar"
+      <artifact:install file="${build.dir}/${name}-${version}-test.jar">
+        <pom refid="spymemcached-test" />
+        <attach file="${build.dir}/${name}-${version}-test-sources.jar"
           classifier="sources" />
     </artifact:install>
   </target>

@@ -40,7 +40,7 @@ SOFTWARE.
     <dependency org="log4j" name="log4j" rev="${log4j.version}"
         conf="common->master" />
     <dependency org="jmock" name="jmock" rev="${jmock.version}"
-        conf="common->master" /> <!-- Test only -->
+        conf="common->master" />
     <dependency org="junit" name="junit" rev="${junit.version}"
         conf="common->master" />
     <dependency org="org.springframework" name="spring-beans"

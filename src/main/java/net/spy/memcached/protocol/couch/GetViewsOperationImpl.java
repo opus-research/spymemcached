@@ -15,14 +15,14 @@ import org.apache.http.HttpResponse;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-public class ViewsOperationImpl extends HttpOperationImpl implements
-		ViewsOperation {
+public class GetViewsOperationImpl extends HttpOperationImpl implements
+		GetViewsOperation {
 
 	private final String bucketName;
 	private final String designDocName;
 
-	public ViewsOperationImpl(HttpRequest r, String bucketName,
-			String designDocName, ViewsCallback viewsCallback) {
+	public GetViewsOperationImpl(HttpRequest r, String bucketName,
+			String designDocName, GetViewsCallback viewsCallback) {
 		super(r, viewsCallback);
 		this.bucketName = bucketName;
 		this.designDocName = designDocName;
@@ -36,7 +36,7 @@ public class ViewsOperationImpl extends HttpOperationImpl implements
 			if (errorcode == HttpURLConnection.HTTP_OK) {
 				List<View> views = parseDesignDocumentForViews(bucketName,
 						designDocName, json);
-				((ViewsCallback) callback).gotData(views);
+				((GetViewsCallback) callback).gotData(views);
 				callback.receivedStatus(new OperationStatus(true, "OK"));
 			} else {
 				callback.receivedStatus(new OperationStatus(false, Integer

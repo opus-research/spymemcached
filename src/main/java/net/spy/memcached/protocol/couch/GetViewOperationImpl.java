@@ -13,15 +13,15 @@ import org.apache.http.HttpResponse;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-public class ViewOperationImpl extends HttpOperationImpl implements
-		ViewOperation {
+public class GetViewOperationImpl extends HttpOperationImpl implements
+		GetViewOperation {
 
 	private final String bucketName;
 	private final String designDocName;
 	private final String viewName;
 
-	public ViewOperationImpl(HttpRequest r, String bucketName,
-			String designDocName, String viewName, ViewCallback viewCallback) {
+	public GetViewOperationImpl(HttpRequest r, String bucketName,
+			String designDocName, String viewName, GetViewCallback viewCallback) {
 		super(r, viewCallback);
 		this.bucketName = bucketName;
 		this.designDocName = designDocName;
@@ -37,7 +37,7 @@ public class ViewOperationImpl extends HttpOperationImpl implements
 
 			int errorcode = response.getStatusLine().getStatusCode();
 			if (errorcode == HttpURLConnection.HTTP_OK) {
-				((ViewCallback) callback).gotData(view);
+				((GetViewCallback) callback).gotData(view);
 				callback.receivedStatus(new OperationStatus(true, "OK"));
 			} else {
 				callback.receivedStatus(new OperationStatus(false, Integer

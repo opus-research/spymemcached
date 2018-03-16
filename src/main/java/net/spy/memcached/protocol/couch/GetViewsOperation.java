@@ -4,8 +4,8 @@ import java.util.List;
 
 import net.spy.memcached.ops.OperationCallback;
 
-public interface ViewsOperation {
-	interface ViewsCallback extends OperationCallback {
+public interface GetViewsOperation {
+	interface GetViewsCallback extends OperationCallback {
 		void gotData(List<View> views);
 	}
 }

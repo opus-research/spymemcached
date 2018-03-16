@@ -10,7 +10,6 @@ import net.spy.memcached.ops.ConcatenationOperation;
 import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
 import net.spy.memcached.ops.FlushOperation;
-import net.spy.memcached.ops.GATOperation;
 import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
@@ -58,16 +57,6 @@ public interface OperationFactory {
 	 * @return the new FlushOperation
 	 */
 	FlushOperation flush(int delay, OperationCallback operationCallback);
-
-	/**
-	 * Gets the value of a key and resets its timeout.
-	 *
-	 * @param key the key to get a value for and reset its timeout
-	 * @param expiration the new expiration for the key
-	 * @param cb the callback that will contain the result
-	 * @return a new GATOperation
-	 */
-	GATOperation gat(String key, int expiration, GATOperation.Callback cb);
 
 	/**
 	 * Create a get operation.

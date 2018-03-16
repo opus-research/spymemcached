@@ -49,31 +49,4 @@ public class UtilTest extends TestCase {
     keys.add("key3");
     assertEquals("key1,key2,key3", StringUtils.join(keys, ","));
   }
-
-  @Test
-  public void testValidateKey() {
-    boolean success = true;
-    try {
-      StringUtils.validateKey("legalKey");
-    } catch(IllegalArgumentException ex) {
-      success = false;
-    }
-    assertTrue(success);
-
-    success = true;
-    try {
-      StringUtils.validateKey("key with spaces");
-    } catch(IllegalArgumentException ex) {
-      success = false;
-    }
-    assertTrue(success);
-
-    success = true;
-    try {
-      StringUtils.validateKey("invalid\nkey");
-    } catch(IllegalArgumentException ex) {
-      success = false;
-    }
-    assertFalse(success);
-  }
 }

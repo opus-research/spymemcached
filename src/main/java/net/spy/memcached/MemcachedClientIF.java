@@ -24,6 +24,7 @@
 package net.spy.memcached;
 
 import net.spy.memcached.internal.BulkFuture;
+import net.spy.memcached.internal.OperationFuture;
 import net.spy.memcached.transcoders.Transcoder;
 
 import java.net.SocketAddress;
@@ -76,7 +77,7 @@ public interface MemcachedClientIF {
 
   Future<CASResponse> asyncCAS(String key, long casId, int exp, Object value);
 
-  <T> Future<CASResponse> asyncCAS(String key, long casId, int exp,
+  <T> OperationFuture<CASResponse> asyncCAS(String key, long casId, int exp,
     T value, Transcoder<T> tc);
 
   <T> CASResponse cas(String key, long casId, int exp, T value,
@@ -229,10 +230,7 @@ public interface MemcachedClientIF {
 
   boolean removeObserver(ConnectionObserver obs);
 
-  @Deprecated
   CountDownLatch broadcastOp(final BroadcastOpFactory of);
-
-  @Deprecated
   CountDownLatch broadcastOp(final BroadcastOpFactory of,
     Collection<MemcachedNode> nodes);
 

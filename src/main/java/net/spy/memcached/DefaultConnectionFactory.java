@@ -170,7 +170,7 @@ public class DefaultConnectionFactory extends SpyObject implements
           createWriteOperationQueue(),
           createOperationQueue(),
           getOpQueueMaxBlockTime(),
-          getOperationTimeout());
+          getOperationTimeout(), this);
     } else if (of instanceof BinaryOperationFactory) {
       boolean doAuth = false;
       if (getAuthDescriptor() != null) {
@@ -182,7 +182,7 @@ public class DefaultConnectionFactory extends SpyObject implements
           createOperationQueue(),
           getOpQueueMaxBlockTime(),
           doAuth,
-          getOperationTimeout());
+          getOperationTimeout(), this);
     } else {
       throw new IllegalStateException("Unhandled operation factory type " + of);
     }

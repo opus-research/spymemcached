@@ -39,9 +39,9 @@ public class ConsistentHashingTest extends TestCase {
 		assertFalse(smaller.contains(oddManOut));
 
 		KetamaNodeLocator lgLocator = new KetamaNodeLocator(
-			larger, DefaultHashAlgorithm.KETAMA_HASH);
+			larger, HashAlgorithm.KETAMA_HASH);
 		KetamaNodeLocator smLocator = new KetamaNodeLocator(
-			smaller, DefaultHashAlgorithm.KETAMA_HASH);
+			smaller, HashAlgorithm.KETAMA_HASH);
 
 		SortedMap<Long, MemcachedNode> lgMap = lgLocator.getKetamaNodes();
 		SortedMap<Long, MemcachedNode> smMap = smLocator.getKetamaNodes();

@@ -24,7 +24,6 @@
 package net.spy.memcached.protocol.binary;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;

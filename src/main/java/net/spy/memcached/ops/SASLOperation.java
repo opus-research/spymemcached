@@ -1,5 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
+ * Copyright (C) 2009-2014 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +24,9 @@
 package net.spy.memcached.ops;
 
 /**
- * Operation for beginning a SASL auth cycle.
+ * Parent marker interface for all SASL operations.
+ *
+ * @author Michael Nitschinger
  */
-public interface SASLAuthOperation extends SASLOperation {
-  // nothing
+public interface SASLOperation extends Operation {
 }

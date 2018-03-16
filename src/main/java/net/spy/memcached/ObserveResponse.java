@@ -30,27 +30,35 @@ public enum ObserveResponse {
   /**
    * Response indicating the key was uninitialized.
    */
-  UNINITIALIZED,
+  UNINITIALIZED((byte) 0xff),
   /**
    * Response indicating the key was modified.
    */
-  MODIFIED,
+  MODIFIED((byte) 0xfe),
   /**
    * Response indicating the key was persisted.
    */
-  FOUND_PERSISTED,
+  FOUND_PERSISTED((byte) 0x01),
   /**
    * Response indicating the key was found but not persisted.
    */
-  FOUND_NOT_PERSISTED,
+  FOUND_NOT_PERSISTED((byte) 0x00),
   /**
    * Response indicating the key was not found and persisted, as in
    * the case of deletes - a real delete.
    */
-  NOT_FOUND_PERSISTED,
+  NOT_FOUND_PERSISTED((byte) 0x80),
   /**
    * Response indicating the key was not found and not
    * persisted, as in the case of deletes - a logical delete.
    */
-  NOT_FOUND_NOT_PERSISTED
+  NOT_FOUND_NOT_PERSISTED((byte) 0x11);
+
+  private final byte value;
+
+
+  ObserveResponse(byte b) {
+    value = b;
+  }
+
 }

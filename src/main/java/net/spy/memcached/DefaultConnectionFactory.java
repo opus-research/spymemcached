@@ -116,16 +116,17 @@ public class DefaultConnectionFactory extends SpyObject implements
    */
   public static final MetricType DEFAULT_METRIC_TYPE = MetricType.OFF;
 
+  /**
+   * The ExecutorService in which the listener callbacks will be executed.
+   */
+  public static final ExecutorService DEFAULT_LISTENER_EXECUTOR_SERVICE =
+    Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
   protected final int opQueueLen;
   private final int readBufSize;
   private final HashAlgorithm hashAlg;
 
   private MetricCollector metrics;
-
-  /**
-   * The ExecutorService in which the listener callbacks will be executed.
-   */
-  private ExecutorService executorService;
 
   /**
    * Construct a DefaultConnectionFactory with the given parameters.
@@ -256,14 +257,8 @@ public class DefaultConnectionFactory extends SpyObject implements
     return DEFAULT_OP_QUEUE_MAX_BLOCK_TIME;
   }
 
-
-  @Override
   public ExecutorService getListenerExecutorService() {
-    if (executorService == null) {
-      executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    }
-
-    return executorService;
+    return DEFAULT_LISTENER_EXECUTOR_SERVICE;
   }
 
   /*

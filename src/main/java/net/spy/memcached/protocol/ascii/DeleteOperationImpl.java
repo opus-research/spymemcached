@@ -31,7 +31,6 @@ import net.spy.memcached.ops.DeleteOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.ops.StatusCode;
 
 /**
  * Operation to delete an item from the cache.
@@ -42,9 +41,9 @@ final class DeleteOperationImpl extends OperationImpl implements
   private static final int OVERHEAD = 32;
 
   private static final OperationStatus DELETED = new OperationStatus(true,
-      "DELETED", StatusCode.SUCCESS);
+      "DELETED");
   private static final OperationStatus NOT_FOUND = new OperationStatus(false,
-      "NOT_FOUND", StatusCode.ERR_NOT_FOUND);
+      "NOT_FOUND");
 
   private final String key;
 

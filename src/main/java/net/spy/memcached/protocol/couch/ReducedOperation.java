@@ -34,6 +34,6 @@ public interface ReducedOperation {
    * A ReducedCallback.
    */
   interface ReducedCallback extends OperationCallback {
-    void gotData(ViewResponse response);
+    void gotData(ViewResponseReduced response);
   }
 }

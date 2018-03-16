@@ -40,6 +40,4 @@ public interface MembaseClientIF extends MemcachedClientIF {
   <T> CASValue<T> getAndLock(String key, int exp, Transcoder<T> tc);
 
   CASValue<Object> getAndLock(String key, int exp);
-
-  int getNumVBuckets();
 }

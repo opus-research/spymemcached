@@ -29,7 +29,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	private OperationException exception = null;
 	protected OperationCallback callback = null;
 	private volatile MemcachedNode handlingNode = null;
-        private boolean timedout;
+	private boolean timedout;
 	private long creationTime;
 
 	public BaseOperationImpl() {
@@ -106,10 +106,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 		if(state == OperationState.COMPLETE) {
 			callback.complete();
 		}
-		if(state == OperationState.TIMEDOUT) {
-			cmd = null;
-			callback.complete();
-		}
 	}
 
 	public final void writeComplete() {
@@ -153,8 +149,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 
         @Override
         public void timeOut() {
-	    assert (state != OperationState.READING || state != OperationState.COMPLETE);
-	    this.transitionState(OperationState.TIMEDOUT);
             timedout = true;
         }
 
@@ -164,12 +158,10 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
         }
 
 	@Override
-	public boolean isTimedOut(long ttl) {
+	public boolean isTimedOut(long ttlMillis) {
 		long elapsed = System.nanoTime();
-		long ttlNanos = ttl * 1000 * 1000; /* ttl supplied is millis */
+		long ttlNanos = ttlMillis * 1000 * 1000;
 		if (elapsed - creationTime > ttlNanos) {
-			assert (state != OperationState.READING || state != OperationState.COMPLETE);
-			this.transitionState(OperationState.TIMEDOUT);
 			timedout = true;
 		} else {
 			// timedout would be false, but we cannot allow you to untimeout an operation

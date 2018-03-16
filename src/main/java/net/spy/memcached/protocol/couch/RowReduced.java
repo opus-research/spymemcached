@@ -1,8 +1,8 @@
 package net.spy.memcached.protocol.couch;
 
-public class RowReduced {
-	private String key;
-	private String value;
+public class RowReduced implements ViewRow {
+	private final String key;
+	private final String value;
 
 	public RowReduced(String key, String value) {
 		// The key can be the string "null" so convert it to null
@@ -19,11 +19,23 @@ public class RowReduced {
 		}
 	}
 
+  @Override
+  public String getId() {
+    throw new UnsupportedOperationException("Reduced views don't contain document id's");
+  }
+
+  @Override
 	public String getKey() {
 		return key;
 	}
 
+  @Override
 	public String getValue() {
 		return value;
 	}
+
+  @Override
+  public String getDocument() {
+    throw new UnsupportedOperationException("Reduced views don't contain documents");
+  }
 }

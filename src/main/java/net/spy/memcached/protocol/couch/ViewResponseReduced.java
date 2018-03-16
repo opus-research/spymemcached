@@ -3,12 +3,12 @@ package net.spy.memcached.protocol.couch;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class ViewResponseReduced implements ViewResponse<RowReduced> {
+public class ViewResponseReduced implements ViewResponse {
 
-	final Collection<RowReduced> rows;
+	final Collection<ViewRow> rows;
 	final Collection<RowError> errors;
 
-	public ViewResponseReduced(final Collection<RowReduced> r,
+	public ViewResponseReduced(final Collection<ViewRow> r,
 			final Collection<RowError> e) {
 		rows = r;
 		errors = e;
@@ -23,14 +23,14 @@ public class ViewResponseReduced implements ViewResponse<RowReduced> {
 	}
 
 	@Override
-	public Iterator<RowReduced> iterator() {
+	public Iterator<ViewRow> iterator() {
 		return rows.iterator();
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder s = new StringBuilder();
-		for (RowReduced r : rows) {
+		for (ViewRow r : rows) {
 			s.append(r.getKey() + " : " + r.getValue() + "\n");
 		}
 		return s.toString();

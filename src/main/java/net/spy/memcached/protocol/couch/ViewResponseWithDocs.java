@@ -9,20 +9,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
+public class ViewResponseWithDocs implements ViewResponse,
 		Map<String, Object> {
 
 	final Map<String, Object> map;
-	final Collection<RowWithDocs> rows;
+	final Collection<ViewRow> rows;
 	final Collection<RowError> errors;
 
-	public ViewResponseWithDocs(final Collection<RowWithDocs> r,
+	public ViewResponseWithDocs(final Collection<ViewRow> r,
 			final Collection<RowError> e) {
 		map = new HashMap<String, Object>();
 		rows = r;
 		errors = e;
-		for (RowWithDocs row : rows) {
-			map.put(row.getId(), row.getDoc());
+		for (ViewRow row : rows) {
+			map.put(row.getId(), row.getDocument());
 		}
 	}
 
@@ -35,14 +35,14 @@ public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
 	}
 
 	@Override
-	public Iterator<RowWithDocs> iterator() {
+	public Iterator<ViewRow> iterator() {
 		return rows.iterator();
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder s = new StringBuilder();
-		for (RowWithDocs r : rows) {
+		for (ViewRow r : rows) {
 			s.append(r.getId() + " : " + r.getKey() + " : " + r.getValue()
 					+ " : " + r.getDoc() + "\n");
 		}
@@ -67,7 +67,7 @@ public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
 	@Override
 	public Set<Entry<String, Object>> entrySet() {
 		Set<Entry<String, Object>> set = new HashSet<Entry<String, Object>>();
-		for (RowWithDocs r : rows) {
+		for (ViewRow r : rows) {
 			set.add(new ViewResponseEntry<String, Object>(r.getId(), map.get(r
 					.getId())));
 		}
@@ -87,7 +87,7 @@ public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
 	@Override
 	public Set<String> keySet() {
 		Set<String> set = new TreeSet<String>();
-		for (RowWithDocs r : rows) {
+		for (ViewRow r : rows) {
 			set.add(r.getId());
 		}
 		return null;
@@ -118,8 +118,8 @@ public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
 	@Override
 	public Collection<Object> values() {
 		Collection<Object> values = new LinkedList<Object>();
-		for (RowWithDocs r : rows) {
-			values.add(r.getDoc());
+		for (ViewRow r : rows) {
+			values.add(r.getDocument());
 		}
 		return values;
 	}

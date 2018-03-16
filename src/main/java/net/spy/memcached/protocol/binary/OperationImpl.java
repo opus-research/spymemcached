@@ -30,7 +30,6 @@ abstract class OperationImpl extends BaseOperationImpl {
 	protected static final int ERR_EXISTS = 2;
 	protected static final int ERR_EINVAL = 4;
 	protected static final int ERR_NOT_STORED = 5;
-    protected static final int ERR_NOT_MY_VBUCKET = 7;
 
 	protected static final OperationStatus NOT_FOUND_STATUS =
 		new CASOperationStatus(false, "Not Found", CASResponse.NOT_FOUND);
@@ -38,8 +37,6 @@ abstract class OperationImpl extends BaseOperationImpl {
 		new CASOperationStatus(false, "Object exists", CASResponse.EXISTS);
 	protected static final OperationStatus NOT_STORED_STATUS =
 		new CASOperationStatus(false, "Not Stored", CASResponse.NOT_FOUND);
-    protected static final OperationStatus NOT_MY_VBUCKET_STATUS =
-        new OperationStatus(false, "Not my vbucket");
 
 	protected static final byte[] EMPTY_BYTES = new byte[0];
 
@@ -148,9 +145,6 @@ abstract class OperationImpl extends BaseOperationImpl {
 			OperationStatus status=getStatusForErrorCode(errorCode, pl);
 			if(status == null) {
 				handleError(OperationErrorType.SERVER, new String(pl));
-			} else if (status == NOT_MY_VBUCKET_STATUS && !getState().equals(OperationState.COMPLETE)) {
-                transitionState(OperationState.RETRY);
-                //errorCode = 0;
 			} else {
 				getCallback().receivedStatus(status);
 				transitionState(OperationState.COMPLETE);
@@ -168,10 +162,6 @@ abstract class OperationImpl extends BaseOperationImpl {
 	 * @return the status to return, or null if this is an exceptional case
 	 */
 	protected OperationStatus getStatusForErrorCode(int errCode, byte[] errPl) {
-        if (errCode == ERR_NOT_MY_VBUCKET) {
-            getLogger().warn("Not_my_vbucket on operation " + this);
-            return NOT_MY_VBUCKET_STATUS;
-        }
 		return null;
 	}
 
@@ -265,7 +255,7 @@ abstract class OperationImpl extends BaseOperationImpl {
 		bb.putShort((short)keyBytes.length);
 		bb.put((byte)extraLen);
 		bb.put((byte)0); // data type
-		bb.putShort((short) this.vbucket); // reserved
+		bb.putShort((short)0); // reserved
 		bb.putInt(keyBytes.length + val.length + extraLen);
 		bb.putInt(opaque);
 		bb.putLong(cas);

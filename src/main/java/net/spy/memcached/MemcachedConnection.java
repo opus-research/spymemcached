@@ -256,7 +256,7 @@ public class MemcachedConnection extends SpyThread {
     if (!shutDown && !reconnectQueue.isEmpty()) {
       attemptReconnects();
     }
-    // rehash operations that in retry state
+    // rehash any operations that are in retry state
     redistributeOperations(retryOps);
     retryOps.clear();
 
@@ -468,7 +468,7 @@ public class MemcachedConnection extends SpyThread {
             assert op == currentOp : "Expected to pop " + currentOp + " got "
                 + op;
           } else if (currentOp.getState() == OperationState.RETRY) {
-            getLogger().warn("Reschedule read op due to NOT_MY_VBUCKET error: "
+            getLogger().debug("Reschedule read op due to NOT_MY_VBUCKET error: "
                 + "%s ", currentOp);
             ((VBucketAware) currentOp).addNotMyVbucketNode(
                 currentOp.getHandlingNode());
@@ -501,7 +501,7 @@ public class MemcachedConnection extends SpyThread {
     return sb.toString();
   }
 
-  private void queueReconnect(MemcachedNode qa) {
+  protected void queueReconnect(MemcachedNode qa) {
     if (!shutDown) {
       getLogger().warn("Closing, and reopening %s, attempt %d.", qa,
           qa.getReconnectCount());

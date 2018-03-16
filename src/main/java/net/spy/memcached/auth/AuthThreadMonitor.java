@@ -36,7 +36,7 @@ import net.spy.memcached.compat.SpyObject;
  */
 public class AuthThreadMonitor extends SpyObject {
 
-  private final Map<Object, AuthThread> nodeMap;
+  private Map<Object, AuthThread> nodeMap;
 
   public AuthThreadMonitor() {
     nodeMap = new HashMap<Object, AuthThread>();
@@ -62,22 +62,21 @@ public class AuthThreadMonitor extends SpyObject {
         new AuthThread(conn, opFact, authDescriptor, node);
     nodeMap.put(node, newSASLAuthenticator);
   }
-
+  
   /**
-   * Interrupt all pending {@link AuthThread}s.
-   *
-   * While shutting down a connection, if there are any {@link AuthThread}s
-   * running, terminate them so that the java process can exit gracefully (
-   * otherwise it will wait infinitely).
+   * While shutting down a connection if there are any AuthThread running
+   * terminate it so that the java process can exit gracefully. Otherwise
+   * the java process goes on infinite wait.
    */
+  
   public synchronized void interruptAllPendingAuth(){
-    for (AuthThread toStop : nodeMap.values()) {
-      if (toStop.isAlive()) {
-        getLogger().warn("Connection shutdown in progress - interrupting "
-          + "waiting authentication thread.");
-        toStop.interrupt();
-      }
-    }
+	  for (AuthThread toStop : nodeMap.values()) {
+		  if (toStop.isAlive()) {
+			  getLogger().warn(
+					  "Connection shutdown in progress - interrupting incomplete authentication" + toStop);
+			  toStop.interrupt();
+		  }
+	  }
   }
 
   private void interruptOldAuth(MemcachedNode nodeToStop) {

@@ -14,7 +14,7 @@ class GetOperationImpl extends OperationImpl
 	implements GetOperation, GetsOperation, GetlOperation,
 	GetAndTouchOperation {
 
-	static final int GET_CMD=0;
+	static final int GET_CMD=0x00;
 	static final int GETL_CMD=0x94;
 	static final int GAT_CMD=0x1d;
 
@@ -25,34 +25,41 @@ class GetOperationImpl extends OperationImpl
 
 	private final String key;
 	private final int exp;
+	private final int cmd;
 
 	public GetOperationImpl(String k, GetOperation.Callback cb) {
 		super(GET_CMD, generateOpaque(), cb);
 		key=k;
 		exp=0;
+		cmd=GET_CMD;
 	}
 
 	public GetOperationImpl(String k, GetsOperation.Callback cb) {
 		super(GET_CMD, generateOpaque(), cb);
 		key=k;
 		exp=0;
+		cmd=GET_CMD;
 	}
 
 	public GetOperationImpl(String k, int e, GetlOperation.Callback cb) {
 		super(GETL_CMD, generateOpaque(), cb);
 		key=k;
 		exp=e;
+		cmd=GETL_CMD;
 	}
 
 	public GetOperationImpl(String k, int e, GetAndTouchOperation.Callback cb) {
 		super(GAT_CMD, generateOpaque(), cb);
 		key=k;
 		exp=e;
+		cmd=GAT_CMD;
 	}
 
 	@Override
 	public void initialize() {
-		if (exp > 0) {
+		if (cmd == GETL_CMD) {
+			prepareBuffer(key, 0, EMPTY_BYTES, 0, exp);
+		} else if (cmd == GAT_CMD) {
 			prepareBuffer(key, 0, EMPTY_BYTES, exp);
 		} else {
 			prepareBuffer(key, 0, EMPTY_BYTES);

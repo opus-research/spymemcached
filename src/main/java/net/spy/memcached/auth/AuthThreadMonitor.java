@@ -62,21 +62,20 @@ public class AuthThreadMonitor extends SpyObject {
         new AuthThread(conn, opFact, authDescriptor, node);
     nodeMap.put(node, newSASLAuthenticator);
   }
-  
+
   /**
    * While shutting down a connection if there are any AuthThread running
    * terminate it so that the java process can exit gracefully. Otherwise
    * the java process goes on infinite wait.
    */
-  
   public synchronized void interruptAllPendingAuth(){
-	  for (AuthThread toStop : nodeMap.values()) {
-		  if (toStop.isAlive()) {
-			  getLogger().warn(
-					  "Connection shutdown in progress - interrupting incomplete authentication" + toStop);
-			  toStop.interrupt();
-		  }
-	  }
+    for (AuthThread toStop : nodeMap.values()) {
+      if (toStop.isAlive()) {
+        getLogger().warn(
+            "Connection shutdown in progress - interrupting incomplete authentication" + toStop);
+        toStop.interrupt();
+      }
+    }
   }
 
   private void interruptOldAuth(MemcachedNode nodeToStop) {

@@ -25,7 +25,7 @@ public interface ConnectionFactory {
 	 * @return a new MemcachedConnection connected to those addresses
 	 * @throws IOException for problems initializing the memcached connections
 	 */
-	MemcachedConnection createConnection(List<InetSocketAddress> addrs)
+	MemcachedConnection createMemcachedConnection(List<InetSocketAddress> addrs)
 		throws IOException;
 
 	/**

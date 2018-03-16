@@ -186,7 +186,7 @@ public class MemcachedClient extends SpyThread
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();
 		assert opFact != null : "Connection factory failed to make op factory";
-		mconn=cf.createConnection(addrs);
+		mconn=cf.createMemcachedConnection(addrs);
 		assert mconn != null : "Connection factory failed to make a connection";
 		operationTimeout = cf.getOperationTimeout();
 		authDescriptor = cf.getAuthDescriptor();
@@ -296,7 +296,7 @@ public class MemcachedClient extends SpyThread
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();
 		assert opFact != null : "Connection factory failed to make op factory";
-		mconn=cf.createConnection(addrs);
+		mconn=cf.createMemcachedConnection(addrs);
 		assert mconn != null : "Connection factory failed to make a connection";
 		operationTimeout = cf.getOperationTimeout();
 		authDescriptor = cf.getAuthDescriptor();

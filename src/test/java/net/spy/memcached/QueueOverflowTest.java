@@ -29,9 +29,9 @@ public class QueueOverflowTest extends ClientBaseCase {
 		// functional after such conditions occur.
 		initClient(new DefaultConnectionFactory(5, 1024) {
 			@Override
-			public MemcachedConnection createConnection(
+			public MemcachedConnection createMemcachedConnection(
 					List<InetSocketAddress> addrs) throws IOException {
-				MemcachedConnection rv = super.createConnection(addrs);
+				MemcachedConnection rv = super.createMemcachedConnection(addrs);
 				return rv;
 			}
 			@Override

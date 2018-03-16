@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,51 +20,64 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached;
+package net.spy.memcached.vbucket.config;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
-import net.spy.memcached.vbucket.config.Config;
-
 /**
- * Interface for locating a node by hash value.
+ * A ConfigDifference.
  */
-public interface NodeLocator {
+public class ConfigDifference {
 
   /**
-   * Get the primary location for the given key.
-   *
-   * @param k the object key
-   * @return the QueueAttachment containing the primary storage for a key
+   * List of server names that were added.
    */
-  MemcachedNode getPrimary(String k);
+  private List<String> serversAdded;
 
   /**
-   * Get an iterator over the sequence of nodes that make up the backup
-   * locations for a given key.
-   *
-   * @param k the object key
-   * @return the sequence of backup nodes.
+   * List of server names that were removed.
    */
-  Iterator<MemcachedNode> getSequence(String k);
+  private List<String> serversRemoved;
 
   /**
-   * Get all memcached nodes. This is useful for broadcasting messages.
+   * Number of vbuckets that changed. -1 if the total number changed.
    */
-  Collection<MemcachedNode> getAll();
+  private int vbucketsChanges;
 
   /**
-   * Create a read-only copy of this NodeLocator.
+   * True if the sequence of servers changed.
    */
-  NodeLocator getReadonlyCopy();
+  private boolean sequenceChanged;
 
-  /**
-   * Update locator status.
-   *
-   * @param nodes New locator nodes.
-   * @param conf Locator configuration.
-   */
-  void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+  public List<String> getServersAdded() {
+    return serversAdded;
+  }
+
+  protected void setServersAdded(List<String> newServersAdded) {
+    this.serversAdded = newServersAdded;
+  }
+
+  public List<String> getServersRemoved() {
+    return serversRemoved;
+  }
+
+  protected void setServersRemoved(List<String> newServersRemoved) {
+    this.serversRemoved = newServersRemoved;
+  }
+
+  public int getVbucketsChanges() {
+    return vbucketsChanges;
+  }
+
+  protected void setVbucketsChanges(int newVbucketsChanges) {
+    this.vbucketsChanges = newVbucketsChanges;
+  }
+
+  public boolean isSequenceChanged() {
+    return sequenceChanged;
+  }
+
+  protected void setSequenceChanged(boolean newSequenceChanged) {
+    this.sequenceChanged = newSequenceChanged;
+  }
 }

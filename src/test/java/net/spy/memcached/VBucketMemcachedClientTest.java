@@ -5,7 +5,6 @@ import junit.framework.TestCase;
 import net.spy.memcached.vbucket.ConfigurationException;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Arrays;
@@ -18,10 +17,10 @@ import java.io.IOException;
  */
 public class VBucketMemcachedClientTest extends TestCase {
     public void testOps() throws Exception {
-        MemcachedClient mc = null;
+        MembaseClient mc = null;
            try {
             URI base = new URI("http://localhost:8091/pools");
-            mc = new MemcachedClient(Arrays.asList(base), "default", "Administrator", "password");
+            mc = new MembaseClient(Arrays.asList(base), "default", "Administrator", "password");
         } catch (IOException ex) {
             Logger.getLogger(VBucketMemcachedClientTest.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ConfigurationException ex) {
@@ -32,7 +31,7 @@ public class VBucketMemcachedClientTest extends TestCase {
 
         Integer i;
         for (i = 0; i < 10000; i++) {
-            Future result = mc.set("test" + i, 0, i.toString());
+            mc.set("test" + i, 0, i.toString());
         }
         mc.set("hello", 0, "world");
         String result = (String) mc.get("hello");

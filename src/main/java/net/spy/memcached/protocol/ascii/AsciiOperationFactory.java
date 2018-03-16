@@ -6,7 +6,6 @@ import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 
-import net.spy.memcached.internal.SyncRequest;
 import net.spy.memcached.ops.BaseOperationFactory;
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.ConcatenationOperation;
@@ -30,7 +29,6 @@ import net.spy.memcached.ops.SASLStepOperation;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.SyncOperation;
 import net.spy.memcached.ops.VersionOperation;
 
 /**
@@ -48,8 +46,8 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 
 	public GetAndTouchOperation getAndTouch(String key, int expiration,
 			GetAndTouchOperation.Callback cb) {
-		throw new UnsupportedOperationException("Get and Touch not supported " +
-				"with ascii protocol");
+		throw new UnsupportedOperationException("Get and touch is not supported " +
+				"for ASCII protocol");
 	}
 
 	public GetOperation get(String key, GetOperation.Callback cb) {
@@ -77,20 +75,14 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 		return new StatsOperationImpl(arg, cb);
 	}
 
-	public SyncOperation sync(Map<SyncRequest, Integer> keys, int replicaCount,
-			boolean persist, boolean mutation, boolean pandm,
-			OperationCallback cb) {
-		throw new UnsupportedOperationException("Sync is not supported in ascii");
-	}
-
 	public StoreOperation store(StoreType storeType, String key, int flags,
 			int exp, byte[] data, OperationCallback cb) {
 		return new StoreOperationImpl(storeType, key, flags, exp, data, cb);
 	}
 
 	public KeyedOperation touch(String key, int expiration, OperationCallback cb) {
-		throw new UnsupportedOperationException("Touch is only supported in" +
-				" the binary protocol");
+		throw new UnsupportedOperationException("Touch is not supported for " +
+				"ASCII protocol");
 	}
 
 	public VersionOperation version(OperationCallback cb) {
@@ -124,18 +116,21 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 	}
 
 	public SASLMechsOperation saslMechs(OperationCallback cb) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("SASL is not supported for " +
+				"ASCII protocol");
 	}
 
 	public SASLStepOperation saslStep(String[] mech, byte[] challenge,
 			String serverName, Map<String, ?> props, CallbackHandler cbh,
 			OperationCallback cb) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("SASL is not supported for " +
+				"ASCII protocol");
 	}
 
 	public SASLAuthOperation saslAuth(String[] mech, String serverName,
 			Map<String, ?> props, CallbackHandler cbh, OperationCallback cb) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("SASL is not supported for " +
+				"ASCII protocol");
 	}
 
 }

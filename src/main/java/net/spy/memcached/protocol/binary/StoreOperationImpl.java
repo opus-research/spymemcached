@@ -1,20 +1,16 @@
 package net.spy.memcached.protocol.binary;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
 
-class StoreOperationImpl extends OperationImpl
+class StoreOperationImpl extends SingleKeyOperationImpl
 	implements StoreOperation, CASOperation {
 
-	private static final int SET=1;
-	private static final int ADD=2;
-	private static final int REPLACE=3;
+	private static final int SET=0x01;
+	private static final int ADD=0x02;
+	private static final int REPLACE=0x03;
 
 	static final int SETQ=0x11;
 	static final int ADDQ=0x12;
@@ -23,7 +19,6 @@ class StoreOperationImpl extends OperationImpl
 	// 4-byte flags, 4-byte expiration
 	static final int EXTRA_LEN = 8;
 
-	private final String key;
 	private final StoreType storeType;
 	private final int flags;
 	private final int exp;
@@ -44,8 +39,7 @@ class StoreOperationImpl extends OperationImpl
 
 	public StoreOperationImpl(StoreType t, String k, int f, int e,
 			byte[] d, long c, OperationCallback cb) {
-		super(cmdMap(t), generateOpaque(), cb);
-		key=k;
+		super(cmdMap(t), generateOpaque(), k, cb);
 		flags=f;
 		exp=e;
 		data=d;
@@ -56,31 +50,6 @@ class StoreOperationImpl extends OperationImpl
 	@Override
 	public void initialize() {
 		prepareBuffer(key, cas, data, flags, exp);
-	}
-
-	@Override
-	protected OperationStatus getStatusForErrorCode(int errCode, byte[] errPl) {
-        OperationStatus baseStatus = super.getStatusForErrorCode(errCode, errPl);
-        if (baseStatus != null) {
-            return baseStatus;
-        }
-		OperationStatus rv=null;
-		switch(errCode) {
-			case ERR_EXISTS:
-				rv=EXISTS_STATUS;
-				break;
-			case ERR_NOT_FOUND:
-				rv=NOT_FOUND_STATUS;
-				break;
-			case ERR_TEMP_FAIL:
-				rv=TEMP_FAIL;
-				break;
-		}
-		return rv;
-	}
-
-	public Collection<String> getKeys() {
-		return Collections.singleton(key);
 	}
 
 	public byte[] getBytes() {

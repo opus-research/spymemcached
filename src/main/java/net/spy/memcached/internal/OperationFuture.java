@@ -8,8 +8,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import net.spy.memcached.MemcachedConnection;
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
+import net.spy.memcached.ops.OperationStatus;
 
 /**
  * Managed future for operations.
@@ -18,23 +20,27 @@ import net.spy.memcached.ops.OperationState;
  *
  * @param <T> Type of object returned from this future.
  */
-public class OperationFuture<T> implements Future<T> {
+public class OperationFuture<T> extends SpyObject implements Future<T> {
 
 	private final CountDownLatch latch;
 	private final AtomicReference<T> objRef;
+	protected OperationStatus status;
 	private final long timeout;
 	private Operation op;
+	private final String key;
 
-	public OperationFuture(CountDownLatch l, long opTimeout) {
-		this(l, new AtomicReference<T>(null), opTimeout);
+	public OperationFuture(String k, CountDownLatch l, long opTimeout) {
+		this(k, l, new AtomicReference<T>(null), opTimeout);
 	}
 
-	public OperationFuture(CountDownLatch l, AtomicReference<T> oref,
+	public OperationFuture(String k, CountDownLatch l, AtomicReference<T> oref,
 		long opTimeout) {
 		super();
 		latch=l;
 		objRef=oref;
+		status = null;
 		timeout = opTimeout;
+		key = k;
 	}
 
 	public boolean cancel(boolean ign) {
@@ -49,6 +55,7 @@ public class OperationFuture<T> implements Future<T> {
 		try {
 			return get(timeout, TimeUnit.MILLISECONDS);
 		} catch (TimeoutException e) {
+			status = new OperationStatus(false, "Timed out");
 			throw new RuntimeException(
 				"Timed out waiting for operation", e);
 		}
@@ -62,6 +69,7 @@ public class OperationFuture<T> implements Future<T> {
 			if (op != null) { // op can be null on a flush
 				op.timeOut();
 			}
+			status = new OperationStatus(false, "Timed out");
 			throw new CheckedOperationTimeoutException(
 					"Timed out waiting for operation", op);
 		} else {
@@ -69,20 +77,41 @@ public class OperationFuture<T> implements Future<T> {
 		    MemcachedConnection.opSucceeded(op);
 		}
 		if(op != null && op.hasErrored()) {
+			status = new OperationStatus(false, op.getException().getMessage());
 			throw new ExecutionException(op.getException());
 		}
 		if(isCancelled()) {
 			throw new ExecutionException(new RuntimeException("Cancelled"));
 		}
                 if(op != null && op.isTimedOut()) {
+						status = new OperationStatus(false, "Timed out");
                         throw new ExecutionException(new CheckedOperationTimeoutException("Operation timed out.", op));
                 }
 
 		return objRef.get();
 	}
 
-	public void set(T o) {
+	public String getKey() {
+		return key;
+	}
+
+	public OperationStatus getStatus() {
+		if (status == null) {
+			try {
+				get();
+			} catch (InterruptedException e) {
+				status = new OperationStatus(false, "Interrupted");
+				Thread.currentThread().isInterrupted();
+			} catch (ExecutionException e) {
+			    getLogger().warn("Error getting status of operation", e);
+			}
+		}
+		return status;
+	}
+
+	public void set(T o, OperationStatus s) {
 		objRef.set(o);
+		status = s;
 	}
 
 	public void setOperation(Operation to) {

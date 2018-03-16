@@ -66,6 +66,15 @@ public interface MemcachedClientIF {
 
 	Future<Object> asyncGet(String key);
 
+	Future<CASValue<Object>> asyncGetAndTouch(final String key, final int exp);
+
+	<T> Future<CASValue<T>> asyncGetAndTouch(final String key, final int exp,
+			final Transcoder<T> tc);
+
+	CASValue<Object> getAndTouch(String key, int exp);
+
+	<T> CASValue<T> getAndTouch(String key, int exp, Transcoder<T> tc);
+
 	<T> Future<CASValue<T>> asyncGets(String key,
 			Transcoder<T> tc);
 
@@ -105,6 +114,11 @@ public interface MemcachedClientIF {
 
 	Map<String, Object> getBulk(String... keys)
 					throws OperationTimeoutException;
+
+	<T> Future<Boolean> touch(final String key, final int exp,
+			final Transcoder<T> tc);
+
+	<T> Future<Boolean> touch(final String key, final int exp);
 
 	Map<SocketAddress, String> getVersions();
 

@@ -421,10 +421,10 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 					assert !channel.isConnected() : "connected";
 				}
 			} else {
-				if(sk.isReadable()) {
+				if(sk.isValid() && sk.isReadable()) {
 					handleReads(sk, qa);
 				}
-				if(sk.isWritable()) {
+				if(sk.isValid() && sk.isWritable()) {
 					handleWrites(sk, qa);
 				}
 			}
@@ -703,10 +703,10 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 			// add the vbucketIndex to the operation
 			if (locator instanceof VBucketNodeLocator) {
 				VBucketNodeLocator vbucketLocator = (VBucketNodeLocator) locator;
-				int vbucketIndex = vbucketLocator.getVBucketIndex(key);
+				short vbucketIndex = (short)vbucketLocator.getVBucketIndex(key);
 				if (o instanceof VBucketAware) {
 					VBucketAware vbucketAwareOp = (VBucketAware) o;
-					vbucketAwareOp.setVBucket(vbucketIndex);
+					vbucketAwareOp.setVBucket(key, vbucketIndex);
 					if (!vbucketAwareOp.getNotMyVbucketNodes().isEmpty()) {
 						MemcachedNode alternative = vbucketLocator.
 						getAlternative(key, vbucketAwareOp.getNotMyVbucketNodes());
@@ -733,7 +733,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		getLogger().debug("Added %s to %s", o, node);
 	}
 
-	public void addOperation(final MemcachedNode node, final Operation o) {
+	private void addOperation(final MemcachedNode node, final Operation o) {
 		o.setHandlingNode(node);
 		o.initialize();
 		node.addOp(o);
@@ -748,6 +748,18 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		for(Map.Entry<MemcachedNode, Operation> me : ops.entrySet()) {
 			final MemcachedNode node=me.getKey();
 			Operation o=me.getValue();
+			// add the vbucketIndex to the operation
+			if (locator instanceof VBucketNodeLocator) {
+				if (o instanceof KeyedOperation && o instanceof VBucketAware) {
+					Collection<String> keys = ((KeyedOperation)o).getKeys();
+					VBucketNodeLocator vbucketLocator = (VBucketNodeLocator) locator;
+					for (String key : keys) {
+						short vbucketIndex = (short)vbucketLocator.getVBucketIndex(key);
+						VBucketAware vbucketAwareOp = (VBucketAware) o;
+						vbucketAwareOp.setVBucket(key, vbucketIndex);
+					}
+				}
+			}
 			o.setHandlingNode(node);
 			o.initialize();
 			node.addOp(o);

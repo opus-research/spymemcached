@@ -73,7 +73,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
       }
     }
     if (rv == null) {
-      rv = new OperationStatus(false, line);
+      rv = new OperationStatus(false, line, null);
     }
     return rv;
   }

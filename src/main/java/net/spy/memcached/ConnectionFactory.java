@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +29,6 @@ import java.nio.channels.SocketChannel;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
 
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.ops.Operation;
@@ -80,12 +78,6 @@ public interface ConnectionFactory {
    * wait to add a new item to a queue.
    */
   long getOpQueueMaxBlockTime();
-
-  /**
-   * Get the ExecutorService which is used to asynchronously execute listeners
-   * on futures.
-   */
-  ExecutorService getListenerExecutorService();
 
   /**
    * Create a NodeLocator instance for the given list of nodes.

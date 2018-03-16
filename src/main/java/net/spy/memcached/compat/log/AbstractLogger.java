@@ -84,7 +84,9 @@ public abstract class AbstractLogger implements Logger {
    * @param exception the exception that caused the message to be generated
    */
   public void debug(Object message, Throwable exception) {
-    log(Level.DEBUG, message, exception);
+    if (isDebugEnabled()) {
+      log(Level.DEBUG, message, exception);
+    }
   }
 
   /**
@@ -105,7 +107,9 @@ public abstract class AbstractLogger implements Logger {
    * @param message the message to log
    */
   public void debug(Object message) {
-    debug(message, null);
+    if (isDebugEnabled()) {
+      debug(message, null);
+    }
   }
 
   /**
@@ -115,7 +119,9 @@ public abstract class AbstractLogger implements Logger {
    * @param exception the exception that caused the message to be generated
    */
   public void info(Object message, Throwable exception) {
-    log(Level.INFO, message, exception);
+    if (isInfoEnabled()) {
+      log(Level.INFO, message, exception);
+    }
   }
 
   /**
@@ -136,7 +142,9 @@ public abstract class AbstractLogger implements Logger {
    * @param message the message to log
    */
   public void info(Object message) {
-    info(message, null);
+    if (isInfoEnabled()) {
+      info(message, null);
+    }
   }
 
   /**

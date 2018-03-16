@@ -119,10 +119,8 @@ public class MemcachedClient extends SpyThread
 
 	private final long operationTimeout;
 
-	private final MemcachedConnection mconn;
+	private final MemcachedConnection conn;
 	final OperationFactory opFact;
-
-	private ConnectionFactory connectionFactory;
 
 	final Transcoder<Object> transcoder;
 
@@ -178,19 +176,18 @@ public class MemcachedClient extends SpyThread
 			throw new IllegalArgumentException(
 				"Operation timeout must be positive.");
 		}
-		connectionFactory = cf;
 		tcService = new TranscodeService(cf.isDaemon());
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();
 		assert opFact != null : "Connection factory failed to make op factory";
-		mconn=cf.createConnection(addrs);
-		assert mconn != null : "Connection factory failed to make a connection";
+		conn=cf.createConnection(addrs);
+		assert conn != null : "Connection factory failed to make a connection";
 		operationTimeout = cf.getOperationTimeout();
 		authDescriptor = cf.getAuthDescriptor();
 		if(authDescriptor != null) {
 			addObserver(this);
 		}
-		setName("Memcached IO over " + mconn);
+		setName("Memcached IO over " + conn);
 		setDaemon(cf.isDaemon());
 		start();
 	}
@@ -301,19 +298,18 @@ public class MemcachedClient extends SpyThread
 			throw new IllegalArgumentException(
 				"Operation timeout must be positive.");
 		}
-		connectionFactory = cf;
 		tcService = new TranscodeService(cf.isDaemon());
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();
 		assert opFact != null : "Connection factory failed to make op factory";
-		mconn=cf.createConnection(addrs);
-		assert mconn != null : "Connection factory failed to make a connection";
+		conn=cf.createConnection(addrs);
+		assert conn != null : "Connection factory failed to make a connection";
 		operationTimeout = cf.getOperationTimeout();
 		authDescriptor = cf.getAuthDescriptor();
 		if(authDescriptor != null) {
 			addObserver(this);
 		}
-		setName("Memcached IO over " + mconn);
+		setName("Memcached IO over " + conn);
 		setDaemon(cf.isDaemon());
 		this.configurationProvider.subscribe(bucketName, this);
 		start();
@@ -346,7 +342,7 @@ public class MemcachedClient extends SpyThread
 	public void reconfigure(Bucket bucket) {
 		reconfiguring = true;
 		try {
-			mconn.reconfigure(bucket);
+			conn.reconfigure(bucket);
 		} catch (IllegalArgumentException ex) {
 			getLogger().warn("Failed to reconfigure client, staying with previous configuration.", ex);
 		} finally {
@@ -367,7 +363,7 @@ public class MemcachedClient extends SpyThread
 	 */
 	public Collection<SocketAddress> getAvailableServers() {
 		ArrayList<SocketAddress> rv=new ArrayList<SocketAddress>();
-		for(MemcachedNode node : mconn.getLocator().getAll()) {
+		for(MemcachedNode node : conn.getLocator().getAll()) {
 			if(node.isActive()) {
 				rv.add(node.getSocketAddress());
 			}
@@ -388,7 +384,7 @@ public class MemcachedClient extends SpyThread
 	 */
 	public Collection<SocketAddress> getUnavailableServers() {
 		ArrayList<SocketAddress> rv=new ArrayList<SocketAddress>();
-		for(MemcachedNode node : mconn.getLocator().getAll()) {
+		for(MemcachedNode node : conn.getLocator().getAll()) {
 			if(!node.isActive()) {
 				rv.add(node.getSocketAddress());
 			}
@@ -402,7 +398,7 @@ public class MemcachedClient extends SpyThread
 	 * @return this instance's NodeLocator
 	 */
 	public NodeLocator getNodeLocator() {
-		return mconn.getLocator().getReadonlyCopy();
+		return conn.getLocator().getReadonlyCopy();
 	}
 
 	/**
@@ -451,12 +447,12 @@ public class MemcachedClient extends SpyThread
 	Operation addOp(final String key, final Operation op) {
 		validateKey(key);
 		checkState();
-		mconn.addOperation(key, op);
+		conn.addOperation(key, op);
 		return op;
 	}
 
 	CountDownLatch broadcastOp(final BroadcastOpFactory of) {
-		return broadcastOp(of, mconn.getLocator().getAll(), true);
+		return broadcastOp(of, conn.getLocator().getAll(), true);
 	}
 
 	CountDownLatch broadcastOp(final BroadcastOpFactory of,
@@ -470,7 +466,7 @@ public class MemcachedClient extends SpyThread
 		if(checkShuttingDown && shuttingDown) {
 			throw new IllegalStateException("Shutting down");
 		}
-		return mconn.broadcastOperation(of, nodes);
+		return conn.broadcastOperation(of, nodes);
 	}
 
 	private <T> OperationFuture<Boolean> asyncStore(StoreType storeType, String key,
@@ -1279,7 +1275,7 @@ public class MemcachedClient extends SpyThread
 		// Break the gets down into groups by key
 		final Map<MemcachedNode, Collection<String>> chunks
 			=new HashMap<MemcachedNode, Collection<String>>();
-		final NodeLocator locator=mconn.getLocator();
+		final NodeLocator locator=conn.getLocator();
 		Iterator<String> key_iter=keys.iterator();
 		while (key_iter.hasNext() && tc_iter.hasNext()) {
 			String key=key_iter.next();
@@ -1345,7 +1341,7 @@ public class MemcachedClient extends SpyThread
 		}
 		assert mops.size() == chunks.size();
 		checkState();
-		mconn.addOperations(mops);
+		conn.addOperations(mops);
 		return rv;
 	}
 
@@ -2031,7 +2027,7 @@ public class MemcachedClient extends SpyThread
 		while(running) {
             if (!reconfiguring) {
                 try {
-                    mconn.handleIO();
+                    conn.handleIO();
                 } catch (IOException e) {
                     logRunException(e);
                 } catch (CancelledKeyException e) {
@@ -2081,7 +2077,7 @@ public class MemcachedClient extends SpyThread
 			try {
 				setName(baseName + " - SHUTTING DOWN (telling client)");
 				running=false;
-				mconn.shutdown();
+				conn.shutdown();
 				setName(baseName + " - SHUTTING DOWN (informed client)");
 				tcService.shutdown();
                 if (configurationProvider != null) {
@@ -2117,7 +2113,7 @@ public class MemcachedClient extends SpyThread
 								// necessary to complete the interface
 							}
 						});
-			}}, mconn.getLocator().getAll(), false);
+			}}, conn.getLocator().getAll(), false);
 		try {
 			// XXX:  Perhaps IllegalStateException should be caught here
 			// and the check retried.
@@ -2137,9 +2133,9 @@ public class MemcachedClient extends SpyThread
 	 * @return true if the observer was added.
 	 */
 	public boolean addObserver(ConnectionObserver obs) {
-		boolean rv = mconn.addObserver(obs);
+		boolean rv = conn.addObserver(obs);
 		if(rv) {
-			for(MemcachedNode node : mconn.getLocator().getAll()) {
+			for(MemcachedNode node : conn.getLocator().getAll()) {
 				if(node.isActive()) {
 					obs.connectionEstablished(node.getSocketAddress(), -1);
 				}
@@ -2155,7 +2151,7 @@ public class MemcachedClient extends SpyThread
 	 * @return true if the observer existed, but no longer does
 	 */
 	public boolean removeObserver(ConnectionObserver obs) {
-		return mconn.removeObserver(obs);
+		return conn.removeObserver(obs);
 	}
 
 	public void connectionEstablished(SocketAddress sa, int reconnectCount) {
@@ -2163,13 +2159,13 @@ public class MemcachedClient extends SpyThread
                     if (authDescriptor.authThresholdReached()) {
                         this.shutdown();
                     }
-			authMonitor.authConnection(mconn, opFact, authDescriptor, findNode(sa));
+			authMonitor.authConnection(conn, opFact, authDescriptor, findNode(sa));
 		}
 	}
 
 	private MemcachedNode findNode(SocketAddress sa) {
 		MemcachedNode node = null;
-		for(MemcachedNode n : mconn.getLocator().getAll()) {
+		for(MemcachedNode n : conn.getLocator().getAll()) {
 			if(n.getSocketAddress().equals(sa)) {
 				node = n;
 			}

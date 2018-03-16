@@ -629,11 +629,11 @@ public class MemcachedConnection extends SpyThread {
   /**
    * Get the node locator used by this connection.
    */
-  public NodeLocator getLocator() {
+  NodeLocator getLocator() {
     return locator;
   }
 
-  public void enqueueOperation(final String key, final Operation o) {
+  public void enqueueOperation(String key, Operation o) {
     StringUtils.validateKey(key);
     checkState();
     addOperation(key, o);

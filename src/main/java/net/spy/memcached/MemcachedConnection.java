@@ -435,7 +435,7 @@ public class MemcachedConnection extends SpyThread {
     }
     ByteBuffer rbuf = qa.getRbuf();
     final SocketChannel channel = qa.getChannel();
-    int read = (channel != null? channel.read(rbuf) : 0);
+    int read = channel.read(rbuf);
     if (read < 0) {
       if (currentOp instanceof TapOperation) {
         // If were doing tap then we won't throw an exception
@@ -505,11 +505,6 @@ public class MemcachedConnection extends SpyThread {
     if (!shutDown) {
       getLogger().warn("Closing, and reopening %s, attempt %d.", qa,
           qa.getReconnectCount());
-      try {
-        qa.getChannel().socket().close();
-      } catch (IOException e) {
-        getLogger().warn("IOException trying to close a socket", e);
-      }
       if (qa.getSk() != null) {
         qa.getSk().cancel();
         assert !qa.getSk().isValid() : "Cancelled selection key is valid";

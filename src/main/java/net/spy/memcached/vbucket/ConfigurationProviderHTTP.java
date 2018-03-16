@@ -72,9 +72,7 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
      * @param bucketToFind
      * @throws ConfigurationException
      */
-    private void readPools(String bucketToFind) throws ConfigurationException {
-	// the intent with this method is to encapsulate all of the walking of URIs
-	// and populating an internal object model of the configuration to one place
+    private void readPools(final String bucketToFind) throws ConfigurationException {
         for (URI baseUri : baseList) {
             try {
                 // get and parse the response from the current base uri
@@ -107,7 +105,6 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
                 for (Pool pool : pools.values()) {
                     if (pool.hasBucket(bucketToFind)) {
                         bucketFound = true;
-			break;
                     }
                 }
                 if (bucketFound) {
@@ -133,12 +130,12 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
         List<String> servers = bucket.getVbuckets().getServers();
         StringBuilder serversString = new StringBuilder();
         for (String server : servers) {
-            serversString.append(server).append(' ');
+            serversString.append(server).append(" ");
         }
         return AddrUtil.getAddresses(serversString.toString());
     }
 
-    public void subscribe(String bucketName, Reconfigurable rec) throws ConfigurationException {
+    public void subscribe(final String bucketName, final Reconfigurable rec) throws ConfigurationException {
 
         Bucket bucket = getBucketConfiguration(bucketName);
 
@@ -205,31 +202,27 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
     }
 
     private String readToString(URLConnection connection) throws IOException {
-	BufferedReader reader = null;
-	try {
-		InputStream inStream = connection.getInputStream();
-		if (connection instanceof java.net.HttpURLConnection) {
-			HttpURLConnection httpConnection = (HttpURLConnection) connection;
-			if (httpConnection.getResponseCode() == 403) {
-				throw new IOException("Service does not accept the authentication credentials: "
-					+ httpConnection.getResponseCode() + httpConnection.getResponseMessage());
-			} else if (httpConnection.getResponseCode() >= 400) {
-				throw new IOException("Service responded with a failure code: "
-					+ httpConnection.getResponseCode() + httpConnection.getResponseMessage());
-			}
-		} else {
-			throw new IOException("Unexpected URI type encountered");
-		}
-		reader = new BufferedReader(new InputStreamReader(inStream));
-		String str;
-		StringBuilder buffer = new StringBuilder();
-		while ((str = reader.readLine()) != null) {
-			buffer.append(str);
-		}
-		return buffer.toString();
-	    } finally {
-	    reader.close();
-	}
+        InputStream inStream = connection.getInputStream();
+        if (connection instanceof java.net.HttpURLConnection) {
+            HttpURLConnection httpConnection = (HttpURLConnection) connection;
+            if (httpConnection.getResponseCode() == 403) {
+                throw new IOException("Service does not accept the authentication credentials: "
+                        + httpConnection.getResponseCode() + httpConnection.getResponseMessage());
+            } else if (httpConnection.getResponseCode() >= 400) {
+                throw new IOException("Service responded with a failure code: "
+                        + httpConnection.getResponseCode() + httpConnection.getResponseMessage());
+            }
+        } else {
+            throw new IOException("Unexpected URI type encountered");
+        }
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inStream));
+        String str;
+        StringBuilder buffer = new StringBuilder();
+        while ((str = reader.readLine()) != null) {
+            buffer.append(str);
+        }
+        reader.close();
+        return buffer.toString();
     }
 
 }

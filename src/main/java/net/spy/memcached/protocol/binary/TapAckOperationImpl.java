@@ -65,6 +65,12 @@ public class TapAckOperationImpl extends TapOperationImpl {
 
   @Override
   public String toString() {
-    return "Cmd: tap ack Opcode: " + opcode + " Opaque: " + opaque;
+    StringBuilder sb = new StringBuilder();
+    sb.append(" Cmd: tap ack ");
+    sb.append(" Opcode: ");
+    sb.append(opcode);
+    sb.append(" Opaque: ");
+    sb.append(opaque);
+    return sb.toString();
   }
 }

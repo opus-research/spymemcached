@@ -81,6 +81,12 @@ class ConcatenationOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   public String toString() {
-    return super.toString() + " Cas: " + cas + " Data Length: " + data.length;
+    StringBuilder sb = new StringBuilder();
+    sb.append(super.toString());
+    sb.append(" Cas: ");
+    sb.append(cas);
+    sb.append(" Data: ");
+    sb.append(new String(data));
+    return sb.toString();
   }
 }

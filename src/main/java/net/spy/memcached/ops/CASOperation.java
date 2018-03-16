@@ -55,5 +55,5 @@ public interface CASOperation extends KeyedOperation {
    * <em>must not</em> be modified.
    * </p>
    */
-  byte[] getData();
+  byte[] getBytes();
 }

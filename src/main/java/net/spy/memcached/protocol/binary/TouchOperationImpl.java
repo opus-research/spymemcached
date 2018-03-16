@@ -46,6 +46,9 @@ public class TouchOperationImpl extends SingleKeyOperationImpl {
 
   @Override
   public String toString() {
-    return super.toString() + " Exp: " + exp;
+    StringBuilder sb = new StringBuilder();
+    sb.append(" Exp: ");
+    sb.append(exp);
+    return sb.toString();
   }
 }

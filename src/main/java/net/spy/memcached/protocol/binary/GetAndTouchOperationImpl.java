@@ -64,6 +64,10 @@ public class GetAndTouchOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   public String toString() {
-    return super.toString() + " Exp: " + exp;
+    StringBuilder sb = new StringBuilder();
+    sb.append(super.toString());
+    sb.append(" Exp: ");
+    sb.append(exp);
+    return sb.toString();
   }
 }

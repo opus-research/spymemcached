@@ -35,7 +35,6 @@ import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.util.StringUtils;
 
 /**
  * Base class for get and gets handlers.
@@ -219,7 +218,19 @@ abstract class BaseGetOpImpl extends OperationImpl {
 
   @Override
   public String toString() {
-    return "Cmd: " + cmd + " Keys: " + StringUtils.join(keys, " ") + "Exp: "
-      + exp;
+    StringBuilder sb = new StringBuilder();
+    sb.append("Cmd: ");
+    sb.append(cmd);
+    sb.append(" Keys: ");
+    for (String key : keys) {
+      sb.append(key);
+      sb.append(" ");
+    }
+    if (hasExp) {
+      sb.append("Exp: ");
+      sb.append(exp);
+      sb.append(" ");
+    }
+    return sb.toString();
   }
 }

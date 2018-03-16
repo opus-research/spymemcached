@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached.protocol.couch;
 
 import java.io.IOException;
@@ -14,100 +20,103 @@ import org.apache.http.util.EntityUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
+/**
+ * An HttpOperationImpl.
+ */
 public abstract class HttpOperationImpl implements HttpOperation {
 
-	private final HttpRequest request;
-	protected final OperationCallback callback;
-	protected OperationException exception;
-	private boolean cancelled;
-	private boolean errored;
-	private boolean timedOut;
+  private final HttpRequest request;
+  protected final OperationCallback callback;
+  protected OperationException exception;
+  private boolean cancelled;
+  private boolean errored;
+  private boolean timedOut;
 
-	public HttpOperationImpl(HttpRequest r, OperationCallback cb) {
-		request = r;
-		callback = cb;
-		exception = null;
-		cancelled = false;
-		errored = false;
-		timedOut = false;
-	}
+  public HttpOperationImpl(HttpRequest r, OperationCallback cb) {
+    request = r;
+    callback = cb;
+    exception = null;
+    cancelled = false;
+    errored = false;
+    timedOut = false;
+  }
 
-	public HttpRequest getRequest() {
-		return request;
-	}
+  public HttpRequest getRequest() {
+    return request;
+  }
 
-	public OperationCallback getCallback() {
-		return callback;
-	}
+  public OperationCallback getCallback() {
+    return callback;
+  }
 
-	public boolean isCancelled() {
-		return cancelled;
-	}
+  public boolean isCancelled() {
+    return cancelled;
+  }
 
-	public boolean hasErrored() {
-		return errored;
-	}
+  public boolean hasErrored() {
+    return errored;
+  }
 
-	public boolean isTimedOut() {
-		return timedOut;
-	}
+  public boolean isTimedOut() {
+    return timedOut;
+  }
 
-	public void cancel() {
-		cancelled = true;
-	}
+  public void cancel() {
+    cancelled = true;
+  }
 
-	public void timeOut() {
-		timedOut = true;
-	}
+  public void timeOut() {
+    timedOut = true;
+  }
 
-	public OperationException getException() {
-		return exception;
-	}
+  public OperationException getException() {
+    return exception;
+  }
 
-	public abstract void handleResponse(HttpResponse response);
+  public abstract void handleResponse(HttpResponse response);
 
-	protected String getEntityString(HttpResponse response) {
-		if (!isTimedOut() && !hasErrored() && !isCancelled()) {
-			try {
-				return EntityUtils.toString(response.getEntity());
-			} catch (ParseException e) {
-				exception = new OperationException(OperationErrorType.GENERAL,
-						"Bad http headers");
-				errored = true;
-			} catch (IOException e) {
-				exception = new OperationException(OperationErrorType.GENERAL,
-						"Error reading response");
-				errored = true;
-			} catch (IllegalArgumentException e) {
-				exception = new OperationException(OperationErrorType.GENERAL,
-						"No entity");
-				errored = true;
-			}
-		}
-		return null;
-	}
+  protected String getEntityString(HttpResponse response) {
+    if (!isTimedOut() && !hasErrored() && !isCancelled()) {
+      try {
+        return EntityUtils.toString(response.getEntity());
+      } catch (ParseException e) {
+        exception =
+            new OperationException(OperationErrorType.GENERAL,
+                "Bad http headers");
+        errored = true;
+      } catch (IOException e) {
+        exception =
+            new OperationException(OperationErrorType.GENERAL,
+                "Error reading response");
+        errored = true;
+      } catch (IllegalArgumentException e) {
+        exception =
+            new OperationException(OperationErrorType.GENERAL, "No entity");
+        errored = true;
+      }
+    }
+    return null;
+  }
 
-	protected OperationStatus parseViewForStatus(String json, int errorcode)
-			throws ParseException {
-		if (json != null) {
-			try {
-				JSONObject base = new JSONObject(json);
-				if (base.has("error")) {
-					String error = "Error Code: " + errorcode + " Error: "
-						+ base.getString("error");
-					if (base.has("reason")) {
-						error += " Reason: " + base.getString("reason");
-					}
-					return new OperationStatus(false, error);
-				} else {
-					return new OperationStatus(true, "Error Code: "
-							+ errorcode);
-				}
-			} catch (JSONException e) {
-				throw new ParseException("Cannot read json: " + json);
-			}
-		}
-		return new OperationStatus(false, "Error Code: " +  errorcode
-				+ "No entity");
-	}
+  protected OperationStatus parseViewForStatus(String json, int errorcode)
+    throws ParseException {
+    if (json != null) {
+      try {
+        JSONObject base = new JSONObject(json);
+        if (base.has("error")) {
+          String error =
+              "Error Code: " + errorcode + " Error: " + base.getString("error");
+          if (base.has("reason")) {
+            error += " Reason: " + base.getString("reason");
+          }
+          return new OperationStatus(false, error);
+        } else {
+          return new OperationStatus(true, "Error Code: " + errorcode);
+        }
+      } catch (JSONException e) {
+        throw new ParseException("Cannot read json: " + json);
+      }
+    }
+    return new OperationStatus(false, "Error Code: " + errorcode + "No entity");
+  }
 }

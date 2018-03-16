@@ -1,3 +1,9 @@
+/**
+ * @author Couchbase <info@couchbase.com>
+ * @copyright 2011 Couchbase, Inc.
+ * All rights reserved.
+ */
+
 package net.spy.memcached.spring;
 
 import java.util.Collection;
@@ -21,33 +27,39 @@ import org.springframework.beans.factory.FactoryBean;
  * A Spring {@link FactoryBean} creating {@link MemcachedClient} instances.
  * <p>
  * Usage example:
+ * 
  * <pre>
  * {@code
- * <bean id="memcachedClient" class="net.spy.memcached.utils.MemcachedClientFactoryBean">
+ * <bean id="memcachedClient" class="net.spy.memcached.utils.
+ *     MemcachedClientFactoryBean">
  *   <property name="servers" value="${pajamas.remoteHosts}"/>
  *   <property name="protocol" value="${pajamas.client.protocol}"/>
- *   <property name="transcoder">
- *     <bean class="net.rubyeye.xmemcached.transcoders.SerializingTranscoder"/>
- *   </property>
+ *   <property name="transcoder"/>
+ *   <bean class="net.rubyeye.xmemcached.transcoders.SerializingTranscoder"/>
  *   <property name="hashAlg" value="${pajamas.client.hashAlg}"/>
  *   <property name="locatorType" value="${pajamas.client.locatorType}"/>
- * </bean>
  * }
  * </pre>
+ * 
  * </p>
+ * 
  * @author Eran Harel
  */
+
+@SuppressWarnings("rawtypes")
 public class MemcachedClientFactoryBean implements FactoryBean {
-  private final ConnectionFactoryBuilder connectionFactoryBuilder = new ConnectionFactoryBuilder();
+  private final ConnectionFactoryBuilder connectionFactoryBuilder =
+      new ConnectionFactoryBuilder();
   private String servers;
 
   @Override
   public Object getObject() throws Exception {
-    return new MemcachedClient(connectionFactoryBuilder.build(), AddrUtil.getAddresses(servers));
+    return new MemcachedClient(connectionFactoryBuilder.build(),
+        AddrUtil.getAddresses(servers));
   }
 
   @Override
-  public Class getObjectType() {
+  public Class<?> getObjectType() {
     return MemcachedClient.class;
   }
 
@@ -56,8 +68,8 @@ public class MemcachedClientFactoryBean implements FactoryBean {
     return true;
   }
 
-  public void setServers(final String servers) {
-    this.servers = servers;
+  public void setServers(final String newServers) {
+    this.servers = newServers;
   }
 
   public void setAuthDescriptor(final AuthDescriptor to) {

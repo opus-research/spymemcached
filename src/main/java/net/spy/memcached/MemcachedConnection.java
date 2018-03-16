@@ -37,7 +37,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -47,7 +46,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -108,7 +106,6 @@ public class MemcachedConnection extends SpyThread {
   private final Collection<Operation> retryOps;
   protected final ConcurrentLinkedQueue<MemcachedNode> nodesToShutdown;
   private final boolean verifyAliveOnConnect;
-  private final Set<SocketAddress> connectingNodes;
 
   /**
    * Construct a memcached connection.
@@ -136,8 +133,6 @@ public class MemcachedConnection extends SpyThread {
     this.bufSize = bufSize;
     this.connectionFactory = f;
 
-    connectingNodes = Collections.newSetFromMap(new ConcurrentHashMap<SocketAddress, Boolean>());
-
     String verifyAlive = System.getProperty("net.spy.verifyAliveOnConnect");
     if(verifyAlive != null && verifyAlive.equals("true")) {
       verifyAliveOnConnect = true;
@@ -156,20 +151,15 @@ public class MemcachedConnection extends SpyThread {
       final Collection<InetSocketAddress> a) throws IOException {
     List<MemcachedNode> connections = new ArrayList<MemcachedNode>(a.size());
     for (SocketAddress sa : a) {
-      if(connectingNodes.contains(sa)) {
-        getLogger().debug("Suppressing connection creation for node "
-          + sa.toString() + "while still connecting");
-        continue;
-      }
-      connectingNodes.add(sa);
-
-      MemcachedNode qa = null;
+      SocketChannel ch = SocketChannel.open();
+      ch.configureBlocking(false);
+      MemcachedNode qa =
+          this.connectionFactory.createMemcachedNode(sa, ch, bufSize);
+      int ops = 0;
+      ch.socket().setTcpNoDelay(!this.connectionFactory.useNagleAlgorithm());
+      // Initially I had attempted to skirt this by queueing every
+      // connect, but it considerably slowed down start time.
       try {
-        SocketChannel ch = SocketChannel.open();
-        ch.configureBlocking(false);
-        qa = this.connectionFactory.createMemcachedNode(sa, ch, bufSize);
-        int ops = 0;
-        ch.socket().setTcpNoDelay(!this.connectionFactory.useNagleAlgorithm());
         if (ch.connect(sa)) {
           getLogger().info("Connected to %s immediately", qa);
           connected(qa);
@@ -187,12 +177,9 @@ public class MemcachedConnection extends SpyThread {
       } catch (SocketException e) {
         getLogger().warn("Socket error on initial connect", e);
         queueReconnect(qa);
-      } finally {
-        connectingNodes.remove(sa);
       }
       connections.add(qa);
     }
-
     return connections;
   }
 

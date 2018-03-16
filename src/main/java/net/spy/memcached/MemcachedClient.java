@@ -129,6 +129,8 @@ public class MemcachedClient extends SpyThread
 	final TranscodeService tcService;
 
 	final AuthDescriptor authDescriptor;
+	
+	private final Bucket bucket;
 
 	private final AuthThreadMonitor authMonitor = new AuthThreadMonitor();
 	private volatile boolean reconfiguring = false;
@@ -179,6 +181,7 @@ public class MemcachedClient extends SpyThread
 				"Operation timeout must be positive.");
 		}
 		connectionFactory = cf;
+		bucket = null;
 		tcService = new TranscodeService(cf.isDaemon());
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();
@@ -223,7 +226,7 @@ public class MemcachedClient extends SpyThread
 			}
 		}
 		this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
-		Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
+		bucket = this.configurationProvider.getBucketConfiguration(bucketName);
 		Config config = bucket.getConfig();
 		ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
 		if (config.getConfigType() == ConfigType.MEMBASE) {

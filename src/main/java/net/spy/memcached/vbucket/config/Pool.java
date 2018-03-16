@@ -1,8 +1,6 @@
 package net.spy.memcached.vbucket.config;
 
 import java.net.URI;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Pool represents a collection of buckets
@@ -14,8 +12,6 @@ public class Pool {
     private final URI uri;
     // pool's streaming uri
     private final URI streamingUri;
-    // buckets uri
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<String, Bucket>();
     // buckets related to this pool
     private URI bucketsUri;
 
@@ -35,10 +31,6 @@ public class Pool {
 
     public URI getStreamingUri() {
         return streamingUri;
-    }
-
-    private Map<String, Bucket> getBuckets() {
-        return buckets;
     }
 
     public URI getBucketsUri() {

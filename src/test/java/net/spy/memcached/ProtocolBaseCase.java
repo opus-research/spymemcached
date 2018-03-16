@@ -683,10 +683,14 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 		byte data[]=new byte[21*1024*1024];
 		r.nextBytes(data);
 
-		if (client.set("bigassthing", 60, data, st).getStatus().isSuccess() != false){
+		try {
+			client.set("bigassthing", 60, data, st).get();
 			fail("Didn't fail setting bigass thing.");
-		} else {
+		} catch(ExecutionException e) {
 			System.err.println("Successful failure setting bigassthing.  Ass size " + data.length + " bytes doesn't fit.");
+			e.printStackTrace();
+			OperationException oe=(OperationException)e.getCause();
+			assertSame(OperationErrorType.SERVER, oe.getType());
 		}
 
 		// But I should still be able to do something.

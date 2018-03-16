@@ -105,7 +105,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	public void reconfigure(Bucket bucket) {
 		reconfiguring = true;
 		try {
-			mconn.reconfigure(bucket);
+			conn.reconfigure(bucket);
 		} catch (IllegalArgumentException ex) {
 			getLogger().warn("Failed to reconfigure client, staying with previous configuration.", ex);
 		} finally {

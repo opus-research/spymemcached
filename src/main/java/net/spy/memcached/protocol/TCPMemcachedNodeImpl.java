@@ -185,48 +185,50 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     if (toWrite == 0 && readQ.remainingCapacity() > 0) {
       getWbuf().clear();
       Operation o = getCurrentWriteOp();
-      if (o != null && (o.isCancelled())) {
-        getLogger().debug("Not writing cancelled op.");
-        Operation cancelledOp = removeCurrentWriteOp();
-        assert o == cancelledOp;
-        return;
-      }
-      if (o != null && o.isTimedOut(defaultOpTimeout)) {
-        getLogger().debug("Not writing timed out op.");
-        Operation timedOutOp = removeCurrentWriteOp();
-        assert o == timedOutOp;
-        return;
-      }
       while (o != null && toWrite < getWbuf().capacity()) {
-        assert o.getState() == OperationState.WRITING;
-        // This isn't the most optimal way to do this, but it hints
-        // at a larger design problem that may need to be taken care
-        // if in the bowels of the client.
-        // In practice, readQ should be small, however.
-        // Also don't add Tap Acks to the readQ since there won't be a response
-        if (!readQ.contains(o) && !(o instanceof TapAckOperationImpl)) {
-          readQ.add(o);
-        }
-
-        ByteBuffer obuf = o.getBuffer();
-        assert obuf != null : "Didn't get a write buffer from " + o;
-        int bytesToCopy = Math.min(getWbuf().remaining(), obuf.remaining());
-        byte[] b = new byte[bytesToCopy];
-        obuf.get(b);
-        getWbuf().put(b);
-        getLogger().debug("After copying stuff from %s: %s", o, getWbuf());
-        if (!o.getBuffer().hasRemaining()) {
-          o.writeComplete();
-          transitionWriteItem();
-
-          preparePending();
-          if (shouldOptimize) {
-            optimize();
+        synchronized(o) {
+          if (o.isCancelled()) {
+            getLogger().debug("Not writing cancelled op.");
+            Operation cancelledOp = removeCurrentWriteOp();
+            assert o == cancelledOp;
+            break;
           }
-
-          o = getCurrentWriteOp();
+          if (o.isTimedOut(defaultOpTimeout)) {
+            getLogger().debug("Not writing timed out op.");
+            Operation timedOutOp = removeCurrentWriteOp();
+            assert o == timedOutOp;
+            break;
+          }
+          assert o.getState() == OperationState.WRITING;
+          // This isn't the most optimal way to do this, but it hints
+          // at a larger design problem that may need to be taken care
+          // if in the bowels of the client.
+          // In practice, readQ should be small, however.
+          // Also don't add Tap Acks to the readQ since there won't be a response
+          if (!readQ.contains(o) && !(o instanceof TapAckOperationImpl)) {
+            readQ.add(o);
+          }
+  
+          ByteBuffer obuf = o.getBuffer();
+          assert obuf != null : "Didn't get a write buffer from " + o;
+          int bytesToCopy = Math.min(getWbuf().remaining(), obuf.remaining());
+          byte[] b = new byte[bytesToCopy];
+          obuf.get(b);
+          getWbuf().put(b);
+          getLogger().debug("After copying stuff from %s: %s", o, getWbuf());
+          if (!o.getBuffer().hasRemaining()) {
+            o.writeComplete();
+            transitionWriteItem();
+  
+            preparePending();
+            if (shouldOptimize) {
+              optimize();
+            }
+  
+            o = getCurrentWriteOp();
+          }
+          toWrite += bytesToCopy;
         }
-        toWrite += bytesToCopy;
       }
       getWbuf().flip();
       assert toWrite <= getWbuf().capacity() : "toWrite exceeded capacity: "

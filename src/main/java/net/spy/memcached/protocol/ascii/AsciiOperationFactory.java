@@ -46,8 +46,8 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 
 	public GetAndTouchOperation getAndTouch(String key, int expiration,
 			GetAndTouchOperation.Callback cb) {
-		throw new UnsupportedOperationException("Get and touch is not supported " +
-				"for ascii");
+		throw new UnsupportedOperationException("Get and Touch not supported " +
+				"with ascii protocol");
 	}
 
 	public GetOperation get(String key, GetOperation.Callback cb) {
@@ -81,7 +81,8 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 	}
 
 	public KeyedOperation touch(String key, int expiration, OperationCallback cb) {
-		throw new UnsupportedOperationException("Touch is not supported for ascii");
+		throw new UnsupportedOperationException("Touch is only supported in" +
+				" the binary protocol");
 	}
 
 	public VersionOperation version(OperationCallback cb) {
@@ -115,18 +116,18 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 	}
 
 	public SASLMechsOperation saslMechs(OperationCallback cb) {
-		throw new UnsupportedOperationException("SASL is not supported for ascii");
+		throw new UnsupportedOperationException();
 	}
 
 	public SASLStepOperation saslStep(String[] mech, byte[] challenge,
 			String serverName, Map<String, ?> props, CallbackHandler cbh,
 			OperationCallback cb) {
-		throw new UnsupportedOperationException("SASL is not supported for ascii");
+		throw new UnsupportedOperationException();
 	}
 
 	public SASLAuthOperation saslAuth(String[] mech, String serverName,
 			Map<String, ?> props, CallbackHandler cbh, OperationCallback cb) {
-		throw new UnsupportedOperationException("SASL is not supported for ascii");
+		throw new UnsupportedOperationException();
 	}
 
 }

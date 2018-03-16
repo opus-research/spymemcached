@@ -25,6 +25,7 @@ package net.spy.memcached.auth;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.OperationFactory;
@@ -90,5 +91,14 @@ public class AuthThreadMonitor extends SpyObject {
       }
       nodeMap.remove(nodeToStop);
     }
+  }
+
+  /**
+   * Getter method to return the HashMap
+   * containing AuthThread for tests.
+   * @return
+   */
+  public Map<Object, AuthThread> getNodeMap() {
+    return nodeMap;
   }
 }

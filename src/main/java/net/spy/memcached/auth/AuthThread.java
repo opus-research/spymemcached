@@ -42,7 +42,7 @@ public class AuthThread extends SpyThread {
 			final OperationCallback cb=new OperationCallback() {
 				public void receivedStatus(OperationStatus val) {
 					// If the status we found was null, we're done.
-					if(val.getMessage().length() == 0) {
+					if(val.getMessage().isEmpty()) {
 						done.set(true);
 						node.authComplete();
 						getLogger().info("Authenticated to "

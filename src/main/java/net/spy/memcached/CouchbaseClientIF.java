@@ -25,7 +25,6 @@ package net.spy.memcached;
 import java.util.List;
 
 import net.spy.memcached.internal.HttpFuture;
-import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.protocol.couch.Query;
 import net.spy.memcached.protocol.couch.View;
 import net.spy.memcached.protocol.couch.ViewResponse;
@@ -47,11 +46,7 @@ public interface CouchbaseClientIF extends MembaseClientIF {
   List<View> getViews(final String designDocumentName);
 
   // Query
-  ViewFuture asyncQuery(View view, Query query);
-
-  ViewFuture asyncQuery(View view, Query query, boolean exceptionOnError);
+  HttpFuture<ViewResponse> asyncQuery(View view, Query query);
 
   ViewResponse query(View view, Query query);
-
-  ViewResponse query(View view, Query query, boolean exceptionOnError);
 }

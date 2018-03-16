@@ -17,6 +17,13 @@ else
 end
 puts "Using server at #{SERVER}"
 
+if ENV['type'].nil? then
+  TYPE="memcached"
+else
+  TYPE=ENV['type']
+end
+puts "Server is type #{TYPE}"
+
 def compute_released_verions
   h = {}
   `git tag`.reject{|i| i =~ /pre|rc/}.map{|v| v.strip}.each do |v|
@@ -58,7 +65,7 @@ define "spymemcached" do
 
   test.options[:java_args] = "-ea"
   test.include "*Test"
-  test.using :fork=>:each, :properties=>{ 'server.address'=>SERVER }
+  test.using :fork=>:each, :properties=>{ 'server.address'=>SERVER, 'server.type'=>TYPE}
   TREE_VER=tree_version
   puts "Tree version is #{TREE_VER}"
 

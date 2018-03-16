@@ -8,9 +8,7 @@ package net.spy.memcached;
  */
 public class OperationTimeoutException extends RuntimeException {
 
-	private static final long serialVersionUID = 1479557202445843619L;
-
-	public OperationTimeoutException(String message) {
+    public OperationTimeoutException(String message) {
         super(message);
     }
 

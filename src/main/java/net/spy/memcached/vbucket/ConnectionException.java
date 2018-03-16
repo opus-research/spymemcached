@@ -2,9 +2,7 @@ package net.spy.memcached.vbucket;
 
 public class ConnectionException extends RuntimeException {
 
-	private static final long serialVersionUID = -6513198067127603979L;
-
-	public ConnectionException() {
+    public ConnectionException() {
         super();
     }
 

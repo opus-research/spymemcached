@@ -30,11 +30,9 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	protected OperationCallback callback = null;
 	private volatile MemcachedNode handlingNode = null;
         private boolean timedout;
-	private long creationTime;
 
 	public BaseOperationImpl() {
 		super();
-		creationTime = System.nanoTime();
 	}
 
 	/**
@@ -148,7 +146,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	}
 
         @Override
-        public void timeOut() {
+        public void timedOut() {
             timedout = true;
         }
 
@@ -161,15 +159,8 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	public boolean isTimedOut(long ttl) {
 		long elapsed = System.nanoTime();
 		long ttlNanos = ttl * 1000 * 1000; /* ttl supplied is millis */
-		if (elapsed - creationTime > ttlNanos) {
+		if (elapsed - creationTime > ttlNanos)
 			timedout = true;
-		} else {
-			// timedout would be false, but we cannot allow you to untimeout an operation
-			if (timedout) {
-				throw new IllegalArgumentException("Operation has already timed out; ttl " +
-								   "specified would allow it to be valid.");
-			}
-		}
 		return timedout;
         }
 }

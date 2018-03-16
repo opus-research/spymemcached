@@ -102,7 +102,7 @@ import net.spy.memcached.transcoders.Transcoder;
 public class MemcachedClient extends SpyObject
 	implements MemcachedClientIF, ConnectionObserver {
 
-	protected volatile boolean shuttingDown=false;
+	private volatile boolean shuttingDown=false;
 
 	protected final long operationTimeout;
 

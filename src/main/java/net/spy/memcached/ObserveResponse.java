@@ -21,38 +21,44 @@
  * IN THE SOFTWARE.
  */
 
+package net.spy.memcached;
 
-package net.spy.memcached.protocol.binary;
+/**
+ * Response codes for a Observe operation.
+ */
+public enum ObserveResponse {
+  /**
+   * Response indicating the key was uninitialized.
+   */
+  UNINITIALIZED((byte) 0xff),
+  /**
+   * Response indicating the key was modified.
+   */
+  MODIFIED((byte) 0xfe),
+  /**
+   * Response indicating the key was persisted.
+   */
+  FOUND_PERSISTED((byte) 0x01),
+  /**
+   * Response indicating the key was found but not persisted.
+   */
+  FOUND_NOT_PERSISTED((byte) 0x00),
+  /**
+   * Response indicating the key was not found and persisted, as in
+   * the case of deletes - a real delete.
+   */
+  NOT_FOUND_PERSISTED((byte) 0x80),
+  /**
+   * Response indicating the key was not found and not
+   * persisted, as in the case of deletes - a logical delete.
+   */
+  NOT_FOUND_NOT_PERSISTED((byte) 0x11);
 
-import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.UnlockOperation;
+  private final byte value;
 
 
-class UnlockOperationImpl extends SingleKeyOperationImpl implements
-    UnlockOperation {
-
-  private static final byte CMD = (byte) 0x95;
-
-  private final long cas;
-
-  public UnlockOperationImpl(String k, long c,
-          OperationCallback cb) {
-    super(CMD, generateOpaque(), k, cb);
-    cas = c;
+  ObserveResponse(byte b) {
+    value = b;
   }
 
-  @Override
-  public void initialize() {
-    prepareBuffer(key, cas, EMPTY_BYTES);
-  }
-
-  @Override
-  protected void decodePayload(byte[] pl) {
-    getCallback().receivedStatus(STATUS_OK);
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + " Cas: " + cas;
-  }
 }

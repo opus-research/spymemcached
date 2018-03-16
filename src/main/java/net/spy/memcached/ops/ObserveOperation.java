@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,38 +20,25 @@
  * IN THE SOFTWARE.
  */
 
+package net.spy.memcached.ops;
 
-package net.spy.memcached.protocol.binary;
+import net.spy.memcached.ObserveResponse;
 
-import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.UnlockOperation;
-
-
-class UnlockOperationImpl extends SingleKeyOperationImpl implements
-    UnlockOperation {
-
-  private static final byte CMD = (byte) 0x95;
-
-  private final long cas;
-
-  public UnlockOperationImpl(String k, long c,
-          OperationCallback cb) {
-    super(CMD, generateOpaque(), k, cb);
-    cas = c;
-  }
-
-  @Override
-  public void initialize() {
-    prepareBuffer(key, cas, EMPTY_BYTES);
-  }
-
-  @Override
-  protected void decodePayload(byte[] pl) {
-    getCallback().receivedStatus(STATUS_OK);
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + " Cas: " + cas;
+/**
+ * Observe operation.
+ */
+public interface ObserveOperation extends KeyedOperation {
+  /**
+   * Operation callback for the Observe request.
+   */
+  interface Callback extends OperationCallback {
+    /**
+     * Callback for each result from a observe.
+     *
+     * @param key the key that was retrieved
+     * @param cas the CAS value for this record
+     * @param or the ObserveResponse
+     */
+    void gotData(String key, long cas, ObserveResponse or);
   }
 }

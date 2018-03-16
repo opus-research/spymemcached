@@ -20,39 +20,30 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALING
  * IN THE SOFTWARE.
  */
+package net.spy.memcached;
 
-
-package net.spy.memcached.protocol.binary;
-
-import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.UnlockOperation;
-
-
-class UnlockOperationImpl extends SingleKeyOperationImpl implements
-    UnlockOperation {
-
-  private static final byte CMD = (byte) 0x95;
-
-  private final long cas;
-
-  public UnlockOperationImpl(String k, long c,
-          OperationCallback cb) {
-    super(CMD, generateOpaque(), k, cb);
-    cas = c;
-  }
-
-  @Override
-  public void initialize() {
-    prepareBuffer(key, cas, EMPTY_BYTES);
-  }
-
-  @Override
-  protected void decodePayload(byte[] pl) {
-    getCallback().receivedStatus(STATUS_OK);
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + " Cas: " + cas;
-  }
+/**
+ * PersistTo codes for a Observe operation.
+ */
+public enum PersistTo {
+  /**
+   * Persist to the Master. ONE implies MASTER.
+   */
+  MASTER,
+  /**
+   * ONE implies MASTER.
+   */
+  ONE,
+  /**
+   * Persist to at least two nodes including Master.
+   */
+  TWO,
+  /**
+   * Persist to at least three nodes including Master.
+   */
+  THREE,
+  /**
+   * Persist to at least four nodes including Master.
+   */
+  FOUR
 }

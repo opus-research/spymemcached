@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,38 +20,26 @@
  * IN THE SOFTWARE.
  */
 
+package net.spy.memcached;
 
-package net.spy.memcached.protocol.binary;
-
-import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.UnlockOperation;
-
-
-class UnlockOperationImpl extends SingleKeyOperationImpl implements
-    UnlockOperation {
-
-  private static final byte CMD = (byte) 0x95;
-
-  private final long cas;
-
-  public UnlockOperationImpl(String k, long c,
-          OperationCallback cb) {
-    super(CMD, generateOpaque(), k, cb);
-    cas = c;
-  }
-
-  @Override
-  public void initialize() {
-    prepareBuffer(key, cas, EMPTY_BYTES);
-  }
-
-  @Override
-  protected void decodePayload(byte[] pl) {
-    getCallback().receivedStatus(STATUS_OK);
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + " Cas: " + cas;
-  }
+/**
+ * ReplicateTo codes for a Observe operation.
+ */
+public enum ReplicateTo {
+  /**
+   * Replicate to at least zero nodes.
+   */
+  ZERO,
+  /**
+   * Replicate to at least one node.
+   */
+  ONE,
+  /**
+   * Replicate to at least two nodes.
+   */
+  TWO,
+  /**
+   * Replicate to at least three nodes.
+   */
+  THREE
 }

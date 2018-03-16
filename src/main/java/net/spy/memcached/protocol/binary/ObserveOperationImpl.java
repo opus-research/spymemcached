@@ -24,35 +24,49 @@
 
 package net.spy.memcached.protocol.binary;
 
+import net.spy.memcached.ObserveResponse;
+import net.spy.memcached.ops.ObserveOperation;
 import net.spy.memcached.ops.OperationCallback;
-import net.spy.memcached.ops.UnlockOperation;
 
+class ObserveOperationImpl extends SingleKeyOperationImpl implements
+    ObserveOperation {
 
-class UnlockOperationImpl extends SingleKeyOperationImpl implements
-    UnlockOperation {
-
-  private static final byte CMD = (byte) 0x95;
+  private static final byte CMD = (byte) 0x92;
 
   private final long cas;
+  private final String key;
+  private final int index;
+  private byte keystate = (byte)0xff;
+  private long retCas = 0;
 
-  public UnlockOperationImpl(String k, long c,
+  public ObserveOperationImpl(String k, long c, int i,
           OperationCallback cb) {
     super(CMD, generateOpaque(), k, cb);
     cas = c;
+    key = k;
+    index = i;
   }
 
   @Override
   public void initialize() {
-    prepareBuffer(key, cas, EMPTY_BYTES);
-  }
-
-  @Override
-  protected void decodePayload(byte[] pl) {
-    getCallback().receivedStatus(STATUS_OK);
+    prepareBuffer("", 0x0, EMPTY_BYTES, (short) index,
+            (short) key.length(), key.getBytes());
   }
 
   @Override
   public String toString() {
     return super.toString() + " Cas: " + cas;
+  }
+
+  @Override
+  protected void decodePayload(byte[] pl) {
+    final short  keylen = (short) decodeShort(pl, 2);
+    keystate = (byte) decodeByte(pl, keylen+4);
+    retCas = (long) decodeLong(pl, keylen+5);
+
+    ObserveResponse r = ObserveResponse.values()[keystate];
+
+    ((ObserveOperation.Callback) getCallback()).gotData(key, retCas, r);
+    getCallback().receivedStatus(STATUS_OK);
   }
 }

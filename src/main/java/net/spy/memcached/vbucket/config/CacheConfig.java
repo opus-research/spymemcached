@@ -22,7 +22,6 @@
 
 package net.spy.memcached.vbucket.config;
 
-import java.net.URL;
 import java.util.List;
 
 import net.spy.memcached.DefaultHashAlgorithm;
@@ -145,10 +144,5 @@ public class CacheConfig implements Config {
 
   public ConfigType getConfigType() {
     return ConfigType.MEMCACHE;
-  }
-
-  @Override
-  public List<URL> getCouchServers() {
-    throw new UnsupportedOperationException("No couch port for cache buckets");
   }
 }

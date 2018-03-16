@@ -22,7 +22,6 @@
 
 package net.spy.memcached.vbucket.config;
 
-import java.net.URL;
 import java.util.List;
 
 import net.spy.memcached.HashAlgorithm;
@@ -46,11 +45,9 @@ public class DefaultConfig implements Config {
 
   private final List<VBucket> vbuckets;
 
-  private final List<URL> couchServers;
-
   public DefaultConfig(HashAlgorithm hashAlgorithm, int serversCount,
       int replicasCount, int vbucketsCount, List<String> servers,
-      List<VBucket> vbuckets, List<URL> couchServers) {
+      List<VBucket> vbuckets) {
     this.hashAlgorithm = hashAlgorithm;
     this.serversCount = serversCount;
     this.replicasCount = replicasCount;
@@ -58,7 +55,6 @@ public class DefaultConfig implements Config {
     this.mask = vbucketsCount - 1;
     this.servers = servers;
     this.vbuckets = vbuckets;
-    this.couchServers = couchServers;
   }
 
   @Override
@@ -95,11 +91,6 @@ public class DefaultConfig implements Config {
   @Override
   public int getReplica(int vbucketIndex, int replicaIndex) {
     return vbuckets.get(vbucketIndex).getReplica(replicaIndex);
-  }
-
-  @Override
-  public List<URL> getCouchServers() {
-    return couchServers;
   }
 
   @Override

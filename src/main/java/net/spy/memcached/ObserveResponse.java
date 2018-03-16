@@ -21,7 +21,7 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.ops;
+package net.spy.memcached;
 
 /**
  * Response codes for a Observe operation.
@@ -77,7 +77,4 @@ public enum ObserveResponse {
     }
   }
 
-  public byte getResponse() {
-    return value;
-  }
 }

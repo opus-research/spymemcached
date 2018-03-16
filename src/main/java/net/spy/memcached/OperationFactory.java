@@ -11,7 +11,6 @@ import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
 import net.spy.memcached.ops.FlushOperation;
 import net.spy.memcached.ops.GetOperation;
-import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Mutator;
@@ -66,15 +65,6 @@ public interface OperationFactory {
 	 * @return a new GetOperation
 	 */
 	GetOperation get(String key, GetOperation.Callback callback);
-
-	/**
-	 * Create a getl operation.
-	 *
-	 * @param key the key to get
-	 * @param callback the callback that will contain the results
-	 * @return a new GetOperation
-	 */
-	GetlOperation getl(String key, int exp, GetlOperation.Callback callback);
 
 	/**
 	 * Create a gets operation.

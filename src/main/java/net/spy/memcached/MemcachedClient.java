@@ -160,7 +160,7 @@ public class MemcachedClient extends SpyThread
 	 * @param addrs the socket addresses
 	 * @throws IOException if connections cannot be established
 	 */
-	public MemcachedClient(ConnectionFactory cf, List<InetSocketAddress> addrs)
+	public MemcachedClient(ConnectionFactory<Operation> cf, List<InetSocketAddress> addrs)
 		throws IOException {
 		if(cf == null) {
 			throw new NullPointerException("Connection factory required");
@@ -222,7 +222,7 @@ public class MemcachedClient extends SpyThread
 		this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
 		Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
 		Config config = bucket.getConfig();
-		ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
+		ConnectionFactoryBuilder<Operation> cfb = new ConnectionFactoryBuilder<Operation>();
 		if (config.getConfigType() == ConfigType.MEMBASE) {
 			cfb.setFailureMode(FailureMode.Retry)
 				.setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
@@ -242,7 +242,7 @@ public class MemcachedClient extends SpyThread
 				new PlainCallbackHandler(usr, pwd));
 			cfb.setAuthDescriptor(ad);
 		}
-		ConnectionFactory cf = cfb.build();
+		ConnectionFactory<Operation> cf = cfb.build();
 		List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getConfig().getServers());
 		if(cf == null) {
 			throw new NullPointerException("Connection factory required");
@@ -323,7 +323,7 @@ public class MemcachedClient extends SpyThread
 	 */
 	public Collection<SocketAddress> getAvailableServers() {
 		ArrayList<SocketAddress> rv=new ArrayList<SocketAddress>();
-		for(MemcachedNode node : conn.getLocator().getAll()) {
+		for(MemcachedNode<Operation> node : conn.getLocator().getAll()) {
 			if(node.isActive()) {
 				rv.add(node.getSocketAddress());
 			}
@@ -344,7 +344,7 @@ public class MemcachedClient extends SpyThread
 	 */
 	public Collection<SocketAddress> getUnavailableServers() {
 		ArrayList<SocketAddress> rv=new ArrayList<SocketAddress>();
-		for(MemcachedNode node : conn.getLocator().getAll()) {
+		for(MemcachedNode<Operation> node : conn.getLocator().getAll()) {
 			if(!node.isActive()) {
 				rv.add(node.getSocketAddress());
 			}
@@ -357,7 +357,7 @@ public class MemcachedClient extends SpyThread
 	 *
 	 * @return this instance's NodeLocator
 	 */
-	public NodeLocator getNodeLocator() {
+	public NodeLocator<Operation> getNodeLocator() {
 		return conn.getLocator().getReadonlyCopy();
 	}
 
@@ -411,17 +411,17 @@ public class MemcachedClient extends SpyThread
 		return op;
 	}
 
-	CountDownLatch broadcastOp(final BroadcastOpFactory of) {
+	CountDownLatch broadcastOp(final BroadcastOpFactory<Operation> of) {
 		return broadcastOp(of, conn.getLocator().getAll(), true);
 	}
 
-	CountDownLatch broadcastOp(final BroadcastOpFactory of,
-			Collection<MemcachedNode> nodes) {
+	CountDownLatch broadcastOp(final BroadcastOpFactory<Operation> of,
+			Collection<MemcachedNode<Operation>> nodes) {
 		return broadcastOp(of, nodes, true);
 	}
 
-	private CountDownLatch broadcastOp(BroadcastOpFactory of,
-			Collection<MemcachedNode> nodes,
+	private CountDownLatch broadcastOp(BroadcastOpFactory<Operation> of,
+			Collection<MemcachedNode<Operation>> nodes,
 			boolean checkShuttingDown) {
 		if(checkShuttingDown && shuttingDown) {
 			throw new IllegalStateException("Shutting down");
@@ -1233,22 +1233,22 @@ public class MemcachedClient extends SpyThread
 		final Map<String, Transcoder<T>> tc_map = new HashMap<String, Transcoder<T>>();
 
 		// Break the gets down into groups by key
-		final Map<MemcachedNode, Collection<String>> chunks
-			=new HashMap<MemcachedNode, Collection<String>>();
-		final NodeLocator locator=conn.getLocator();
+		final Map<MemcachedNode<Operation>, Collection<String>> chunks
+			=new HashMap<MemcachedNode<Operation>, Collection<String>>();
+		final NodeLocator<Operation> locator=conn.getLocator();
 		Iterator<String> key_iter=keys.iterator();
 		while (key_iter.hasNext() && tc_iter.hasNext()) {
 			String key=key_iter.next();
 			tc_map.put(key, tc_iter.next());
 			validateKey(key);
-			final MemcachedNode primaryNode=locator.getPrimary(key);
-			MemcachedNode node=null;
+			final MemcachedNode<Operation> primaryNode=locator.getPrimary(key);
+			MemcachedNode<Operation> node=null;
 			if(primaryNode.isActive()) {
 				node=primaryNode;
 			} else {
-				for(Iterator<MemcachedNode> i=locator.getSequence(key);
+				for(Iterator<MemcachedNode<Operation>> i=locator.getSequence(key);
 					node == null && i.hasNext();) {
-					MemcachedNode n=i.next();
+					MemcachedNode<Operation> n=i.next();
 					if(n.isActive()) {
 						node=n;
 					}
@@ -1288,10 +1288,10 @@ public class MemcachedClient extends SpyThread
 
 		// Now that we know how many servers it breaks down into, and the latch
 		// is all set up, convert all of these strings collections to operations
-		final Map<MemcachedNode, Operation> mops=
-			new HashMap<MemcachedNode, Operation>();
+		final Map<MemcachedNode<Operation>, Operation> mops=
+			new HashMap<MemcachedNode<Operation>, Operation>();
 
-		for(Map.Entry<MemcachedNode, Collection<String>> me
+		for(Map.Entry<MemcachedNode<Operation>, Collection<String>> me
 				: chunks.entrySet()) {
 			Operation op=opFact.get(me.getValue(), cb);
 			mops.put(me.getKey(), op);
@@ -1488,8 +1488,8 @@ public class MemcachedClient extends SpyThread
 		final Map<SocketAddress, String>rv=
 			new ConcurrentHashMap<SocketAddress, String>();
 
-		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory(){
-			public Operation newOp(final MemcachedNode n,
+		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory<Operation>(){
+			public Operation newOp(final MemcachedNode<Operation> n,
 					final CountDownLatch latch) {
 				final SocketAddress sa=n.getSocketAddress();
 				return opFact.version(
@@ -1534,8 +1534,8 @@ public class MemcachedClient extends SpyThread
 		final Map<SocketAddress, Map<String, String>> rv
 			=new HashMap<SocketAddress, Map<String, String>>();
 
-		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory(){
-			public Operation newOp(final MemcachedNode n,
+		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory<Operation>(){
+			public Operation newOp(final MemcachedNode<Operation> n,
 				final CountDownLatch latch) {
 				final SocketAddress sa=n.getSocketAddress();
 				rv.put(sa, new HashMap<String, String>());
@@ -1878,8 +1878,8 @@ public class MemcachedClient extends SpyThread
 			new AtomicReference<Boolean>(null);
 		final ConcurrentLinkedQueue<Operation> ops=
 			new ConcurrentLinkedQueue<Operation>();
-		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory(){
-			public Operation newOp(final MemcachedNode n,
+		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory<Operation>(){
+			public Operation newOp(final MemcachedNode<Operation> n,
 					final CountDownLatch latch) {
 				Operation op=opFact.flush(delay, new OperationCallback(){
 					public void receivedStatus(OperationStatus s) {
@@ -1935,8 +1935,8 @@ public class MemcachedClient extends SpyThread
 		final ConcurrentMap<String, String> rv
 			= new ConcurrentHashMap<String, String>();
 
-		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory() {
-			public Operation newOp(MemcachedNode n,
+		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory<Operation>() {
+			public Operation newOp(MemcachedNode<Operation> n,
 					final CountDownLatch latch) {
 				return opFact.saslMechs(new OperationCallback() {
 					public void receivedStatus(OperationStatus status) {
@@ -2051,8 +2051,8 @@ public class MemcachedClient extends SpyThread
 	 *         is too full to accept any more requests
 	 */
 	public boolean waitForQueues(long timeout, TimeUnit unit) {
-		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory(){
-			public Operation newOp(final MemcachedNode n,
+		CountDownLatch blatch = broadcastOp(new BroadcastOpFactory<Operation>(){
+			public Operation newOp(final MemcachedNode<Operation> n,
 					final CountDownLatch latch) {
 				return opFact.noop(
 						new OperationCallback() {
@@ -2086,7 +2086,7 @@ public class MemcachedClient extends SpyThread
 	public boolean addObserver(ConnectionObserver obs) {
 		boolean rv = conn.addObserver(obs);
 		if(rv) {
-			for(MemcachedNode node : conn.getLocator().getAll()) {
+			for(MemcachedNode<Operation> node : conn.getLocator().getAll()) {
 				if(node.isActive()) {
 					obs.connectionEstablished(node.getSocketAddress(), -1);
 				}
@@ -2114,9 +2114,9 @@ public class MemcachedClient extends SpyThread
 		}
 	}
 
-	private MemcachedNode findNode(SocketAddress sa) {
-		MemcachedNode node = null;
-		for(MemcachedNode n : conn.getLocator().getAll()) {
+	private MemcachedNode<Operation> findNode(SocketAddress sa) {
+		MemcachedNode<Operation> node = null;
+		for(MemcachedNode<Operation> n : conn.getLocator().getAll()) {
 			if(n.getSocketAddress().equals(sa)) {
 				node = n;
 			}

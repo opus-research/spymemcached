@@ -7,12 +7,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Collection;
 
-import net.spy.memcached.ops.Operation;
-
 /**
  * Interface defining a connection to a memcached server.
  */
-public interface MemcachedNode {
+public interface MemcachedNode<T> {
 
 	/**
 	 * Move all of the operations delivered via addOperation into the internal
@@ -25,7 +23,7 @@ public interface MemcachedNode {
 	 *
 	 * This is useful for redistributing items.
 	 */
-	Collection<Operation> destroyInputQueue();
+	Collection<T> destroyInputQueue();
 
 	/**
 	 * Clear the queue of currently processing operations by either cancelling
@@ -49,24 +47,24 @@ public interface MemcachedNode {
 	/**
 	 * Get the operation at the top of the queue that is requiring input.
 	 */
-	Operation getCurrentReadOp();
+	T getCurrentReadOp();
 
 	/**
 	 * Remove the operation at the top of the queue that is requiring input.
 	 */
-	Operation removeCurrentReadOp();
+	T removeCurrentReadOp();
 
 	/**
 	 * Get the operation at the top of the queue that has information available
 	 * to write.
 	 */
-	Operation getCurrentWriteOp();
+	T getCurrentWriteOp();
 
 	/**
 	 * Remove the operation at the top of the queue that has information
 	 * available to write.
 	 */
-	Operation removeCurrentWriteOp();
+	T removeCurrentWriteOp();
 
 	/**
 	 * True if an operation is available to read.
@@ -82,14 +80,14 @@ public interface MemcachedNode {
 	 * Add an operation to the queue.  Authentication operations should
 	 * never be added to the queue, but this is not checked.
 	 */
-	void addOp(Operation op);
+	void addOp(T op);
 
 	/**
 	 * Insert an operation to the beginning of the queue.
 	 *
 	 * This method is meant to be invoked rarely.
 	 */
-	void insertOp(Operation o);
+	void insertOp(T o);
 
 	/**
 	 * Compute the appropriate selection operations for the channel this

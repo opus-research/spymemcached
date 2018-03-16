@@ -52,6 +52,15 @@ public class SerializingTranscoderTest extends BaseTranscoderCase {
     }
   }
 
+  public void testJsonObject() {
+    String json = "{\"aaaaaaaaaaaaaaaaaaaaaaaaa\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}";
+    tc.setCompressionThreshold(8);
+    CachedData cd = tc.encode(json);
+    assertTrue(Arrays.equals(json.getBytes(), cd.getData()));
+    assertNotSame(SerializingTranscoder.COMPRESSED, cd.getFlags());
+    assertEquals(json, tc.decode(cd));
+  }
+
   public void testCompressedStringNotSmaller() throws Exception {
     String s1 = "This is a test simple string that will not be compressed.";
     // Reduce the compression threshold so it'll attempt to compress it.

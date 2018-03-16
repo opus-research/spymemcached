@@ -184,9 +184,29 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   public final void fillWriteBuffer(boolean shouldOptimize) {
     if (toWrite == 0 && readQ.remainingCapacity() > 0) {
       getWbuf().clear();
-      Operation o = getNextWritableOp();
+      Operation o = getCurrentWriteOp();
+      if (o != null && (o.isCancelled())) {
+        getLogger().debug("Not writing cancelled op.");
+        Operation cancelledOp = removeCurrentWriteOp();
+        assert o == cancelledOp;
+        return;
+      }
+      if (o != null && o.isTimedOut(defaultOpTimeout)) {
+        getLogger().debug("Not writing timed out op.");
+        Operation timedOutOp = removeCurrentWriteOp();
+        assert o == timedOutOp;
+        return;
+      }
       while (o != null && toWrite < getWbuf().capacity()) {
         assert o.getState() == OperationState.WRITING;
+        // This isn't the most optimal way to do this, but it hints
+        // at a larger design problem that may need to be taken care
+        // if in the bowels of the client.
+        // In practice, readQ should be small, however.
+        // Also don't add Tap Acks to the readQ since there won't be a response
+        if (!readQ.contains(o) && !(o instanceof TapAckOperationImpl)) {
+          readQ.add(o);
+        }
 
         ByteBuffer obuf = o.getBuffer();
         assert obuf != null : "Didn't get a write buffer from " + o;
@@ -203,7 +223,8 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           if (shouldOptimize) {
             optimize();
           }
-          o = getNextWritableOp();
+
+          o = getCurrentWriteOp();
         }
         toWrite += bytesToCopy;
       }
@@ -215,29 +236,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     } else {
       getLogger().debug("Buffer is full, skipping");
     }
-  }
-
-  private Operation getNextWritableOp() {
-    Operation o = getCurrentWriteOp();
-    while (o != null && o.getState() == OperationState.WRITE_QUEUED) {
-      if (o.isCancelled()) {
-        getLogger().debug("Not writing cancelled op.");
-        Operation cancelledOp = removeCurrentWriteOp();
-        assert o == cancelledOp;
-      } else if (o.isTimedOut(defaultOpTimeout)) {
-        getLogger().debug("Not writing timed out op.");
-        Operation timedOutOp = removeCurrentWriteOp();
-        assert o == timedOutOp;
-      } else {
-        o.writing();
-        if (!(o instanceof TapAckOperationImpl)) {
-          readQ.add(o);
-        }
-        return o;
-      }
-      o = getCurrentWriteOp();
-    }
-    return o;
   }
 
   /*

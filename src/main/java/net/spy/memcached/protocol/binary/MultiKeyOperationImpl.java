@@ -69,13 +69,4 @@ abstract class MultiKeyOperationImpl extends OperationImpl implements
     assert vbmap.containsKey(k) : "Key " + k + " not contained in operation";
     return vbmap.get(k);
   }
-
-  @Override
-  public String toString() {
-    String s = super.toString() + " Keys: ";
-    for (String key : getKeys()) {
-      s += key + " ";
-    }
-    return s;
-  }
 }

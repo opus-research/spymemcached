@@ -44,9 +44,4 @@ class SASLMechsOperationImpl extends OperationImpl implements
   protected void decodePayload(byte[] pl) {
     getCallback().receivedStatus(new OperationStatus(true, new String(pl)));
   }
-
-  @Override
-  public String toString() {
-    return "SASL mechs operation";
-  }
 }

@@ -24,6 +24,7 @@
 package net.spy.memcached.auth;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -57,7 +58,7 @@ public class AuthThread extends SpyThread {
     start();
   }
 
-  protected String[] listSupportedSASLMechanisms(AtomicBoolean done) {
+  private String[] listSupportedSASLMechanisms(AtomicBoolean done) {
     final CountDownLatch listMechsLatch = new CountDownLatch(1);
     final AtomicReference<String> supportedMechs =
       new AtomicReference<String>();

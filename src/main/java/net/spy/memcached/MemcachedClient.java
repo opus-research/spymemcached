@@ -124,6 +124,13 @@ import net.spy.memcached.util.StringUtils;
  *          // Do other timeout related stuff
  *      }
  * </pre>
+ *
+ * <p>Optionally, it is possible to activate a check that makes sure that
+ * the node is alive and responding before running actual operations (even
+ * before authentication. Only enable this if you are sure that you do not
+ * run into issues during connection (some memcached services have problems
+ * with it). You can enable it by setting the net.spy.verifyAliveOnConnect
+ * System Property to "true".</p>
  */
 public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     ConnectionObserver {
@@ -378,6 +385,9 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   /**
    * Append to an existing value in the cache.
    *
+   * If 0 is passed in as the CAS identifier, it will override the value
+   * on the server without performing the CAS check.
+   *
    * <p>
    * Note that the return will be false any time a mutation has not occurred.
    * </p>
@@ -401,6 +411,27 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * Note that the return will be false any time a mutation has not occurred.
    * </p>
    *
+   * @param key the key to whose value will be appended
+   * @param val the value to append
+   * @return a future indicating success, false if there was no change to the
+   *         value
+   * @throws IllegalStateException in the rare circumstance where queue is too
+   *           full to accept any more requests
+   */
+  public OperationFuture<Boolean> append(String key, Object val) {
+    return append(0, key, val, transcoder);
+  }
+
+  /**
+   * Append to an existing value in the cache.
+   *
+   * If 0 is passed in as the CAS identifier, it will override the value
+   * on the server without performing the CAS check.
+   *
+   * <p>
+   * Note that the return will be false any time a mutation has not occurred.
+   * </p>
+   *
    * @param <T>
    * @param cas cas identifier (ignored in the ascii protocol)
    * @param key the key to whose value will be appended
@@ -416,7 +447,33 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   /**
+   * Append to an existing value in the cache.
+   *
+   * If 0 is passed in as the CAS identifier, it will override the value
+   * on the server without performing the CAS check.
+   *
+   * <p>
+   * Note that the return will be false any time a mutation has not occurred.
+   * </p>
+   *
+   * @param <T>
+   * @param key the key to whose value will be appended
+   * @param val the value to append
+   * @param tc the transcoder to serialize and unserialize the value
+   * @return a future indicating success
+   * @throws IllegalStateException in the rare circumstance where queue is too
+   *           full to accept any more requests
+   */
+  public <T> OperationFuture<Boolean> append(String key, T val,
+      Transcoder<T> tc) {
+    return asyncCat(ConcatenationType.append, 0, key, val, tc);
+  }
+
+  /**
    * Prepend to an existing value in the cache.
+   *
+   * If 0 is passed in as the CAS identifier, it will override the value
+   * on the server without performing the CAS check.
    *
    * <p>
    * Note that the return will be false any time a mutation has not occurred.
@@ -440,6 +497,26 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * Note that the return will be false any time a mutation has not occurred.
    * </p>
    *
+   * @param key the key to whose value will be prepended
+   * @param val the value to append
+   * @return a future indicating success
+   * @throws IllegalStateException in the rare circumstance where queue is too
+   *           full to accept any more requests
+   */
+  public OperationFuture<Boolean> prepend(String key, Object val) {
+    return prepend(0, key, val, transcoder);
+  }
+
+  /**
+   * Prepend to an existing value in the cache.
+   *
+   * If 0 is passed in as the CAS identifier, it will override the value
+   * on the server without performing the CAS check.
+   *
+   * <p>
+   * Note that the return will be false any time a mutation has not occurred.
+   * </p>
+   *
    * @param <T>
    * @param cas cas identifier (ignored in the ascii protocol)
    * @param key the key to whose value will be prepended
@@ -452,6 +529,26 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   public <T> OperationFuture<Boolean> prepend(long cas, String key, T val,
       Transcoder<T> tc) {
     return asyncCat(ConcatenationType.prepend, cas, key, val, tc);
+  }
+
+  /**
+   * Prepend to an existing value in the cache.
+   *
+   * <p>
+   * Note that the return will be false any time a mutation has not occurred.
+   * </p>
+   *
+   * @param <T>
+   * @param key the key to whose value will be prepended
+   * @param val the value to append
+   * @param tc the transcoder to serialize and unserialize the value
+   * @return a future indicating success
+   * @throws IllegalStateException in the rare circumstance where queue is too
+   *           full to accept any more requests
+   */
+  public <T> OperationFuture<Boolean> prepend(String key, T val,
+      Transcoder<T> tc) {
+    return asyncCat(ConcatenationType.prepend, 0, key, val, tc);
   }
 
   /**

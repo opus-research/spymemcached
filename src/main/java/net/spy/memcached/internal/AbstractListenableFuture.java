@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2014 Couchbase, Inc.
+ * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,11 @@
 
 package net.spy.memcached.internal;
 
-import net.spy.memcached.compat.SpyObject;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import net.spy.memcached.compat.SpyObject;
 
 /**
  * The {@link AbstractListenableFuture} implements common functionality shared
@@ -56,12 +55,7 @@ public abstract class AbstractListenableFuture
    */
   private List<GenericCompletionListener<? extends Future<T>>> listeners;
 
-  /**
-   * Creates a new {@link AbstractListenableFuture}.
-   *
-   * @param executor the executor in which the callbacks will be executed in.
-   */
-  protected AbstractListenableFuture(ExecutorService executor) {
+  public AbstractListenableFuture(ExecutorService executor) {
     service = executor;
     listeners = new ArrayList<GenericCompletionListener<? extends Future<T>>>();
   }
@@ -85,18 +79,24 @@ public abstract class AbstractListenableFuture
    * @return the current future to allow chaining.
    */
   protected Future<T> addToListeners(
-    final GenericCompletionListener<? extends Future<T>> listener) {
+    GenericCompletionListener<? extends Future<T>> listener) {
     if (listener == null) {
       throw new IllegalArgumentException("The listener can't be null.");
     }
 
     if(isDone()) {
       notifyListener(executor(), this, listener);
-    } else {
-      synchronized(this) {
+      return this;
+    }
+
+    synchronized(this) {
+      if (!isDone()) {
         listeners.add(listener);
+        return this;
       }
     }
+
+    notifyListener(executor(), this, listener);
     return this;
   }
 
@@ -117,7 +117,7 @@ public abstract class AbstractListenableFuture
         } catch(Throwable t) {
           getLogger().warn(
             "Exception thrown wile executing " + listener.getClass().getName()
-              + ".operationComplete()", t);
+            + ".operationComplete()", t);
         }
       }
     });
@@ -139,15 +139,9 @@ public abstract class AbstractListenableFuture
    *
    * @param future the future to pass on to the listeners.
    */
-  protected void notifyListeners(final Future<?> future) {
-    final List<GenericCompletionListener<? extends Future<T>>> copy =
-      new ArrayList<GenericCompletionListener<? extends Future<T>>>();
-    synchronized(this) {
-      copy.addAll(listeners);
-      listeners = new ArrayList<GenericCompletionListener<? extends Future<T>>>();
-    }
+  protected synchronized void notifyListeners(final Future<?> future) {
     for (GenericCompletionListener<? extends Future<? super T>> listener
-      : copy) {
+      : listeners) {
       notifyListener(executor(), future, listener);
     }
   }
@@ -164,11 +158,16 @@ public abstract class AbstractListenableFuture
       throw new IllegalArgumentException("The listener can't be null.");
     }
 
-    if (!isDone()) {
-      synchronized(this) {
+    if(isDone()) {
+      return this;
+    }
+
+    synchronized(this) {
+      if (!isDone()) {
         listeners.remove(listener);
       }
     }
+
     return this;
   }
 }

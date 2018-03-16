@@ -24,9 +24,12 @@
 
 package net.spy.memcached.protocol.binary;
 
+import net.spy.memcached.KeyUtil;
 import net.spy.memcached.ObserveResponse;
 import net.spy.memcached.ops.ObserveOperation;
 import net.spy.memcached.ops.OperationCallback;
+
+import java.util.Arrays;
 
 class ObserveOperationImpl extends SingleKeyOperationImpl implements
     ObserveOperation {
@@ -43,12 +46,14 @@ class ObserveOperationImpl extends SingleKeyOperationImpl implements
     super(CMD, generateOpaque(), k, cb);
     cas = c;
     index = i;
+    System.out.println("constructor of operation impl");
   }
 
   @Override
   public void initialize() {
+    byte[] keyBytes = KeyUtil.getKeyBytes(key);
     prepareBuffer("", 0x0, EMPTY_BYTES, (short) index,
-            (short) key.length(), key.getBytes());
+      (short) keyBytes.length, keyBytes);
   }
 
   @Override
@@ -58,6 +63,7 @@ class ObserveOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   protected void decodePayload(byte[] pl) {
+    System.out.println(Arrays.toString(pl));
     final short  keylen = (short) decodeShort(pl, 2);
     keystate = (byte) decodeByte(pl, keylen+4);
     retCas = (long) decodeLong(pl, keylen+5);

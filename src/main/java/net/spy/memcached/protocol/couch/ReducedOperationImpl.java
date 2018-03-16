@@ -1,4 +1,4 @@
-package net.spy.memcached.protocol.couchdb;
+package net.spy.memcached.protocol.couch;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -14,10 +14,10 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
-public class DocsOperationImpl extends HttpOperationImpl implements
-		DocsOperation {
+public class ReducedOperationImpl extends HttpOperationImpl implements
+		ReducedOperation {
 
-	public DocsOperationImpl(HttpRequest r, DocsCallback cb) {
+	public ReducedOperationImpl(HttpRequest r, ReducedCallback cb) {
 		super(r, cb);
 	}
 
@@ -27,9 +27,9 @@ public class DocsOperationImpl extends HttpOperationImpl implements
 		int errorcode = response.getStatusLine().getStatusCode();
 		try {
 			OperationStatus status = parseViewForStatus(json, errorcode);
-			ViewResponseWithDocs vr = parseDocsViewResult(json);
+			ViewResponseReduced vr = parseReducedViewResult(json);
 
-			((DocsCallback) callback).gotData(vr);
+			((ReducedCallback) callback).gotData(vr);
 			callback.receivedStatus(status);
 		} catch (ParseException e) {
 			exception = new OperationException(OperationErrorType.GENERAL,
@@ -38,9 +38,9 @@ public class DocsOperationImpl extends HttpOperationImpl implements
 		callback.complete();
 	}
 
-	private ViewResponseWithDocs parseDocsViewResult(String json)
+	private ViewResponseReduced parseReducedViewResult(String json)
 			throws ParseException {
-		final Collection<RowWithDocs> rows = new LinkedList<RowWithDocs>();
+		final Collection<RowReduced> rows = new LinkedList<RowReduced>();
 		final Collection<RowError> errors = new LinkedList<RowError>();
 		if (json != null) {
 			try {
@@ -49,11 +49,10 @@ public class DocsOperationImpl extends HttpOperationImpl implements
 					JSONArray ids = base.getJSONArray("rows");
 					for (int i = 0; i < ids.length(); i++) {
 						JSONObject elem = ids.getJSONObject(i);
-						if (elem.has("id")) {
-							String id = elem.getString("id");
+						if (elem.has("key")) {
 							String key = elem.getString("key");
 							String value = elem.getString("value");
-							rows.add(new RowWithDocs(id, key, value, null));
+							rows.add(new RowReduced(key, value));
 						} else if (elem.has("error")) {
 							String from = elem.getString("from");
 							String reason = elem.getString("reason");
@@ -68,6 +67,6 @@ public class DocsOperationImpl extends HttpOperationImpl implements
 				throw new ParseException("Cannot read json: " + json, 0);
 			}
 		}
-		return new ViewResponseWithDocs(rows, errors);
+		return new ViewResponseReduced(rows, errors);
 	}
 }

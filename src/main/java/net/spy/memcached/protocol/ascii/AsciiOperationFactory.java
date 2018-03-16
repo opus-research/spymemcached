@@ -6,7 +6,6 @@ import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 
-import net.spy.memcached.internal.SyncRequest;
 import net.spy.memcached.ops.BaseOperationFactory;
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.ConcatenationOperation;
@@ -30,7 +29,6 @@ import net.spy.memcached.ops.SASLStepOperation;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.SyncOperation;
 import net.spy.memcached.ops.VersionOperation;
 
 /**
@@ -75,12 +73,6 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 
 	public StatsOperation stats(String arg, StatsOperation.Callback cb) {
 		return new StatsOperationImpl(arg, cb);
-	}
-
-	public SyncOperation sync(Map<SyncRequest, Integer> keys, int replicaCount,
-			boolean persist, boolean mutation, boolean pandm,
-			OperationCallback cb) {
-		throw new UnsupportedOperationException("Sync is not supported in ascii");
 	}
 
 	public StoreOperation store(StoreType storeType, String key, int flags,

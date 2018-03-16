@@ -30,8 +30,17 @@ import net.spy.memcached.ops.GetAndTouchOperation;
 public class GetAndTouchOperationImpl extends BaseGetOpImpl implements
     GetAndTouchOperation {
 
+  private final int exp;
+
   public GetAndTouchOperationImpl(String c, int e,
       GetAndTouchOperation.Callback cb, String k) {
     super(c, e, cb, k);
+    exp = e;
   }
+
+  @Override
+  public int getExpiration() {
+    return exp;
+  }
+
 }

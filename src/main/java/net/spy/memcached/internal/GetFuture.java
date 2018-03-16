@@ -26,7 +26,6 @@ package net.spy.memcached.internal;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -41,20 +40,16 @@ import net.spy.memcached.ops.OperationStatus;
  *
  * @param <T> Type of object returned from the get
  */
-public class GetFuture<T> extends AbstractListenableFuture<T, GetFutureListener> {
+public class GetFuture<T> implements Future<T> {
 
   private final OperationFuture<Future<T>> rv;
 
-  public GetFuture(CountDownLatch l, long opTimeout, String key,
-    ExecutorService service) {
-    super(service);
-    this.rv = new OperationFuture<Future<T>>(key, l, opTimeout, service);
+  public GetFuture(CountDownLatch l, long opTimeout, String key) {
+    this.rv = new OperationFuture<Future<T>>(key, l, opTimeout);
   }
 
   public boolean cancel(boolean ign) {
-    boolean result = rv.cancel(ign);
-    notifyListeners();
-    return result;
+    return rv.cancel(ign);
   }
 
   public T get() throws InterruptedException, ExecutionException {
@@ -74,7 +69,6 @@ public class GetFuture<T> extends AbstractListenableFuture<T, GetFutureListener>
 
   public void set(Future<T> d, OperationStatus s) {
     rv.set(d, s);
-    notifyListeners();
   }
 
   public void setOperation(Operation to) {
@@ -88,17 +82,4 @@ public class GetFuture<T> extends AbstractListenableFuture<T, GetFutureListener>
   public boolean isDone() {
     return rv.isDone();
   }
-
-  @Override
-  public GetFuture<T> addListener(GetFutureListener listener) {
-    super.addToListeners((GenericFutureListener) listener);
-    return this;
-  }
-
-  @Override
-  public GetFuture<T> removeListener(GetFutureListener listener) {
-    super.removeFromListeners((GenericFutureListener) listener);
-    return this;
-  }
-
 }

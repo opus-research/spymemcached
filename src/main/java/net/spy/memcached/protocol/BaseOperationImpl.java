@@ -206,7 +206,6 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
       timedOutUnsent = true;
       timedout = true;
       callback.complete();
-      cmd = null;
     } else {
       // timedout would be false, but we cannot allow you to untimeout an
       // operation

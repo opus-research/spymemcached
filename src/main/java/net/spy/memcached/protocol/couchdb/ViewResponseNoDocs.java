@@ -5,17 +5,10 @@ import java.util.Iterator;
 
 public class ViewResponseNoDocs implements ViewResponse<RowNoDocs> {
 
-	final Collection<RowNoDocs> rows;
-	final Collection<RowError> errors;
+	Collection<RowNoDocs> rows;
 
-	public ViewResponseNoDocs(final Collection<RowNoDocs> r,
-			final Collection<RowError> e) {
+	public ViewResponseNoDocs(final Collection<RowNoDocs> r) {
 		rows = r;
-		errors = e;
-	}
-
-	public Collection<RowError> getErrors() {
-		return errors;
 	}
 
 	public int size() {

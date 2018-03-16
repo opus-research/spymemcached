@@ -12,26 +12,16 @@ import java.util.TreeSet;
 public class ViewResponseWithDocs implements ViewResponse<RowWithDocs>,
 		Map<String, Object> {
 
-	final Map<String, Object> map;
-	final Collection<RowWithDocs> rows;
-	final Collection<RowError> errors;
+	Map<String, Object> map;
+	Collection<RowWithDocs> rows;
 
-	public ViewResponseWithDocs(final Collection<RowWithDocs> r,
-			final Collection<RowError> e) {
+	public ViewResponseWithDocs(final Collection<RowWithDocs> r) {
 		map = new HashMap<String, Object>();
 		rows = r;
-		errors = e;
 		for (RowWithDocs row : rows) {
 			map.put(row.getId(), row.getDoc());
 		}
-	}
 
-	public void addError(RowError r) {
-		errors.add(r);
-	}
-
-	public Collection<RowError> getErrors() {
-		return errors;
 	}
 
 	@Override

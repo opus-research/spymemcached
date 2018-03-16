@@ -1,10 +1,7 @@
 .settings
-.classpath
-.project
 cobertura.ser
 target/
 reports/
-build/
 junit*
 *.iml
 *~

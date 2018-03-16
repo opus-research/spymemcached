@@ -8,19 +8,18 @@ import java.util.List;
  */
 public class Bucket {
     // Bucket name
-    private String name;
-    // configuration config
-    private Config configuration;
+    private final String name;
+    // vbuckets config
+    private final Config vbuckets;
     // bucket's streaming uri
     private final URI streamingURI;
 
     // nodes list
     private List<Node> nodes;
 
-
-    public Bucket(String name, Config configuration, URI streamingURI, List<Node> nodes) {
+    public Bucket(final String name, final Config vbuckets, final URI streamingURI, final List<Node> nodes) {
         this.name = name;
-        this.configuration = configuration;
+        this.vbuckets = vbuckets;
         this.streamingURI = streamingURI;
         this.nodes = nodes;
     }
@@ -29,17 +28,12 @@ public class Bucket {
         return name;
     }
 
-
-    public Config getConfig() {
-        return configuration;
+    public Config getVbuckets() {
+        return vbuckets;
     }
 
     public URI getStreamingURI() {
         return streamingURI;
-    }
-
-    public List<Node> getNodes() {
-        return nodes;
     }
 
     @Override
@@ -51,7 +45,7 @@ public class Bucket {
 
         if (!name.equals(bucket.name)) return false;
         if (!nodes.equals(bucket.nodes)) return false;
-        if (!configuration.equals(bucket.configuration)) return false;
+        if (!vbuckets.equals(bucket.vbuckets)) return false;
 
         return true;
     }
@@ -59,7 +53,7 @@ public class Bucket {
     @Override
     public int hashCode() {
         int result = name.hashCode();
-        result = 31 * result + configuration.hashCode();
+        result = 31 * result + vbuckets.hashCode();
         result = 31 * result + nodes.hashCode();
         return result;
     }

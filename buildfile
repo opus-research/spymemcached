@@ -10,6 +10,13 @@ COPYRIGHT = "2006-2011  Dustin Sallings, Matt Ingenthron"
 
 PROJECT_NAME = "spymemcached"
 
+if ENV['server'].nil? then
+  SERVER="127.0.0.1"
+else
+  SERVER=ENV['server']
+end
+puts "Using server at #{SERVER}"
+
 def compute_released_verions
   h = {}
   `git tag`.reject{|i| i =~ /pre|rc/}.map{|v| v.strip}.each do |v|
@@ -51,6 +58,7 @@ define "spymemcached" do
 
   test.options[:java_args] = "-ea"
   test.include "*Test"
+  test.using :fork=>:each, :properties=>{ 'server.address'=>SERVER }
   TREE_VER=tree_version
   puts "Tree version is #{TREE_VER}"
 

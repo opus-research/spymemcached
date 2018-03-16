@@ -28,10 +28,10 @@ import java.net.InetSocketAddress;
 import junit.framework.TestCase;
 
 /**
- * Test the KetamaNodeKeyFormatter with the currently supported 2 formats used by
+ * Test the KetamaNodeKeyFormat with the currently supported 2 formats used by
  * either spymemcached and libmemcached
  */
-public class KetamaNodeKeyFormatterTest extends TestCase {
+public class KetamaNodeKeyFormatTest extends TestCase {
 
     private MemcachedNode defaultNode = new MockMemcachedNode(new InetSocketAddress("localhost", 11211));
     private InetAddress ip;
@@ -43,22 +43,17 @@ public class KetamaNodeKeyFormatterTest extends TestCase {
         noHostnameNode = new MockMemcachedNode(new InetSocketAddress(ip, 11211));
     }
 
-    public void testSpymemcachedFormatIsDefault() throws Exception {
-        KetamaNodeKeyFormatter formatter = new KetamaNodeKeyFormatter();
-        assertEquals(formatter.getFormat(), KetamaNodeKeyFormatter.Format.SPYMEMCACHED);
-    }
-
     public void testSpymemcachedFormat() throws Exception {
-        KetamaNodeKeyFormatter formatter = new KetamaNodeKeyFormatter(KetamaNodeKeyFormatter.Format.SPYMEMCACHED);
-        assertEquals("localhost/127.0.0.1:11211-1", formatter.getKeyForNode(defaultNode, 1));
-        assertEquals("1.2.3.4:11211-1", formatter.getKeyForNode(noHostnameNode, 1));
-        assertEquals("localhost/127.0.0.1:11212-1", formatter.getKeyForNode(noDefaultPortNode, 1));
+        KetamaNodeKeyFormat format = KetamaNodeKeyFormat.SPYMEMCACHED;
+        assertEquals("localhost/127.0.0.1:11211-1", format.getKeyForNode(defaultNode, 1));
+        assertEquals("1.2.3.4:11211-1", format.getKeyForNode(noHostnameNode, 1));
+        assertEquals("localhost/127.0.0.1:11212-1", format.getKeyForNode(noDefaultPortNode, 1));
     }
 
     public void testLibmemcachedFormat() throws Exception {
-        KetamaNodeKeyFormatter formatter = new KetamaNodeKeyFormatter(KetamaNodeKeyFormatter.Format.LIBMEMCACHED);
-        assertEquals("localhost-1", formatter.getKeyForNode(defaultNode, 1));
-        assertEquals("1.2.3.4-1", formatter.getKeyForNode(noHostnameNode, 1));
-        assertEquals("localhost:11212-1", formatter.getKeyForNode(noDefaultPortNode, 1));
+        KetamaNodeKeyFormat format = KetamaNodeKeyFormat.LIBMEMCACHED;
+        assertEquals("localhost-1", format.getKeyForNode(defaultNode, 1));
+        assertEquals("1.2.3.4-1", format.getKeyForNode(noHostnameNode, 1));
+        assertEquals("localhost:11212-1", format.getKeyForNode(noDefaultPortNode, 1));
     }
 }

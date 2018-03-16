@@ -30,68 +30,52 @@ import java.util.Map;
  * Known key formats used in Ketama for assigning nodes around the ring
  */
 
-public class KetamaNodeKeyFormatter {
+public enum KetamaNodeKeyFormat {
 
-    public enum Format {
-        /**
-         * SPYMEMCACHED uses the format traditionally used by spymemcached to map
-         * nodes to names. The format is HOSTNAME/IP:PORT-ITERATION
-         *
-         * <p>
-         * This default implementation uses the socket-address of the MemcachedNode
-         * and concatenates it with a hyphen directly against the repetition number
-         * for example a key for a particular server's first repetition may look like:
-         * <p>
-         *
-         * <p>
-         * <code>myhost/10.0.2.1-0</code>
-         * </p>
-         *
-         * <p>
-         * for the second repetition
-         * </p>
-         *
-         * <p>
-         * <code>myhost/10.0.2.1-1</code>
-         * </p>
-         *
-         * <p>
-         * for a server where reverse lookups are failing the returned keys may look
-         * like
-         * </p>
-         *
-         * <p>
-         * <code>/10.0.2.1-0</code> and <code>/10.0.2.1-1</code>
-         * </p>
-         */
-        SPYMEMCACHED,
+    /**
+     * SPYMEMCACHED uses the format traditionally used by spymemcached to map
+     * nodes to names. The format is HOSTNAME/IP:PORT-ITERATION
+     *
+     * <p>
+     * This default implementation uses the socket-address of the MemcachedNode
+     * and concatenates it with a hyphen directly against the repetition number
+     * for example a key for a particular server's first repetition may look like:
+     * <p>
+     *
+     * <p>
+     * <code>myhost/10.0.2.1-0</code>
+     * </p>
+     *
+     * <p>
+     * for the second repetition
+     * </p>
+     *
+     * <p>
+     * <code>myhost/10.0.2.1-1</code>
+     * </p>
+     *
+     * <p>
+     * for a server where reverse lookups are failing the returned keys may look
+     * like
+     * </p>
+     *
+     * <p>
+     * <code>/10.0.2.1-0</code> and <code>/10.0.2.1-1</code>
+     * </p>
+     */
+    SPYMEMCACHED,
 
-        /**
-         * LIBMEMCACHED uses the format traditionally used by libmemcached to map
-         * nodes to names. The format is HOSTNAME:[PORT]-ITERATION the PORT is not
-         * part of the node identifier if it is the default memecached port (11211)
-         */
-        LIBMEMCACHED
-    }
-
-    private final Format format;
-
-    public Format getFormat() {
-        return format;
-    }
+    /**
+     * LIBMEMCACHED uses the format traditionally used by libmemcached to map
+     * nodes to names. The format is HOSTNAME:[PORT]-ITERATION the PORT is not
+     * part of the node identifier if it is the default memecached port (11211)
+     */
+    LIBMEMCACHED;
 
     // Carrried over from the DefaultKetamaNodeLocatorConfiguration:
     // Internal lookup map to try to carry forward the optimisation that was
     // previously in KetamaNodeLocator
     private Map<MemcachedNode, String> nodeKeys = new HashMap<MemcachedNode, String>();
-
-    public KetamaNodeKeyFormatter() {
-        this(Format.SPYMEMCACHED);
-    }
-
-    public KetamaNodeKeyFormatter(Format format) {
-        this.format = format;
-    }
 
     /**
      * Returns a uniquely identifying key, suitable for hashing by the
@@ -114,7 +98,7 @@ public class KetamaNodeKeyFormatter {
         // all other cases should be as fast as possible.
         String nodeKey = nodeKeys.get(node);
         if (nodeKey == null) {
-            switch(this.format) {
+            switch(this) {
                 case LIBMEMCACHED:
                     InetSocketAddress address = (InetSocketAddress)node.getSocketAddress();
                     nodeKey = address.getHostName();

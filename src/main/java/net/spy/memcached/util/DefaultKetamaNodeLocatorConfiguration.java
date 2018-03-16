@@ -23,7 +23,7 @@
 
 package net.spy.memcached.util;
 
-import net.spy.memcached.KetamaNodeKeyFormatter;
+import net.spy.memcached.KetamaNodeKeyFormat;
 import net.spy.memcached.MemcachedNode;
 
 /**
@@ -34,24 +34,24 @@ public class DefaultKetamaNodeLocatorConfiguration implements
     KetamaNodeLocatorConfiguration {
 
   private final int numReps = 160;
-  private final KetamaNodeKeyFormatter ketamaNodeKeyFormatter;
+  private final KetamaNodeKeyFormat ketamaNodeKeyFormat;
 
   /**
    * Create a KetamaNodeLocatorConfiguraiton with the default SPYMEMCACHED node
    * key format
    */
   public DefaultKetamaNodeLocatorConfiguration() {
-      ketamaNodeKeyFormatter = new KetamaNodeKeyFormatter();
+      ketamaNodeKeyFormat = KetamaNodeKeyFormat.SPYMEMCACHED;
   }
 
   /**
    * Create a KetamaNodeLocatorConfiguraiton
    *
-   * @param nodeKeyFormatter Ketama node key format, either SPYMEMCACHED or LIBMEMCACHED
+   * @param nodeKeyFormat Ketama node key format, either SPYMEMCACHED or LIBMEMCACHED
    */
 
-  public DefaultKetamaNodeLocatorConfiguration(KetamaNodeKeyFormatter nodeKeyFormatter) {
-      ketamaNodeKeyFormatter = nodeKeyFormatter;
+  public DefaultKetamaNodeLocatorConfiguration(KetamaNodeKeyFormat nodeKeyFormat) {
+      ketamaNodeKeyFormat = nodeKeyFormat;
   }
 
   /**
@@ -65,9 +65,9 @@ public class DefaultKetamaNodeLocatorConfiguration implements
   }
 
   /**
-   * Delegates to the KetamaNodeKeyFormatter
+   * Delegates to the KetamaNodeKeyFormat.
    */
   public String getKeyForNode(MemcachedNode node, int repetition) {
-    return ketamaNodeKeyFormatter.getKeyForNode(node, repetition);
+    return ketamaNodeKeyFormat.getKeyForNode(node, repetition);
   }
 }

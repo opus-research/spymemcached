@@ -55,6 +55,7 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
   private final HashAlgorithm hashAlg;
   private final Map<InetSocketAddress, Integer> weights;
   private final boolean isWeightedKetama;
+  private int totalWeight;
   private final KetamaNodeLocatorConfiguration config;
 
   /**
@@ -67,7 +68,7 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
    *          consistent hash continuum
    */
   public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg) {
-    this(nodes, alg, KetamaNodeKeyFormatter.Format.SPYMEMCACHED, new HashMap<InetSocketAddress, Integer>());
+    this(nodes, alg, KetamaNodeKeyFormat.SPYMEMCACHED, new HashMap<InetSocketAddress, Integer>());
   }
 
   /**
@@ -84,9 +85,9 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
    *          weight as Integer
    */
     public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg,
-            KetamaNodeKeyFormatter.Format nodeKeyFormat,
+            KetamaNodeKeyFormat nodeKeyFormat,
             Map<InetSocketAddress, Integer> weights) {
-    this(nodes, alg, weights, new DefaultKetamaNodeLocatorConfiguration(new KetamaNodeKeyFormatter(nodeKeyFormat)));
+    this(nodes, alg, weights, new DefaultKetamaNodeLocatorConfiguration(nodeKeyFormat));
   }
 
   /**
@@ -125,6 +126,7 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
     config = configuration;
     weights = nodeWeights;
     isWeightedKetama = !weights.isEmpty();
+    totalWeight = 0;
     setKetamaNodes(nodes);
   }
 
@@ -138,6 +140,7 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
     hashAlg = alg;
     config = conf;
     weights = nodeWeights;
+    totalWeight = 0;
     isWeightedKetama = !weights.isEmpty();
   }
 
@@ -217,12 +220,11 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
    */
   protected void setKetamaNodes(List<MemcachedNode> nodes) {
     TreeMap<Long, MemcachedNode> newNodeMap =
-            new TreeMap<Long, MemcachedNode>();
+        new TreeMap<Long, MemcachedNode>();
     int numReps = config.getNodeRepetitions();
     int nodeCount = nodes.size();
-    int totalWeight = 0;
 
-    if (isWeightedKetama) {
+    if (isWeightedKetama && totalWeight == 0) {
         for (MemcachedNode node : nodes) {
             totalWeight += weights.get(node.getSocketAddress());
         }
@@ -230,14 +232,18 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 
     for (MemcachedNode node : nodes) {
       if (isWeightedKetama) {
-
           int thisWeight = weights.get(node.getSocketAddress());
-          float percent = (float)thisWeight / (float)totalWeight;
+          float percent = (float)thisWeight / (float)this.totalWeight;
           int pointerPerServer = (int)((Math.floor((float)(percent * (float)config.getNodeRepetitions() / 4 * (float)nodeCount + 0.0000000001))) * 4);
           for (int i = 0; i < pointerPerServer / 4; i++) {
-              for(long position : ketamaNodePositionsAtIteration(node, i)) {
-                  newNodeMap.put(position, node);
-                  getLogger().debug("Adding node %s with weight %s in position %d", node, thisWeight, position);
+              byte[] digest = DefaultHashAlgorithm.computeMd5(config.getKeyForNode(node, i));
+              for (int h = 0; h < 4; h++) {
+                  Long k = ((long) (digest[3 + h * 4] & 0xFF) << 24)
+                      | ((long) (digest[2 + h * 4] & 0xFF) << 16)
+                      | ((long) (digest[1 + h * 4] & 0xFF) << 8)
+                      | (digest[h * 4] & 0xFF);
+                  newNodeMap.put(k, node);
+                  getLogger().debug("Adding node %s in position %d", node, k);
               }
           }
       } else {
@@ -247,9 +253,15 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
           // MD5
           if (hashAlg == DefaultHashAlgorithm.KETAMA_HASH) {
               for (int i = 0; i < numReps / 4; i++) {
-                  for(long position : ketamaNodePositionsAtIteration(node, i)) {
-                    newNodeMap.put(position, node);
-                    getLogger().debug("Adding node %s in position %d", node, position);
+                  byte[] digest =
+                      DefaultHashAlgorithm.computeMd5(config.getKeyForNode(node, i));
+                  for (int h = 0; h < 4; h++) {
+                      Long k = ((long) (digest[3 + h * 4] & 0xFF) << 24)
+                          | ((long) (digest[2 + h * 4] & 0xFF) << 16)
+                          | ((long) (digest[1 + h * 4] & 0xFF) << 8)
+                          | (digest[h * 4] & 0xFF);
+                      newNodeMap.put(k, node);
+                      getLogger().debug("Adding node %s in position %d", node, k);
                   }
               }
           } else {
@@ -261,18 +273,5 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
     }
     assert newNodeMap.size() == numReps * nodes.size();
     ketamaNodes = newNodeMap;
-  }
-
-  private List<Long> ketamaNodePositionsAtIteration(MemcachedNode node, int iteration) {
-      List<Long> positions = new ArrayList<Long>();
-      byte[] digest = DefaultHashAlgorithm.computeMd5(config.getKeyForNode(node, iteration));
-      for (int h = 0; h < 4; h++) {
-          Long k = ((long) (digest[3 + h * 4] & 0xFF) << 24)
-              | ((long) (digest[2 + h * 4] & 0xFF) << 16)
-              | ((long) (digest[1 + h * 4] & 0xFF) << 8)
-              | (digest[h * 4] & 0xFF);
-          positions.add(k);
-      }
-      return positions;
   }
 }

@@ -53,7 +53,7 @@ public class KetamaConnectionFactoryTest extends TestCase {
       KetamaConnectionFactory connectionFactory = new KetamaConnectionFactory();
       assertEquals(connectionFactory.getHashAlg(), DefaultHashAlgorithm.KETAMA_HASH);
       assertTrue(connectionFactory.getWeights().isEmpty());
-      assertEquals(connectionFactory.getKetamaNodeKeyFormat(), KetamaNodeKeyFormatter.Format.SPYMEMCACHED);
+      assertEquals(connectionFactory.getKetamaNodeKeyFormat(), KetamaNodeKeyFormat.SPYMEMCACHED);
   }
 
   /*
@@ -64,9 +64,9 @@ public class KetamaConnectionFactoryTest extends TestCase {
         weights.put(new InetSocketAddress("localhost", 11211), 8);
         KetamaConnectionFactory connectionFactory = new KetamaConnectionFactory(
                 1, 1, 1, DefaultHashAlgorithm.FNV1_32_HASH,
-                KetamaNodeKeyFormatter.Format.LIBMEMCACHED, weights);
+                KetamaNodeKeyFormat.LIBMEMCACHED, weights);
         assertEquals(connectionFactory.getWeights(), weights);
         assertEquals(connectionFactory.getHashAlg(), DefaultHashAlgorithm.FNV1_32_HASH);
-        assertEquals(connectionFactory.getKetamaNodeKeyFormat(), KetamaNodeKeyFormatter.Format.LIBMEMCACHED);
+        assertEquals(connectionFactory.getKetamaNodeKeyFormat(), KetamaNodeKeyFormat.LIBMEMCACHED);
   }
 }

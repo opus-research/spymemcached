@@ -75,7 +75,7 @@ public final class StringUtils {
     }
     // Validate the key
     for (byte b : keyBytes) {
-      if (b == ' ' || b == '\n' || b == '\r' || b == 0) {
+      if (b == '\n' || b == '\r' || b == 0) {
         throw new IllegalArgumentException(
             "Key contains invalid characters:  ``" + key + "''");
       }

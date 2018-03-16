@@ -375,7 +375,7 @@
 
   <target name="docsjar" depends="docs"
       description="Create the documentation jar">
-    <zip destfile="${build.dir}/${name}-${version}-javadoc.jar"
+    <zip destfile="${build.dir}/${name}-${version}-javadoc.zip"
         basedir="${build.javadoc}" />
   </target>
 

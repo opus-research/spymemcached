@@ -41,7 +41,7 @@ import net.spy.memcached.util.StringUtils;
 /**
  * Base class for get and gets handlers.
  */
-public abstract class BaseGetOpImpl extends OperationImpl {
+abstract class BaseGetOpImpl extends OperationImpl {
 
   private static final OperationStatus END = new OperationStatus(true, "END",
     StatusCode.SUCCESS);
@@ -200,8 +200,8 @@ public abstract class BaseGetOpImpl extends OperationImpl {
       size += k.length;
       size++;
     }
-    byte[] e = getAfterKeyBytes();
-    if (useAfterKeyBytes()) {
+    byte[] e = String.valueOf(exp).getBytes();
+    if (hasExp) {
       size += e.length + 1;
     }
     ByteBuffer b = ByteBuffer.allocate(size);
@@ -210,21 +210,13 @@ public abstract class BaseGetOpImpl extends OperationImpl {
       b.put((byte) ' ');
       b.put(k);
     }
-    if (useAfterKeyBytes()) {
+    if (hasExp) {
       b.put((byte) ' ');
       b.put(e);
     }
     b.put(RN_BYTES);
     b.flip();
     setBuffer(b);
-  }
-  
-  protected byte[] getAfterKeyBytes() {
-    return String.valueOf(exp).getBytes();
-  }
-  
-  protected boolean useAfterKeyBytes() {
-    return hasExp;
   }
 
   @Override

@@ -38,19 +38,17 @@ import java.util.concurrent.TimeUnit;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.protocol.couch.DocsOperation.DocsCallback;
 import net.spy.memcached.protocol.couch.DocsOperationImpl;
 import net.spy.memcached.protocol.couch.GetViewOperation.GetViewCallback;
 import net.spy.memcached.protocol.couch.GetViewOperationImpl;
 import net.spy.memcached.protocol.couch.GetViewsOperation.GetViewsCallback;
 import net.spy.memcached.protocol.couch.GetViewsOperationImpl;
 import net.spy.memcached.protocol.couch.HttpOperation;
-import net.spy.memcached.protocol.couch.NoDocsOperation.NoDocsCallback;
 import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
 import net.spy.memcached.protocol.couch.Query;
-import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
 import net.spy.memcached.protocol.couch.ReducedOperationImpl;
 import net.spy.memcached.protocol.couch.View;
+import net.spy.memcached.protocol.couch.ViewOperation.ViewCallback;
 import net.spy.memcached.protocol.couch.ViewResponse;
 import net.spy.memcached.protocol.couch.ViewRow;
 import net.spy.memcached.vbucket.config.Bucket;
@@ -272,7 +270,7 @@ public class CouchbaseClient extends MembaseClient
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-    final HttpOperation op = new DocsOperationImpl(request, new DocsCallback() {
+    final HttpOperation op = new DocsOperationImpl(request, new ViewCallback() {
       private ViewResponse vr = null;
 
       @Override
@@ -328,7 +326,7 @@ public class CouchbaseClient extends MembaseClient
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new NoDocsOperationImpl(request, new NoDocsCallback() {
+        new NoDocsOperationImpl(request, new ViewCallback() {
           private ViewResponse vr = null;
 
           @Override
@@ -372,7 +370,7 @@ public class CouchbaseClient extends MembaseClient
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new ReducedOperationImpl(request, new ReducedCallback() {
+        new ReducedOperationImpl(request, new ViewCallback() {
           private ViewResponse vr = null;
 
           @Override

@@ -43,4 +43,9 @@ public class ConfigurationProviderHTTPTest extends TestCase {
     public void testGetAnonymousAuthBucket() throws Exception {
         assertEquals("default", configProvider.getAnonymousAuthBucket());
     }
+
+    public void testBuildAuthHeader() {
+	ConfigurationProviderHTTP.buildAuthHeader("foo", "bar");
+
+    }
 }

@@ -22,6 +22,7 @@
 
 package net.spy.memcached.ops;
 
+import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.ObserveResponse;
 
 /**
@@ -39,6 +40,6 @@ public interface ObserveOperation extends KeyedOperation {
      * @param cas the CAS value for this record
      * @param or the ObserveResponse
      */
-    void gotData(String key, long cas, ObserveResponse or);
+    void gotData(String key, long cas, MemcachedNode node, ObserveResponse or);
   }
 }

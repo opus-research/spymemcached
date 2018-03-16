@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,37 +22,44 @@
 
 package net.spy.memcached.protocol.binary;
 
-import net.spy.memcached.ops.DeleteOperation;
+import java.io.IOException;
 
-class DeleteOperationImpl extends SingleKeyOperationImpl implements
-    DeleteOperation {
+import net.spy.memcached.ops.OperationState;
+import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.ops.StatsOperation;
 
-  private static final byte CMD = 0x04;
+/**
+ * A StatsOperationImpl.
+ */
+public class KeyStatsOperationImpl extends SingleKeyOperationImpl
+  implements StatsOperation {
 
-  private final long cas;
+  private static final byte CMD = 0x10;
 
-  public DeleteOperationImpl(String k, DeleteOperation.Callback cb) {
-    this(k, 0, cb);
-  }
-
-  public DeleteOperationImpl(String k, long c, DeleteOperation.Callback cb) {
-    super(CMD, generateOpaque(), k, cb);
-    cas = c;
+  public KeyStatsOperationImpl(String key, StatsOperation.Callback c) {
+    super(CMD, generateOpaque(), key, c);
   }
 
   @Override
   public void initialize() {
-    prepareBuffer(key, cas, EMPTY_BYTES);
+    String keyval = "key " + key + " " + getVBucket(key);
+    prepareBuffer(keyval, 0, EMPTY_BYTES);
   }
 
   @Override
-  protected void decodePayload(byte[] pl) {
-    super.decodePayload(pl);
-    ((DeleteOperation.Callback) getCallback()).gotData(responseCas);
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + " Cas: " + cas;
+  protected void finishedPayload(byte[] pl) throws IOException {
+    if (keyLen > 0) {
+      final byte[] keyBytes = new byte[keyLen];
+      final byte[] data = new byte[pl.length - keyLen];
+      System.arraycopy(pl, 0, keyBytes, 0, keyLen);
+      System.arraycopy(pl, keyLen, data, 0, pl.length - keyLen);
+      Callback cb = (Callback) getCallback();
+      cb.gotStat(new String(keyBytes, "UTF-8"), new String(data, "UTF-8"));
+    } else {
+      OperationStatus status = getStatusForErrorCode(errorCode, pl);
+      getCallback().receivedStatus(status);
+      transitionState(OperationState.COMPLETE);
+    }
+    resetInput();
   }
 }

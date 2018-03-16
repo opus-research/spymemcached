@@ -76,7 +76,7 @@ public interface OperationFactory {
    * @param operationCallback the status callback
    * @return the new DeleteOperation
    */
-  DeleteOperation delete(String key, OperationCallback operationCallback);
+  DeleteOperation delete(String key, DeleteOperation.Callback callback);
 
   /**
    * Create a Unlock operation.
@@ -159,6 +159,15 @@ public interface OperationFactory {
    * @return a new GetOperation
    */
   GetOperation get(Collection<String> keys, GetOperation.Callback cb);
+
+  /**
+   * Get a new KeyStatsOperation.
+   *
+   * @param key the key to get stats for
+   * @param cb the stats callback
+   * @return the new StatsOperation
+   */
+  StatsOperation keyStats(String key, StatsOperation.Callback cb);
 
   /**
    * Create a mutator operation.

@@ -62,7 +62,6 @@
   <!-- maven -->
   <property name="mvn.build.dir" value="${build.dir}/m2" />
   <property name="spymemcached.pom" value="${mvn.build.dir}/spymemcached.pom" />
-  <property name="spymemcached.pom" value="${mvn.build.dir}/spymemcached-test.pom" />
 
   <!-- compilation -->
   <property name="javac.deprecation" value="off"/>
@@ -113,8 +112,6 @@
     <path refid="lib.path.id" />
     <path location="${build.dir}" />
   </path>
-
-  <ivy:settings file="${ivy.settings.dir}/ivysettings.xml" />
 
   <!-- load ant-contrib tasks to get the "if" task. -->
   <taskdef resource="net/sf/antcontrib/antcontrib.properties">
@@ -194,7 +191,7 @@
   </target>
 
   <target name="ivy-retrieve" depends="ivy-resolve">
-    <ivy:retrieve settingsRef="${name}.ivy.settings"
+    <ivy:retrieve settingsRef="${name}.ivy.settings" conf="common"
       pattern="${build.ivy.lib.dir}/${ivy.artifact.retrieve.pattern}" sync="true" />
     <ivy:cachepath pathid="${name}.common.classpath" conf="common" />
   </target>
@@ -224,11 +221,13 @@
   <!-- ======================================
         Section: Testing and Reporting
        ====================================== -->
-  <target name="report" depends="ivy-retrieve" description="--> generates a report of dependencies">
+  <target name="report" depends="ivy-retrieve"
+      description="Generates a report of dependencies">
     <ivy:report todir="${build.dir}"/>
   </target>
 
-  <target name="test" depends="compile, compile-test">
+  <target name="test" depends="compile, compile-test"
+      description="Run Spymemcached unit tests">
     <echo>Testing against ${server.type}</echo>
     <echo>IPV4 address ${server.address_v4}</echo>
     <echo>IPV6 address ${server.address_v6}</echo>
@@ -306,7 +305,7 @@
     <fail if="junit.failure" message="Unit test(s) failed.  See reports!"/>
   </target>
 
-    <target name="junitreport" description="Create a report for the rest result">
+    <target name="junitreport">
         <mkdir dir="${junit.out.dir.html}"/>
         <junitreport todir="${junit.out.dir.html}">
             <fileset dir="${junit.out.dir.xml}">
@@ -345,7 +344,7 @@
     </uptodate>
   </target>
 
-  <target name="doc" description="Build javadoc"
+  <target name="docs" description="Build javadoc"
       depends="init,javadoc-uptodate,compile" unless="javadoc.is.uptodate">
     <exec executable="git" outputproperty="version">
       <arg value="describe" />
@@ -391,7 +390,8 @@
     </exec>
   </target>
 
-  <target name="compile" depends="ivy-init, gen-version, ivy-retrieve" description="--> compile and run the project">
+  <target name="compile" depends="ivy-init, gen-version, ivy-retrieve"
+      description="Compile and run the project">
     <mkdir dir="${build.classes}" />
     <javac
         encoding="${build.encoding}"
@@ -479,8 +479,13 @@
         Section: Maven Support
        ====================================== -->
 
-  <target name="mvn-prep" depends="init, ivy-init">
+  <target name="mvn-prep" depends="init, ivy-init"
+      description="Creates maven files">
     <!-- prepare for mvn tasks. -->
+    <exec executable="git" outputproperty="version">
+      <arg value="describe" />
+      <arg value="--abbrev=0" />
+    </exec>
 
     <!-- Download maven -->
     <mkdir dir="${build.dir}" />
@@ -508,6 +513,20 @@
         <include name="*.pom" />
       </fileset>
     </replaceregexp>
+  </target>
+
+  <target name="mvn-install" depends="init,mvn-prep,jar,srcjars"
+      description="Install Spymemcached in local m2 repository">
+    <exec executable="git" outputproperty="version">
+      <arg value="describe" />
+      <arg value="--abbrev=0" />
+    </exec>
+    <artifact:pom id="spymemcached" file="${spymemcached.pom}" />
+    <artifact:install file="${build.dir}/${name}-${version}.jar">
+      <pom refid="spymemcached" />
+      <attach file="${build.dir}/${name}-${version}-sources.jar"
+          classifier="sources" />
+    </artifact:install>
   </target>
 
   <!-- ======================================
@@ -562,13 +581,13 @@
   <!-- =================================
         Section: Cleaning
        ================================= -->
-  <target name="clean" description="--> clean the project">
+  <target name="clean" description="Clean the project">
     <delete includeemptydirs="true">
       <fileset dir="${basedir}">
         <exclude name="src/**" />
         <exclude name="ivy/**" />
         <exclude name="etc/**" />
-        <exclude name="lib/**" />
+        <exclude name="lib/ant*" />
         <exclude name="xdocs/**" />
         <exclude name="build.xml" />
         <exclude name="config.properties" />
@@ -577,9 +596,5 @@
         <exclude name="README.markdown" />
       </fileset>
     </delete>
-  </target>
-
-  <target name="clean-cache" description="--> clean the ivy cache">
-    <ivy:cleancache />
   </target>
 </project>

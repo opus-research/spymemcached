@@ -503,7 +503,6 @@ public class CouchbaseClientTest {
     int count = 0;
     while (op.hasNext()) {
       ViewRow row = op.next();
-      System.out.println(row.getId() + " : " + row.getKey());
       if (!ITEMS.containsKey(row.getId())) {
         assert false : "Got bad key: " + row.getId() + " during pagination";
       }

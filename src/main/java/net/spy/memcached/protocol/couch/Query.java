@@ -201,17 +201,16 @@ public class Query {
   @Override
   public String toString() {
     boolean first = true;
-    StringBuffer result = new StringBuffer();
+    String result = "";
     for (Entry<String, Object> arg : args.entrySet()) {
       if (first) {
-        result.append("?");
+        result += "?" + getArg(arg.getKey(), arg.getValue());
         first = false;
       } else {
-        result.append("&");
+        result += "&" + getArg(arg.getKey(), arg.getValue());
       }
-      result.append(getArg(arg.getKey(), arg.getValue()));
     }
-    return result.toString();
+    return result;
   }
 
   private String getArg(String key, Object value) {

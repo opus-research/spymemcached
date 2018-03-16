@@ -1,10 +1,8 @@
 package net.spy.memcached.vbucket.config;
 
-import net.spy.memcached.vbucket.ConfigurationException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Pool represents a collection of buckets
@@ -17,10 +15,9 @@ public class Pool {
     // pool's streaming uri
     private final URI streamingUri;
     // buckets uri
-    private final Map<String, Bucket> buckets = new HashMap<String, Bucket>();
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<String, Bucket>();
     // buckets related to this pool
     private URI bucketsUri;
-    private AtomicReference<Map> currentBuckets;
 
     public Pool(String name, URI uri, URI streamingUri) {
         this.name = name;
@@ -44,40 +41,11 @@ public class Pool {
         return buckets;
     }
 
-    /**
-     * Get the current set of buckets known to this pool member.
-     *
-     * @return an atomic reference to the current Map of buckets
-     */
-    private AtomicReference<Map> getCurrentBuckets() {
-	if (currentBuckets == null) {
-	    throw new ConfigurationException("Buckets were never populated.");
-	}
-	return currentBuckets;
-    }
-
-    public Map<String, Bucket> getROBuckets() {
-	return java.util.Collections.unmodifiableMap(currentBuckets.get());
-    }
-
     public URI getBucketsUri() {
         return bucketsUri;
     }
 
     void setBucketsUri(URI bucketsUri) {
         this.bucketsUri = bucketsUri;
-    }
-
-    public void replaceBuckets(Map<String, Bucket> replacingMap) {
-	HashMap<String, Bucket> swapMap = new HashMap(replacingMap); //TODO: replace this with a deep copy
-	currentBuckets.set(swapMap);
-    }
-
-    public boolean hasBucket(String bucketName) {
-	boolean bucketFound = false;
-	if (getCurrentBuckets().get().containsKey(bucketName)) {
-		bucketFound = true;
-	}
-	return bucketFound;
     }
 }

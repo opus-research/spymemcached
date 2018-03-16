@@ -49,6 +49,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import net.spy.memcached.compat.SpyThread;
+import net.spy.memcached.compat.log.LoggerFactory;
 import net.spy.memcached.internal.OperationFuture;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.NoopOperation;
@@ -62,7 +63,6 @@ import net.spy.memcached.ops.VBucketAware;
 import net.spy.memcached.protocol.binary.BinaryOperationFactory;
 import net.spy.memcached.protocol.binary.TapAckOperationImpl;
 import net.spy.memcached.util.StringUtils;
-import org.slf4j.LoggerFactory;
 
 /**
  * Connection to a cluster of memcached servers.
@@ -157,7 +157,10 @@ public class MemcachedConnection extends SpyThread {
           getLogger().info("Added %s to connect queue", qa);
           ops = SelectionKey.OP_CONNECT;
         }
+
+        selector.wakeup();
         qa.setSk(ch.register(selector, ops, qa));
+
         assert ch.isConnected()
             || qa.getSk().interestOps() == SelectionKey.OP_CONNECT
             : "Not connected, and not wanting to connect";

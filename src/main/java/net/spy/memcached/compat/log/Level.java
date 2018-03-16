@@ -20,34 +20,39 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.compat;
-
-import net.spy.memcached.compat.log.Logger;
-import net.spy.memcached.compat.log.LoggerFactory;
+package net.spy.memcached.compat.log;
 
 /**
- * Superclass for all Spy Objects.
+ * Levels for logging.
  */
-public class SpyObject extends Object {
-
-  private transient Logger logger = null;
+public enum Level {
 
   /**
-   * Get an instance of SpyObject.
+   * Debug level.
    */
-  public SpyObject() {
-    super();
-  }
+  DEBUG,
+  /**
+   * Info level.
+   */
+  INFO,
+  /**
+   * Warning level.
+   */
+  WARN,
+  /**
+   * Error level.
+   */
+  ERROR,
+  /**
+   * Fatal level.
+   */
+  FATAL;
 
   /**
-   * Get a Logger instance for this class.
-   *
-   * @return an appropriate logger instance.
+   * Get a string representation of this level.
    */
-  protected Logger getLogger() {
-    if (logger == null) {
-      logger = LoggerFactory.getLogger(getClass());
-    }
-    return (logger);
+  @Override
+  public String toString() {
+    return ("{LogLevel:  " + name() + "}");
   }
 }

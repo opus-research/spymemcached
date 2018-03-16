@@ -21,7 +21,7 @@ SOFTWARE.
 -->
 
 <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
-  <info organisation="spy" module="${name}" revision="${version}"/>
+  <info organisation="net.spy" module="${name}" revision="${version}"/>
 
   <configurations defaultconfmapping="default">
     <!--these match the Maven configurations-->
@@ -48,7 +48,7 @@ SOFTWARE.
   </publications>
 
   <dependencies defaultconfmapping="sources->sources(),%->default" defaultconf="default,sources">
-    <dependency org="org.slf4j" name="slf4j-api" rev="${slf4j.version}"
+    <dependency org="log4j" name="log4j" rev="${log4j.version}"
         conf="common->master" />
     <dependency org="jmock" name="jmock" rev="${jmock.version}"
         conf="common->master" />

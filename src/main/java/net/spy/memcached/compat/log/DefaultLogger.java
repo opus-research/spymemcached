@@ -20,34 +20,59 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.compat;
+package net.spy.memcached.compat.log;
 
-import net.spy.memcached.compat.log.Logger;
-import net.spy.memcached.compat.log.LoggerFactory;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
- * Superclass for all Spy Objects.
+ * Default logger implementation.
+ *
+ * This logger is really primitive. It just logs everything to stderr if it's
+ * higher than INFO.
  */
-public class SpyObject extends Object {
+public class DefaultLogger extends AbstractLogger {
 
-  private transient Logger logger = null;
+  private final SimpleDateFormat df;
 
   /**
-   * Get an instance of SpyObject.
+   * Get an instance of DefaultLogger.
    */
-  public SpyObject() {
-    super();
+  public DefaultLogger(String name) {
+    super(name);
+    df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
   }
 
   /**
-   * Get a Logger instance for this class.
-   *
-   * @return an appropriate logger instance.
+   * False.
    */
-  protected Logger getLogger() {
-    if (logger == null) {
-      logger = LoggerFactory.getLogger(getClass());
+  @Override
+  public boolean isDebugEnabled() {
+    return (false);
+  }
+
+  /**
+   * True.
+   */
+  @Override
+  public boolean isInfoEnabled() {
+    return (true);
+  }
+
+  /**
+   * @see AbstractLogger
+   */
+  @Override
+  public synchronized void log(Level level, Object message, Throwable e) {
+    if (level == Level.INFO
+        || level == Level.WARN
+        || level == Level.ERROR
+        || level == Level.FATAL) {
+      System.err.printf("%s %s %s:  %s\n", df.format(new Date()), level.name(),
+          getName(), message);
+      if (e != null) {
+        e.printStackTrace();
+      }
     }
-    return (logger);
   }
 }

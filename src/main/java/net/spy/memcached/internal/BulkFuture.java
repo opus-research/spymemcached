@@ -72,22 +72,4 @@ public interface BulkFuture<V> extends Future<V> {
    * @return the operation status.
    */
   OperationStatus getStatus();
-
-  /**
-   * Add a listener to the future, which will be executed once the operation
-   * completes.
-   *
-   * @param listener the listener which will be executed.
-   * @return the current future to allow for object-chaining.
-   */
-  Future<V> addListener(BulkGetCompletionListener listener);
-
-  /**
-   * Remove a previously added listener from the future.
-   *
-   * @param listener the previously added listener.
-   * @return the current future to allow for object-chaining.
-   */
-  Future<V> removeListener(BulkGetCompletionListener listener);
-
 }

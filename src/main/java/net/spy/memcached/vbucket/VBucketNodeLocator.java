@@ -22,7 +22,7 @@ import net.spy.memcached.vbucket.config.ConfigDifference;
  */
 public class VBucketNodeLocator extends SpyObject implements NodeLocator {
 
-    private AtomicReference<TotalConfig> fullConfig;
+    private final AtomicReference<TotalConfig> fullConfig;
 
     /**
      * Construct a VBucketNodeLocator over the given JSON configuration string.
@@ -70,7 +70,8 @@ public class VBucketNodeLocator extends SpyObject implements NodeLocator {
      * {@inheritDoc}
      */
     public Iterator<MemcachedNode> getSequence(String k) {
-        return new NullIterator<MemcachedNode>();
+        Map<String, MemcachedNode> nodesMap = fullConfig.get().getNodesMap();
+        return nodesMap.values().iterator();
     }
 
     /**
@@ -162,21 +163,5 @@ public class VBucketNodeLocator extends SpyObject implements NodeLocator {
 	    return nodesMap;
         }
     }
-
-	class NullIterator<E> implements Iterator<MemcachedNode> {
-
-		public boolean hasNext() {
-			return false;
-		}
-
-		public MemcachedNode next() {
-			throw new NoSuchElementException("VBucketNodeLocators have no alternate nodes.");
-		}
-
-		public void remove() {
-			throw new UnsupportedOperationException("VBucketNodeLocators have no alternate nodes; cannot remove.");
-		}
-
-	}
 
 }

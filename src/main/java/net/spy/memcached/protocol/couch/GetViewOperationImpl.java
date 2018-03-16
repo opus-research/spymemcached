@@ -25,8 +25,6 @@ package net.spy.memcached.protocol.couch;
 import java.net.HttpURLConnection;
 import java.text.ParseException;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
@@ -38,31 +36,32 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 /**
- * A ViewsOperationImpl.
+ * A ViewOperationImpl.
  */
-public class ViewsFetcherOperationImpl extends HttpOperationImpl
-    implements ViewsFetcherOperation {
+public class GetViewOperationImpl extends HttpOperationImpl implements
+    GetViewOperation {
 
   private final String bucketName;
   private final String designDocName;
+  private final String viewName;
 
-
-  public ViewsFetcherOperationImpl(HttpRequest r, String bucketName,
-      String designDocName, ViewsFetcherCallback viewsCallback) {
-    super(r, viewsCallback);
+  public GetViewOperationImpl(HttpRequest r, String bucketName,
+      String designDocName, String viewName, GetViewCallback viewCallback) {
+    super(r, viewCallback);
     this.bucketName = bucketName;
     this.designDocName = designDocName;
+    this.viewName = viewName;
   }
 
   @Override
   public void handleResponse(HttpResponse response) {
     String json = getEntityString(response);
     try {
+      View view = parseDesignDocumentForView(bucketName, designDocName,
+          viewName, json);
       int errorcode = response.getStatusLine().getStatusCode();
       if (errorcode == HttpURLConnection.HTTP_OK) {
-        List<View> views = parseDesignDocumentForViews(bucketName,
-          designDocName, json);
-        ((ViewsFetcherCallback) callback).gotData(views);
+        ((GetViewCallback) callback).gotData(view);
         callback.receivedStatus(new OperationStatus(true, "OK"));
       } else {
         callback.receivedStatus(new OperationStatus(false,
@@ -75,27 +74,32 @@ public class ViewsFetcherOperationImpl extends HttpOperationImpl
     callback.complete();
   }
 
-  private List<View> parseDesignDocumentForViews(String dn, String ddn,
-      String json) throws ParseException {
-    List<View> viewList = new LinkedList<View>();
-    try {
-      JSONObject base = new JSONObject(json);
-      if (base.has("error")) {
-        return null;
-      }
-      if (base.has("views")) {
-        JSONObject views = base.getJSONObject("views");
-        Iterator<?> itr = views.keys();
-        while (itr.hasNext()) {
-          String viewname = (String) itr.next();
-          boolean map = views.getJSONObject(viewname).has("map");
-          boolean reduce = views.getJSONObject(viewname).has("reduce");
-          viewList.add(new View(dn, ddn, viewname, map, reduce));
+  private View parseDesignDocumentForView(String dn, String ddn,
+      String viewname, String json) throws ParseException {
+    View view = null;
+    if (json != null) {
+      try {
+        JSONObject base = new JSONObject(json);
+        if (base.has("error")) {
+          return null;
         }
+        if (base.has("views")) {
+          JSONObject views = base.getJSONObject("views");
+          Iterator<?> itr = views.keys();
+          while (itr.hasNext()) {
+            String curView = (String) itr.next();
+            if (curView.equals(viewname)) {
+              boolean map = views.getJSONObject(curView).has("map");
+              boolean reduce = views.getJSONObject(curView).has("reduce");
+              view = new View(dn, ddn, viewname, map, reduce);
+              break;
+            }
+          }
+        }
+      } catch (JSONException e) {
+        throw new ParseException("Cannot read json: " + json, 0);
       }
-    } catch (JSONException e) {
-      throw new ParseException("Cannot read json: " + json, 0);
     }
-    return viewList;
+    return view;
   }
 }

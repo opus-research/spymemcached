@@ -24,7 +24,6 @@ package net.spy.memcached.vbucket.config;
 
 import java.util.List;
 
-import net.spy.memcached.DefaultHashAlgorithm;
 import net.spy.memcached.HashAlgorithm;
 
 /**
@@ -32,7 +31,7 @@ import net.spy.memcached.HashAlgorithm;
  */
 public class CacheConfig implements Config {
 
-  private final HashAlgorithm hashAlgorithm = DefaultHashAlgorithm.NATIVE_HASH;
+  private final HashAlgorithm hashAlgorithm = HashAlgorithm.NATIVE_HASH;
 
   private int vbucketsCount;
 

@@ -20,4 +20,12 @@ public class TouchOperationImpl extends SingleKeyOperationImpl {
 	public void initialize() {
 		prepareBuffer(key, 0, EMPTY_BYTES, exp);
 	}
+
+	public boolean setVBucket(String k, short vb) {
+		if (k.equals(key)) {
+			vbucket = vb;
+			return true;
+		}
+		return false;
+	}
 }

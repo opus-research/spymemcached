@@ -8,10 +8,6 @@ import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.VBucketAware;
 
-/**
- * Binary operations that contain a single key and are VBucket aware
- * operations should extend this class.
- */
 abstract class SingleKeyOperationImpl extends OperationImpl
 		implements VBucketAware, KeyedOperation{
 
@@ -38,9 +34,12 @@ abstract class SingleKeyOperationImpl extends OperationImpl
 		notMyVbucketNodes = nodes;
 	}
 
-	public void setVBucket(String k, short vb) {
-		assert k.equals(key) : (k + " doesn't match the key " + key + " for this operation");
-		vbucket = vb;
+	public boolean setVBucket(String k, short vb) {
+		if (k.equals(key)) {
+			vbucket = vb;
+			return true;
+		}
+		return false;
 	}
 
 	public short getVBucket(String k) {

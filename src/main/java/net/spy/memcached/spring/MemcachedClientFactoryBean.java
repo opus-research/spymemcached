@@ -66,15 +66,11 @@ public class MemcachedClientFactoryBean implements FactoryBean {
   private final ConnectionFactoryBuilder connectionFactoryBuilder =
       new ConnectionFactoryBuilder();
   private String servers;
-  private MemcachedClient instance;
 
   @Override
   public Object getObject() throws Exception {
-    if(instance == null) {
-      instance = new MemcachedClient(connectionFactoryBuilder.build(),
-              AddrUtil.getAddresses(servers));
-    }
-    return instance;
+    return new MemcachedClient(connectionFactoryBuilder.build(),
+        AddrUtil.getAddresses(servers));
   }
 
   @Override
@@ -85,12 +81,6 @@ public class MemcachedClientFactoryBean implements FactoryBean {
   @Override
   public boolean isSingleton() {
     return true;
-  }
-
-  public void shutdown() {
-    if(instance != null) {
-      instance.shutdown();
-    }
   }
 
   public void setServers(final String newServers) {

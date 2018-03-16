@@ -31,11 +31,24 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 	final KetamaNodeLocatorConfiguration config;
 
 
+	/**
+	 * Create a new KetamaNodeLocator using specified nodes and the specifed hash algorithm.
+	 *
+	 * @param nodes The List of nodes to use in the Ketama consistent hash continuum
+	 * @param alg The hash algorithm to use when choosing a node in the Ketama consistent hash continuum
+	 */
 	public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg) {
         this(nodes, alg, new DefaultKetamaNodeLocatorConfiguration());
 	}
 
-    public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg, KetamaNodeLocatorConfiguration conf) {
+	/**
+	 * Create a new KetamaNodeLocator using specified nodes and the specifed hash algorithm and configuration.
+	 *
+	 * @param nodes The List of nodes to use in the Ketama consistent hash continuum
+	 * @param alg The hash algorithm to use when choosing a node in the Ketama consistent hash continuum
+	 * @param conf
+	 */
+	public KetamaNodeLocator(List<MemcachedNode> nodes, HashAlgorithm alg, KetamaNodeLocatorConfiguration conf) {
 		super();
 		allNodes = nodes;
 		hashAlg = alg;
@@ -85,9 +98,7 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 	}
 
 	public Iterator<MemcachedNode> getSequence(String k) {
-		// Seven searches gives us a 1 in 2^7 chance of hitting the
-		// same dead node all of the time.
-		return new KetamaIterator(k, 7, getKetamaNodes(), hashAlg);
+		return new KetamaIterator(k, allNodes.size(), getKetamaNodes(), hashAlg);
 	}
 
 	public NodeLocator getReadonlyCopy() {
@@ -115,6 +126,11 @@ public final class KetamaNodeLocator extends SpyObject implements NodeLocator {
 	return ketamaNodes;
     }
 
+    /**
+     * Setup the KetamaNodeLocator with the list of nodes it should use.
+     *
+     * @param nodes a List of MemcachedNodes for this KetamaNodeLocator to use in its continuum
+     */
     protected void setKetamaNodes(List<MemcachedNode> nodes) {
 	TreeMap<Long, MemcachedNode> newNodeMap = new TreeMap<Long, MemcachedNode>();
 	int numReps= config.getNodeRepetitions();

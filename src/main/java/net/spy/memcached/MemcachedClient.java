@@ -5,6 +5,7 @@ package net.spy.memcached;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.net.URI;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedSelectorException;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.auth.AuthThreadMonitor;
+import net.spy.memcached.auth.PlainCallbackHandler;
 import net.spy.memcached.compat.SpyThread;
 import net.spy.memcached.internal.BulkFuture;
 import net.spy.memcached.internal.BulkGetFuture;
@@ -40,6 +42,7 @@ import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
 import net.spy.memcached.ops.GetAndTouchOperation;
 import net.spy.memcached.ops.GetOperation;
+import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.Mutator;
 import net.spy.memcached.ops.Operation;
@@ -50,6 +53,13 @@ import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
+import net.spy.memcached.vbucket.ConfigurationException;
+import net.spy.memcached.vbucket.ConfigurationProvider;
+import net.spy.memcached.vbucket.ConfigurationProviderHTTP;
+import net.spy.memcached.vbucket.Reconfigurable;
+import net.spy.memcached.vbucket.config.Bucket;
+import net.spy.memcached.vbucket.config.Config;
+import net.spy.memcached.vbucket.config.ConfigType;
 
 /**
  * Client to a memcached server.
@@ -102,25 +112,25 @@ import net.spy.memcached.transcoders.Transcoder;
  * </pre>
  */
 public class MemcachedClient extends SpyThread
-	implements MemcachedClientIF, ConnectionObserver {
+	implements MemcachedClientIF, ConnectionObserver, Reconfigurable {
 
-	protected volatile boolean running=true;
+	private volatile boolean running=true;
 	private volatile boolean shuttingDown=false;
 
-	protected final long operationTimeout;
+	private final long operationTimeout;
 
-	protected final MemcachedConnection conn;
-	protected final OperationFactory opFact;
+	private final MemcachedConnection conn;
+	final OperationFactory opFact;
 
-	protected final Transcoder<Object> transcoder;
+	final Transcoder<Object> transcoder;
 
-	protected final TranscodeService tcService;
+	final TranscodeService tcService;
 
-	protected final AuthDescriptor authDescriptor;
+	final AuthDescriptor authDescriptor;
 
-	protected final ConnectionFactory connFactory;
-
-	protected final AuthThreadMonitor authMonitor = new AuthThreadMonitor();
+	private final AuthThreadMonitor authMonitor = new AuthThreadMonitor();
+	private volatile boolean reconfiguring = false;
+	private ConfigurationProvider configurationProvider;
 
 	/**
 	 * Get a memcache client operating on the specified memcached locations.
@@ -152,11 +162,6 @@ public class MemcachedClient extends SpyThread
 	 */
 	public MemcachedClient(ConnectionFactory cf, List<InetSocketAddress> addrs)
 		throws IOException {
-		this(cf, addrs, true);
-	}
-
-	protected MemcachedClient(ConnectionFactory cf, List<InetSocketAddress> addrs,
-			boolean startIOThread) throws IOException {
 		if(cf == null) {
 			throw new NullPointerException("Connection factory required");
 		}
@@ -171,7 +176,6 @@ public class MemcachedClient extends SpyThread
 			throw new IllegalArgumentException(
 				"Operation timeout must be positive.");
 		}
-		connFactory = cf;
 		tcService = new TranscodeService(cf.isDaemon());
 		transcoder=cf.getDefaultTranscoder();
 		opFact=cf.getOperationFactory();
@@ -185,8 +189,124 @@ public class MemcachedClient extends SpyThread
 		}
 		setName("Memcached IO over " + conn);
 		setDaemon(cf.isDaemon());
-		if (startIOThread) {
-			start();
+		start();
+	}
+
+	/**
+	 * Get a MemcachedClient based on the REST response from a Membase server
+	 * where the username is different than the bucket name.
+	 *
+	 * To connect to the "default" special bucket for a given cluster, use an
+	 * empty string as the password.
+	 *
+	 * If a password has not been assigned to the bucket, it is typically an
+	 * empty string.
+	 *
+	 * @param baseList the URI list of one or more servers from the cluster
+	 * @param bucketName the bucket name in the cluster you wish to use
+	 * @param usr the username for the bucket; this nearly always be the same
+	 *        as the bucket name
+	 * @param pwd the password for the bucket
+	 * @throws IOException if connections could not be made
+	 * @throws ConfigurationException if the configuration provided by the
+	 *         server has issues or is not compatible
+	 */
+	public MemcachedClient(final List<URI> baseList,
+		final String bucketName,
+		final String usr, final String pwd) throws IOException, ConfigurationException {
+		for (URI bu : baseList) {
+			if (!bu.isAbsolute()) {
+				throw new IllegalArgumentException("The base URI must be absolute");
+			}
+		}
+		this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
+		Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
+		Config config = bucket.getConfig();
+		ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
+		if (config.getConfigType() == ConfigType.MEMBASE) {
+			cfb.setFailureMode(FailureMode.Retry)
+				.setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
+				.setHashAlg(HashAlgorithm.KETAMA_HASH)
+				.setLocatorType(ConnectionFactoryBuilder.Locator.VBUCKET)
+				.setVBucketConfig(bucket.getConfig());
+		} else if (config.getConfigType() == ConfigType.MEMCACHE) {
+			cfb.setFailureMode(FailureMode.Retry)
+				.setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
+				.setHashAlg(HashAlgorithm.KETAMA_HASH)
+				.setLocatorType(ConnectionFactoryBuilder.Locator.CONSISTENT);
+		} else {
+			throw new ConfigurationException("Bucket type not supported or JSON response unexpected");
+		}
+		if (!this.configurationProvider.getAnonymousAuthBucket().equals(bucketName) && usr != null) {
+			AuthDescriptor ad = new AuthDescriptor(new String[]{"PLAIN"},
+				new PlainCallbackHandler(usr, pwd));
+			cfb.setAuthDescriptor(ad);
+		}
+		ConnectionFactory cf = cfb.build();
+		List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getConfig().getServers());
+		if(cf == null) {
+			throw new NullPointerException("Connection factory required");
+		}
+		if(addrs == null) {
+			throw new NullPointerException("Server list required");
+		}
+		if(addrs.isEmpty()) {
+			throw new IllegalArgumentException(
+			"You must have at least one server to connect to");
+		}
+		if(cf.getOperationTimeout() <= 0) {
+			throw new IllegalArgumentException(
+				"Operation timeout must be positive.");
+		}
+		tcService = new TranscodeService(cf.isDaemon());
+		transcoder=cf.getDefaultTranscoder();
+		opFact=cf.getOperationFactory();
+		assert opFact != null : "Connection factory failed to make op factory";
+		conn=cf.createConnection(addrs);
+		assert conn != null : "Connection factory failed to make a connection";
+		operationTimeout = cf.getOperationTimeout();
+		authDescriptor = cf.getAuthDescriptor();
+		if(authDescriptor != null) {
+			addObserver(this);
+		}
+		setName("Memcached IO over " + conn);
+		setDaemon(cf.isDaemon());
+		this.configurationProvider.subscribe(bucketName, this);
+		start();
+	}
+
+	/**
+	 * Get a MemcachedClient based on the REST response from a Membase server.
+	 *
+	 * This constructor is merely a convenience for situations where the bucket
+	 * name is the same as the user name.  This is commonly the case.
+	 *
+	 * To connect to the "default" special bucket for a given cluster, use an
+	 * empty string as the password.
+	 *
+	 * If a password has not been assigned to the bucket, it is typically an
+	 * empty string.
+	 *
+	 * @param baseList the URI list of one or more servers from the cluster
+	 * @param bucketName the bucket name in the cluster you wish to use
+	 * @param pwd the password for the bucket
+	 * @throws IOException if connections could not be made
+	 * @throws ConfigurationException if the configuration provided by the
+	 *         server has issues or is not compatible
+	 */
+	public MemcachedClient(List<URI> baseList,
+		String bucketName,
+		String pwd) throws IOException, ConfigurationException {
+		this(baseList, bucketName, bucketName, pwd);
+	}
+	public void reconfigure(Bucket bucket) {
+		reconfiguring = true;
+		try {
+			conn.reconfigure(bucket);
+		} catch (IllegalArgumentException ex) {
+			getLogger().warn("Failed to reconfigure client, staying with previous configuration.", ex);
+		} finally {
+			reconfiguring = false;
 		}
 	}
 
@@ -250,7 +370,7 @@ public class MemcachedClient extends SpyThread
 		return transcoder;
 	}
 
-	protected void validateKey(String key) {
+	private void validateKey(String key) {
 		byte[] keyBytes=KeyUtil.getKeyBytes(key);
 		if(keyBytes.length > MAX_KEY_LENGTH) {
 			throw new IllegalArgumentException("Key is too long (maxlen = "
@@ -269,7 +389,7 @@ public class MemcachedClient extends SpyThread
 		}
 	}
 
-	protected void checkState() {
+	private void checkState() {
 		if(shuttingDown) {
 			throw new IllegalStateException("Shutting down");
 		}
@@ -309,16 +429,16 @@ public class MemcachedClient extends SpyThread
 		return conn.broadcastOperation(of, nodes);
 	}
 
-	private <T> OperationFuture<Boolean> asyncStore(StoreType storeType, String key,
+	private <T> Future<Boolean> asyncStore(StoreType storeType, String key,
 						   int exp, T value, Transcoder<T> tc) {
 		CachedData co=tc.encode(value);
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(key, latch,
+		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
 				operationTimeout);
 		Operation op=opFact.store(storeType, key, co.getFlags(),
 				exp, co.getData(), new OperationCallback() {
 					public void receivedStatus(OperationStatus val) {
-						rv.set(val.isSuccess(), val);
+						rv.set(val.isSuccess());
 					}
 					public void complete() {
 						latch.countDown();
@@ -328,22 +448,22 @@ public class MemcachedClient extends SpyThread
 		return rv;
 	}
 
-	private OperationFuture<Boolean> asyncStore(StoreType storeType,
+	private Future<Boolean> asyncStore(StoreType storeType,
 			String key, int exp, Object value) {
 		return asyncStore(storeType, key, exp, value, transcoder);
 	}
 
-	private <T> OperationFuture<Boolean> asyncCat(
+	private <T> Future<Boolean> asyncCat(
 			ConcatenationType catType, long cas, String key,
 			T value, Transcoder<T> tc) {
 		CachedData co=tc.encode(value);
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(key, latch,
+		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
 				operationTimeout);
 		Operation op=opFact.cat(catType, cas, key, co.getData(),
 				new OperationCallback() {
 			public void receivedStatus(OperationStatus val) {
-				rv.set(val.isSuccess(), val);
+				rv.set(val.isSuccess());
 			}
 			public void complete() {
 				latch.countDown();
@@ -364,7 +484,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<Boolean> touch(final String key, final int exp) {
+	public <T> Future<Boolean> touch(final String key, final int exp) {
 		return touch(key, exp, transcoder);
 	}
 
@@ -379,15 +499,15 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<Boolean> touch(final String key, final int exp,
+	public <T> Future<Boolean> touch(final String key, final int exp,
 			final Transcoder<T> tc) {
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(key, latch,
+		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
 				operationTimeout);
 
 		Operation op=opFact.touch(key, exp, new OperationCallback() {
 			public void receivedStatus(OperationStatus status) {
-				rv.set(status.isSuccess(), status);
+				rv.set(status.isSuccess());
 		}
 			public void complete() {
 				latch.countDown();
@@ -411,7 +531,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Boolean> append(long cas, String key, Object val) {
+	public Future<Boolean> append(long cas, String key, Object val) {
 		return append(cas, key, val, transcoder);
 	}
 
@@ -430,7 +550,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<Boolean> append(long cas, String key, T val,
+	public <T> Future<Boolean> append(long cas, String key, T val,
 			Transcoder<T> tc) {
 		return asyncCat(ConcatenationType.append, cas, key, val, tc);
 	}
@@ -448,7 +568,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Boolean> prepend(long cas, String key, Object val) {
+	public Future<Boolean> prepend(long cas, String key, Object val) {
 		return prepend(cas, key, val, transcoder);
 	}
 
@@ -467,7 +587,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<Boolean> prepend(long cas, String key, T val,
+	public <T> Future<Boolean> prepend(long cas, String key, T val,
 			Transcoder<T> tc) {
 		return asyncCat(ConcatenationType.prepend, cas, key, val, tc);
 	}
@@ -507,12 +627,12 @@ public class MemcachedClient extends SpyThread
 		CachedData co=tc.encode(value);
 		final CountDownLatch latch=new CountDownLatch(1);
 		final OperationFuture<CASResponse> rv=new OperationFuture<CASResponse>(
-				key, latch, operationTimeout);
+				latch, operationTimeout);
 		Operation op=opFact.cas(StoreType.set, key, casId, co.getFlags(), exp,
 				co.getData(), new OperationCallback() {
 					public void receivedStatus(OperationStatus val) {
 						if(val instanceof CASOperationStatus) {
-							rv.set(((CASOperationStatus)val).getCASResponse(), val);
+							rv.set(((CASOperationStatus)val).getCASResponse());
 						} else if(val instanceof CancelledOperationStatus) {
 							// Cancelled, ignore and let it float up
 						} else {
@@ -638,7 +758,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<Boolean> add(String key, int exp, T o, Transcoder<T> tc) {
+	public <T> Future<Boolean> add(String key, int exp, T o, Transcoder<T> tc) {
 		return asyncStore(StoreType.add, key, exp, o, tc);
 	}
 
@@ -673,7 +793,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Boolean> add(String key, int exp, Object o) {
+	public Future<Boolean> add(String key, int exp, Object o) {
 		return asyncStore(StoreType.add, key, exp, o, transcoder);
 	}
 
@@ -709,7 +829,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<Boolean> set(String key, int exp, T o, Transcoder<T> tc) {
+	public <T> Future<Boolean> set(String key, int exp, T o, Transcoder<T> tc) {
 		return asyncStore(StoreType.set, key, exp, o, tc);
 	}
 
@@ -744,7 +864,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Boolean> set(String key, int exp, Object o) {
+	public Future<Boolean> set(String key, int exp, Object o) {
 		return asyncStore(StoreType.set, key, exp, o, transcoder);
 	}
 
@@ -781,7 +901,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<Boolean> replace(String key, int exp, T o,
+	public <T> Future<Boolean> replace(String key, int exp, T o,
 		Transcoder<T> tc) {
 		return asyncStore(StoreType.replace, key, exp, o, tc);
 	}
@@ -817,7 +937,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Boolean> replace(String key, int exp, Object o) {
+	public Future<Boolean> replace(String key, int exp, Object o) {
 		return asyncStore(StoreType.replace, key, exp, o, transcoder);
 	}
 
@@ -831,16 +951,16 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> GetFuture<T> asyncGet(final String key, final Transcoder<T> tc) {
+	public <T> Future<T> asyncGet(final String key, final Transcoder<T> tc) {
 
 		final CountDownLatch latch=new CountDownLatch(1);
-		final GetFuture<T> rv=new GetFuture<T>(latch, operationTimeout, key);
+		final GetFuture<T> rv=new GetFuture<T>(latch, operationTimeout);
 
 		Operation op=opFact.get(key,
 				new GetOperation.Callback() {
 			private Future<T> val=null;
 			public void receivedStatus(OperationStatus status) {
-				rv.set(val, status);
+				rv.set(val);
 			}
 			public void gotData(String k, int flags, byte[] data) {
 				assert key.equals(k) : "Wrong key returned";
@@ -864,7 +984,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public GetFuture<Object> asyncGet(final String key) {
+	public Future<Object> asyncGet(final String key) {
 		return asyncGet(key, transcoder);
 	}
 
@@ -878,18 +998,18 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<CASValue<T>> asyncGets(final String key,
+	public <T> Future<CASValue<T>> asyncGets(final String key,
 			final Transcoder<T> tc) {
 
 		final CountDownLatch latch=new CountDownLatch(1);
 		final OperationFuture<CASValue<T>> rv=
-			new OperationFuture<CASValue<T>>(key, latch, operationTimeout);
+			new OperationFuture<CASValue<T>>(latch, operationTimeout);
 
 		Operation op=opFact.gets(key,
 				new GetsOperation.Callback() {
 			private CASValue<T> val=null;
 			public void receivedStatus(OperationStatus status) {
-				rv.set(val, status);
+				rv.set(val);
 			}
 			public void gotData(String k, int flags, long cas, byte[] data) {
 				assert key.equals(k) : "Wrong key returned";
@@ -914,7 +1034,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<CASValue<Object>> asyncGets(final String key) {
+	public Future<CASValue<Object>> asyncGets(final String key) {
 		return asyncGets(key, transcoder);
 	}
 
@@ -1038,6 +1158,58 @@ public class MemcachedClient extends SpyThread
 	}
 
 	/**
+	 * Gets and locks the given key asynchronously. By default the maximum allowed
+	 * timeout is 30 seconds. Timeouts greater than this will be set to 30 seconds.
+	 *
+	 * @param key the key to fetch and lock
+	 * @param exp the amount of time the lock should be valid for in seconds.
+	 * @param tc the transcoder to serialize and unserialize value
+	 * @return a future that will hold the return value of the fetch
+	 * @throws IllegalStateException in the rare circumstance where queue
+	 *         is too full to accept any more requests
+	 */
+	public <T> Future<CASValue<T>> asyncGetAndLock(final String key, int exp,
+			final Transcoder<T> tc) {
+		final CountDownLatch latch=new CountDownLatch(1);
+		final OperationFuture<CASValue<T>> rv=
+			new OperationFuture<CASValue<T>>(latch, operationTimeout);
+
+		Operation op=opFact.getl(key, exp,
+				new GetlOperation.Callback() {
+			private CASValue<T> val=null;
+			public void receivedStatus(OperationStatus status) {
+				rv.set(val);
+			}
+			public void gotData(String k, int flags, long cas, byte[] data) {
+				assert key.equals(k) : "Wrong key returned";
+				assert cas > 0 : "CAS was less than zero:  " + cas;
+				val=new CASValue<T>(cas, tc.decode(
+					new CachedData(flags, data, tc.getMaxSize())));
+			}
+			public void complete() {
+				latch.countDown();
+			}});
+		rv.setOperation(op);
+		addOp(key, op);
+		return rv;
+	}
+
+	/**
+	 * Get and lock the given key asynchronously and decode with the default
+	 * transcoder. By default the maximum allowed timeout is 30 seconds.
+	 * Timeouts greater than this will be set to 30 seconds.
+	 *
+	 * @param key the key to fetch and lock
+	 * @param exp the amount of time the lock should be valid for in seconds.
+	 * @return a future that will hold the return value of the fetch
+	 * @throws IllegalStateException in the rare circumstance where queue
+	 *         is too full to accept any more requests
+	 */
+	public Future<CASValue<Object>> asyncGetAndLock(final String key, int exp) {
+		return asyncGetAndLock(key, exp, transcoder);
+	}
+
+	/**
 	 * Asynchronously get a bunch of objects from the cache.
 	 *
 	 * @param <T>
@@ -1096,12 +1268,10 @@ public class MemcachedClient extends SpyThread
 
 		final CountDownLatch latch=new CountDownLatch(chunks.size());
 		final Collection<Operation> ops=new ArrayList<Operation>(chunks.size());
-		final BulkGetFuture<T> rv = new BulkGetFuture<T>(m, ops, latch);
 
 		GetOperation.Callback cb=new GetOperation.Callback() {
 				@SuppressWarnings("synthetic-access")
 				public void receivedStatus(OperationStatus status) {
-					rv.setStatus(status);
 					if(!status.isSuccess()) {
 						getLogger().warn("Unsuccessful get:  %s", status);
 					}
@@ -1130,7 +1300,7 @@ public class MemcachedClient extends SpyThread
 		assert mops.size() == chunks.size();
 		checkState();
 		conn.addOperations(mops);
-		return rv;
+		return new BulkGetFuture<T>(m, ops, latch);
 	}
 
 	/**
@@ -1145,7 +1315,7 @@ public class MemcachedClient extends SpyThread
 	 */
 	public <T> BulkFuture<Map<String, T>> asyncGetBulk(Collection<String> keys,
 		Transcoder<T> tc) {
-		return asyncGetBulk(keys, new SingleElementInfiniteIterator<Transcoder<T>>(tc));
+		return asyncGetBulk(keys, new SingleElementInfiniteIterator(tc));
 	}
 
 	/**
@@ -1197,7 +1367,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<CASValue<Object>> asyncGetAndTouch(final String key, final int exp) {
+	public Future<CASValue<Object>> asyncGetAndTouch(final String key, final int exp) {
 		return asyncGetAndTouch(key, exp, transcoder);
 	}
 
@@ -1211,22 +1381,22 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public <T> OperationFuture<CASValue<T>> asyncGetAndTouch(final String key, final int exp,
+	public <T> Future<CASValue<T>> asyncGetAndTouch(final String key, final int exp,
 			final Transcoder<T> tc) {
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<CASValue<T>> rv=new OperationFuture<CASValue<T>>(key, latch,
+		final OperationFuture<CASValue<T>> rv=new OperationFuture<CASValue<T>>(latch,
 				operationTimeout);
 
 		Operation op=opFact.getAndTouch(key, exp, new GetAndTouchOperation.Callback() {
 			private CASValue<T> val=null;
 			public void receivedStatus(OperationStatus status) {
-				rv.set(val, status);
+				rv.set(val);
 			}
 			public void complete() {
 				latch.countDown();
 			}
-			public void gotData(String k, int flags, long cas, byte[] data) {
-				assert k.equals(key) : "Wrong key returned";
+			public void gotData(String key, int flags, long cas, byte[] data) {
+				assert key.equals(key) : "Wrong key returned";
 				assert cas > 0 : "CAS was less than zero:  " + cas;
 				val=new CASValue<T>(cas, tc.decode(
 					new CachedData(flags, data, tc.getMaxSize())));
@@ -1420,6 +1590,48 @@ public class MemcachedClient extends SpyThread
 	}
 
 	/**
+	 * Getl with a single key. By default the maximum allowed timeout is 30
+	 * seconds. Timeouts greater than this will be set to 30 seconds.
+	 *
+	 * @param key the key to get and lock
+	 * @param exp the amount of time the lock should be valid for in seconds.
+	 * @param tc the transcoder to serialize and unserialize value
+	 * @return the result from the cache (null if there is none)
+	 * @throws OperationTimeoutException if the global operation timeout is
+	 *		   exceeded
+	 * @throws IllegalStateException in the rare circumstance where queue
+	 *         is too full to accept any more requests
+	 */
+	public <T> CASValue<T> getAndLock(String key, int exp, Transcoder<T> tc) {
+		try {
+			return asyncGetAndLock(key, exp, tc).get(
+					operationTimeout, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			throw new RuntimeException("Interrupted waiting for value", e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException("Exception waiting for value", e);
+		} catch (TimeoutException e) {
+			throw new OperationTimeoutException("Timeout waiting for value", e);
+		}
+	}
+
+	/**
+	 * Get and lock with a single key and decode using the default transcoder.
+	 * By default the maximum allowed timeout is 30 seconds. Timeouts greater
+	 * than this will be set to 30 seconds.
+	 * @param key the key to get and lock
+	 * @param exp the amount of time the lock should be valid for in seconds.
+	 * @return the result from the cache (null if there is none)
+	 * @throws OperationTimeoutException if the global operation timeout is
+	 *		   exceeded
+	 * @throws IllegalStateException in the rare circumstance where queue
+	 *         is too full to accept any more requests
+	 */
+	public CASValue<Object> getAndLock(String key, int exp) {
+		return getAndLock(key, exp, transcoder);
+	}
+
+	/**
 	 * Increment the given key by the given amount.
 	 *
 	 * Due to the way the memcached server operates on items, incremented
@@ -1527,15 +1739,15 @@ public class MemcachedClient extends SpyThread
 		return rv;
 	}
 
-	private OperationFuture<Long> asyncMutate(Mutator m, String key, int by, long def,
+	private Future<Long> asyncMutate(Mutator m, String key, int by, long def,
 			int exp) {
 		final CountDownLatch latch = new CountDownLatch(1);
-		final OperationFuture<Long> rv = new OperationFuture<Long>(key,
+		final OperationFuture<Long> rv = new OperationFuture<Long>(
 				latch, operationTimeout);
 		Operation op = addOp(key, opFact.mutate(m, key, by, def, exp,
 				new OperationCallback() {
 			public void receivedStatus(OperationStatus s) {
-				rv.set(new Long(s.isSuccess() ? s.getMessage() : "-1"), s);
+				rv.set(new Long(s.isSuccess() ? s.getMessage() : "-1"));
 			}
 			public void complete() {
 				latch.countDown();
@@ -1555,7 +1767,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Long> asyncIncr(String key, int by) {
+	public Future<Long> asyncIncr(String key, int by) {
 		return asyncMutate(Mutator.incr, key, by, 0, -1);
 	}
 
@@ -1569,7 +1781,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Long> asyncDecr(String key, int by) {
+	public Future<Long> asyncDecr(String key, int by) {
 		return asyncMutate(Mutator.decr, key, by, 0, -1);
 	}
 
@@ -1625,7 +1837,7 @@ public class MemcachedClient extends SpyThread
 	 * @deprecated Hold values are no longer honored.
 	 */
 	@Deprecated
-	public OperationFuture<Boolean> delete(String key, int hold) {
+	public Future<Boolean> delete(String key, int hold) {
 		return delete(key);
 	}
 
@@ -1637,14 +1849,14 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Boolean> delete(String key) {
+	public Future<Boolean> delete(String key) {
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(key, latch,
+		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
 			operationTimeout);
 		DeleteOperation op=opFact.delete(key,
 				new OperationCallback() {
 					public void receivedStatus(OperationStatus s) {
-						rv.set(s.isSuccess(), s);
+						rv.set(s.isSuccess());
 					}
 					public void complete() {
 						latch.countDown();
@@ -1661,7 +1873,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Boolean> flush(final int delay) {
+	public Future<Boolean> flush(final int delay) {
 		final AtomicReference<Boolean> flushResult=
 			new AtomicReference<Boolean>(null);
 		final ConcurrentLinkedQueue<Operation> ops=
@@ -1679,8 +1891,7 @@ public class MemcachedClient extends SpyThread
 				ops.add(op);
 				return op;
 			}});
-
-		return new OperationFuture<Boolean>(null, blatch, flushResult,
+		return new OperationFuture<Boolean>(blatch, flushResult,
 				operationTimeout) {
 			@Override
 			public boolean cancel(boolean ign) {
@@ -1690,12 +1901,6 @@ public class MemcachedClient extends SpyThread
 					rv |= op.getState() == OperationState.WRITING;
 				}
 				return rv;
-			}
-			@Override
-			public Boolean get(long duration, TimeUnit units) throws InterruptedException,
-				TimeoutException, ExecutionException {
-				status = new OperationStatus(true, "OK");
-				return super.get(duration, units);
 			}
 			@Override
 			public boolean isCancelled() {
@@ -1722,7 +1927,7 @@ public class MemcachedClient extends SpyThread
 	 * @throws IllegalStateException in the rare circumstance where queue
 	 *         is too full to accept any more requests
 	 */
-	public OperationFuture<Boolean> flush() {
+	public Future<Boolean> flush() {
 		return flush(-1);
 	}
 
@@ -1755,7 +1960,7 @@ public class MemcachedClient extends SpyThread
 		return rv.keySet();
 	}
 
-	protected void logRunException(Exception e) {
+	private void logRunException(Exception e) {
 		if(shuttingDown) {
 			// There are a couple types of errors that occur during the
 			// shutdown sequence that are considered OK.  Log at debug.
@@ -1771,17 +1976,19 @@ public class MemcachedClient extends SpyThread
 	@Override
 	public void run() {
 		while(running) {
-            try {
-                conn.handleIO();
-            } catch (IOException e) {
-                logRunException(e);
-            } catch (CancelledKeyException e) {
-                logRunException(e);
-            } catch (ClosedSelectorException e) {
-                logRunException(e);
-            } catch (IllegalStateException e) {
-                logRunException(e);
-            }
+            if (!reconfiguring) {
+                try {
+                    conn.handleIO();
+                } catch (IOException e) {
+                    logRunException(e);
+                } catch (CancelledKeyException e) {
+                    logRunException(e);
+                } catch (ClosedSelectorException e) {
+                    logRunException(e);
+                } catch (IllegalStateException e) {
+                    logRunException(e);
+                }
+			}
 		}
 		getLogger().info("Shut down memcached client");
 	}
@@ -1824,8 +2031,11 @@ public class MemcachedClient extends SpyThread
 				conn.shutdown();
 				setName(baseName + " - SHUTTING DOWN (informed client)");
 				tcService.shutdown();
+                if (configurationProvider != null) {
+                    configurationProvider.shutdown();
+                }
 			} catch (IOException e) {
-				getLogger().warn("exception while shutting down", e);
+				getLogger().warn("exception while shutting down configuration provider", e);
 			}
 		}
 		return rv;

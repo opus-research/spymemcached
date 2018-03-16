@@ -94,7 +94,8 @@ public class BucketUpdateResponseHandlerTest {
         partialResponse =
                 (StringBuilder) PrivateAccessor.getField(handler, "partialResponse");
         assertNull(partialResponse);
-        PrivateAccessor.getField(handler, "lastResponse");
+        String lastResponse =
+                (String) PrivateAccessor.getField(handler, "lastResponse");
         //TODO: enable this check back when dummy http chunk issue will be fixed
         //assertEquals(responseMsg, lastResponse);
 

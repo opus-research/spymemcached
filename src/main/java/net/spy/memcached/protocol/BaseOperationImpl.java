@@ -34,6 +34,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 	private boolean timedout;
 	private long creationTime;
 	private boolean timedOutUnsent = false;
+	protected int vbucket;
 	protected Collection<MemcachedNode> notMyVbucketNodes = new HashSet<MemcachedNode>();
 
 	public BaseOperationImpl() {
@@ -153,6 +154,26 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
 
 	public void setHandlingNode(MemcachedNode to) {
 		handlingNode = to;
+	}
+
+	public int getVbucket() {
+		return vbucket;
+	}
+
+	public void setVBucket(int vbucket) {
+		this.vbucket = vbucket;
+	}
+
+	public Collection<MemcachedNode> getNotMyVbucketNodes() {
+		return notMyVbucketNodes;
+	}
+
+	public void addNotMyVbucketNode(MemcachedNode node) {
+		notMyVbucketNodes.add(node);
+	}
+
+	public void setNotMyVbucketNodes(Collection<MemcachedNode> nodes) {
+		notMyVbucketNodes = nodes;
 	}
 
         @Override

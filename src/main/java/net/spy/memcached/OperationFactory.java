@@ -5,7 +5,6 @@ import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 
-import net.spy.memcached.internal.SyncRequest;
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.ConcatenationOperation;
 import net.spy.memcached.ops.ConcatenationType;
@@ -27,7 +26,6 @@ import net.spy.memcached.ops.SASLStepOperation;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.SyncOperation;
 import net.spy.memcached.ops.VersionOperation;
 
 /**
@@ -148,25 +146,6 @@ public interface OperationFactory {
 	 */
 	StoreOperation store(StoreType storeType, String key, int flags, int exp,
 			byte[] data, OperationCallback cb);
-
-	/**
-	 * Creates a sync operation.
-	 * @param keys The set of keys to do a sync with
-	 * @param replicaCount The amount of times the key should be replicated before
-	 * returning a sync success.
-	 * @param persist Whether or not the key should be persisted to disk before
-	 * returning a sync success.
-	 * @param mutation Whether or not to wait for the key to be mutated (changed)
-	 *  by another operation before returning a sync success.
-	 * @param pandm Stands for persist and mutate. Setting this to true means that
-	 * the value after being mutated must be persisted to disk. Setting it to false
-	 * means the the value must either be mutated or persisted to disk before
-	 * returning a sync success.
-	 * @param cb The status callback.
-	 * @return A sync operation.
-	 */
-	SyncOperation sync(Collection<SyncRequest> keys, int replicaCount, boolean persist,
-			boolean mutation, boolean pandm, OperationCallback cb);
 
 	/**
 	 * Resets a keys expiration time

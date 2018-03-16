@@ -2193,6 +2193,13 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     String baseName = mconn.getName();
     mconn.setName(baseName + " - SHUTTING DOWN");
     boolean rv = true;
+    if (connFactory.isDefaultExecutorService()) {
+      try {
+        executorService.shutdown();
+      } catch (Exception ex) {
+        getLogger().warn("Failed shutting down the ExecutorService: ", ex);
+      }
+    }
     try {
       // Conditionally wait
       if (timeout > 0) {

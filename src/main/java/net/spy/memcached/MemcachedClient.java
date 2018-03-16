@@ -250,7 +250,7 @@ public class MemcachedClient extends SpyThread
 		return transcoder;
 	}
 
-	private void validateKey(String key) {
+	protected void validateKey(String key) {
 		byte[] keyBytes=KeyUtil.getKeyBytes(key);
 		if(keyBytes.length > MAX_KEY_LENGTH) {
 			throw new IllegalArgumentException("Key is too long (maxlen = "
@@ -269,7 +269,7 @@ public class MemcachedClient extends SpyThread
 		}
 	}
 
-	private void checkState() {
+	protected void checkState() {
 		if(shuttingDown) {
 			throw new IllegalStateException("Shutting down");
 		}

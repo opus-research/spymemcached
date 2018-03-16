@@ -35,9 +35,11 @@ public class Query {
   private static final String ENDKEYDOCID = "endkey_docid";
   private static final String GROUP = "group";
   private static final String GROUPLEVEL = "group_level";
+  private static final String INCLUDEDOCS = "include_docs";
   private static final String INCLUSIVEEND = "inclusive_end";
   private static final String KEY = "key";
   private static final String LIMIT = "limit";
+  private static final String REDUCE = "reduce";
   private static final String SKIP = "skip";
   private static final String STALE = "stale";
   private static final String STARTKEY = "startkey";
@@ -48,6 +50,16 @@ public class Query {
 
   public Query() {
     args = new HashMap<String, Object>();
+  }
+
+  public boolean willReduce() {
+    return (args.containsKey(REDUCE))
+      ? ((Boolean)args.get(REDUCE)).booleanValue() : false;
+  }
+
+  public boolean willIncludeDocs() {
+    return (args.containsKey(INCLUDEDOCS))
+      ? ((Boolean)args.get(INCLUDEDOCS)).booleanValue() : false;
   }
 
   public Query setDescending(boolean descending) {
@@ -68,6 +80,11 @@ public class Query {
   public Query setGroup(boolean group, int grouplevel) {
     args.put(GROUP, new Boolean(group));
     args.put(GROUPLEVEL, Integer.valueOf((grouplevel)));
+    return this;
+  }
+
+  public Query setIncludeDocs(boolean includedocs) {
+    args.put(INCLUDEDOCS, new Boolean(includedocs));
     return this;
   }
 
@@ -94,6 +111,11 @@ public class Query {
 
   public Query setRangeStart(String startkey) {
     args.put(STARTKEY, startkey);
+    return this;
+  }
+
+  public Query setReduce(boolean reduce) {
+    args.put(REDUCE, new Boolean(reduce));
     return this;
   }
 

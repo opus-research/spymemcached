@@ -15,7 +15,7 @@ public class ConfigDifference {
     private List<String> serversRemoved;
 
     /**
-     * Number of vbuckets that changed.  -1 if the total number changed.
+     * Number of vbuckets that changed. -1 if the total number changed.
      */
     private int vbucketsChanges;
 

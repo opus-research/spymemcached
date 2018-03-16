@@ -22,8 +22,6 @@
 
 package net.spy.memcached.ops;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * An operation callback that will capture receivedStatus and complete
  * invocations and dispatch to a single callback.
@@ -36,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class MultiOperationCallback implements OperationCallback {
 
   private OperationStatus mostRecentStatus = null;
-  private final AtomicInteger remaining;
+  private int remaining = 0;
   protected final OperationCallback originalCallback;
 
   /**
@@ -52,11 +50,11 @@ public abstract class MultiOperationCallback implements OperationCallback {
     }
 
     originalCallback = original;
-    remaining = new AtomicInteger(todo);
+    remaining = todo;
   }
 
   public void complete() {
-    if (remaining.decrementAndGet() == 0) {
+    if (--remaining == 0) {
       originalCallback.receivedStatus(mostRecentStatus);
       originalCallback.complete();
     }

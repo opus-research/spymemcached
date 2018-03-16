@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import net.spy.memcached.KeyUtil;
+import net.spy.memcached.ops.GetAndTouchOperation;
 import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
@@ -114,7 +115,10 @@ abstract class BaseGetOpImpl extends OperationImpl {
 			} else if (cb instanceof GetlOperation.Callback) {
 				GetlOperation.Callback gcb=(GetlOperation.Callback)cb;
 				gcb.gotData(currentKey, currentFlags, casValue, data);
-			} else {
+			} else if (cb instanceof GetAndTouchOperation.Callback) {
+				GetAndTouchOperation.Callback gcb=(GetAndTouchOperation.Callback)cb;
+				gcb.gotData(currentKey, currentFlags, data);
+			}else {
 				throw new ClassCastException("Couldn't convert " + cb + "to a relevent op");
 			}
 			lookingFor='\r';

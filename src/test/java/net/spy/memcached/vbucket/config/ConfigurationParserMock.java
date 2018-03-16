@@ -1,7 +1,6 @@
 package net.spy.memcached.vbucket.config;
 
 import net.spy.memcached.HashAlgorithm;
-import net.spy.memcached.TestConfig;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -24,7 +23,7 @@ public class ConfigurationParserMock implements ConfigurationParser {
     private String bucketsUri = "/pools/default/buckets";
     private String bucketStreamingUri = "/pools/default/bucketsStreaming/Administrator";
     private List<Node> nodes = Collections.singletonList(
-            new Node(Status.healthy, TestConfig.IPV4_ADDR, Collections.singletonMap(Port.direct, "11210")));
+            new Node(Status.healthy, "localhost", Collections.singletonMap(Port.direct, "11210")));
 
     public Map<String, Pool> parseBase(String base) throws ParseException {
         Map<String, Pool> result = new HashMap<String, Pool>();

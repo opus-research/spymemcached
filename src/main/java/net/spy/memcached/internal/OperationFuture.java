@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.compat.SpyObject;
+import net.spy.memcached.ops.ErrorCode;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
@@ -171,7 +172,9 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
           "Operation timed out.", op));
     }
 
-    /* TODO: re-add assertion that op.getState() == OperationState.COMPLETE */
+    if (op != null) {
+      assert op.getState() == OperationState.COMPLETE;
+    }
 
     return objRef.get();
   }
@@ -198,7 +201,8 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
       try {
         get();
       } catch (InterruptedException e) {
-        status = new OperationStatus(false, "Interrupted");
+        status = new OperationStatus(false, "Interrupted",
+            ErrorCode.EXCEPTION);
         Thread.currentThread().isInterrupted();
       } catch (ExecutionException e) {
         getLogger().warn("Error getting status of operation", e);

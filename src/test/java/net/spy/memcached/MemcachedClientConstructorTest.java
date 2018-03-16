@@ -123,8 +123,8 @@ public class MemcachedClientConstructorTest extends TestCase {
         public long getOperationTimeout() {
           return -1;
         }
-      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR
-              +":" + TestConfig.PORT_NUMBER));
+      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR +
+              ":" + TestConfig.PORT_NUMBER));
       fail("Expected null pointer exception, got " + client);
     } catch (IllegalArgumentException e) {
       assertEquals("Operation timeout must be positive.", e.getMessage());
@@ -138,8 +138,8 @@ public class MemcachedClientConstructorTest extends TestCase {
         public long getOperationTimeout() {
           return 0;
         }
-      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR
-              + ":" + TestConfig.PORT_NUMBER));
+      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR +
+              ":" + TestConfig.PORT_NUMBER));
       fail("Expected null pointer exception, got " + client);
     } catch (IllegalArgumentException e) {
       assertEquals("Operation timeout must be positive.", e.getMessage());
@@ -153,8 +153,8 @@ public class MemcachedClientConstructorTest extends TestCase {
         public OperationFactory getOperationFactory() {
           return null;
         }
-      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":"
-              + TestConfig.PORT_NUMBER));
+      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":" +
+              TestConfig.PORT_NUMBER));
     } catch (AssertionError e) {
       assertEquals("Connection factory failed to make op factory",
           e.getMessage());
@@ -169,8 +169,8 @@ public class MemcachedClientConstructorTest extends TestCase {
             List<InetSocketAddress> addrs) throws IOException {
           return null;
         }
-      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":"
-              + TestConfig.PORT_NUMBER));
+      }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":" +
+              TestConfig.PORT_NUMBER));
     } catch (AssertionError e) {
       assertEquals("Connection factory failed to make a connection",
           e.getMessage());
@@ -189,8 +189,8 @@ public class MemcachedClientConstructorTest extends TestCase {
   public void testKetamaNodeLocatorAccessor() throws Exception {
     client =
         new MemcachedClient(new KetamaConnectionFactory(),
-            AddrUtil.getAddresses(TestConfig.IPV4_ADDR
-            + ":" + TestConfig.PORT_NUMBER));
+            AddrUtil.getAddresses(TestConfig.IPV4_ADDR +
+            ":" + TestConfig.PORT_NUMBER));
     assertTrue(client.getNodeLocator() instanceof KetamaNodeLocator);
     assertTrue(client.getNodeLocator().getPrimary("x")
         instanceof MemcachedNodeROImpl);

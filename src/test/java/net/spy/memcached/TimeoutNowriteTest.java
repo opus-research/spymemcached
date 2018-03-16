@@ -53,8 +53,8 @@ public class TimeoutNowriteTest extends ClientBaseCase {
       public FailureMode getFailureMode() {
         return FailureMode.Retry;
       }
-    }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":"
-         + TestConfig.PORT_NUMBER));
+    }, AddrUtil.getAddresses(TestConfig.IPV4_ADDR + ":" +
+          TestConfig.PORT_NUMBER));
   }
 
   public void testTimeoutDontwrite() {

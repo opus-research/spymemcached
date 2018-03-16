@@ -184,6 +184,7 @@ public class BulkGetFuture<T>
 
   public void setStatus(OperationStatus s) {
     status = s;
+    notifyListeners();
   }
 
   public boolean isCancelled() {
@@ -217,11 +218,5 @@ public class BulkGetFuture<T>
     return this;
   }
 
-  /**
-   * Signals that this future is complete.
-   */
-  public void signalComplete() {
-    notifyListeners();
-  }
 
 }

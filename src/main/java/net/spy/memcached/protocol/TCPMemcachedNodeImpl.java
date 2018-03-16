@@ -347,7 +347,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
           getLogger().debug("Redistributing Operation " + op + " because auth "
             + "latch taken longer than " + authWaitTime + " milliseconds to "
             + "complete on node " + getSocketAddress());
-          connection.retryOperation(op);
+          connection.redistributeOperation(op);
         } else {
           op.cancel();
           getLogger().warn("Operation canceled because authentication "

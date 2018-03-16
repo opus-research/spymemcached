@@ -38,7 +38,6 @@ import java.nio.channels.SocketChannel;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -92,12 +91,6 @@ public class MemcachedConnection extends SpyThread {
    * find those bugs and often works around them.
    */
   private static final int EXCESSIVE_EMPTY = 0x1000000;
-
-  /**
-   * If an operation gets cloned more than this ceiling, cancel it for
-   * safety reasons.
-   */
-  private static final int MAX_CLONE_COUNT = 100;
 
   private static final String RECON_QUEUE_METRIC =
     "[MEM] Reconnecting Nodes (ReconnectQueue)";
@@ -203,7 +196,7 @@ public class MemcachedConnection extends SpyThread {
   /**
    * Holds operations that need to be retried.
    */
-  private final List<Operation> retryOps;
+  private final Collection<Operation> retryOps;
 
   /**
    * Holds all nodes that are scheduled for shutdown.
@@ -254,7 +247,7 @@ public class MemcachedConnection extends SpyThread {
     opFact = opfactory;
     timeoutExceptionThreshold = f.getTimeoutExceptionThreshold();
     selector = Selector.open();
-    retryOps = Collections.synchronizedList(new ArrayList<Operation>());
+    retryOps = new ArrayList<Operation>();
     nodesToShutdown = new ConcurrentLinkedQueue<MemcachedNode>();
     listenerExecutorService = f.getListenerExecutorService();
     this.bufSize = bufSize;
@@ -436,11 +429,8 @@ public class MemcachedConnection extends SpyThread {
     if (!shutDown && !reconnectQueue.isEmpty()) {
       attemptReconnects();
     }
-
-    if (!retryOps.isEmpty()) {
-      redistributeOperations(new ArrayList<Operation>(retryOps));
-      retryOps.clear();
-    }
+    redistributeOperations(retryOps);
+    retryOps.clear();
 
     handleShutdownQueue();
   }
@@ -998,13 +988,6 @@ public class MemcachedConnection extends SpyThread {
       return;
     }
 
-    if (op.getCloneCount() >= MAX_CLONE_COUNT) {
-      getLogger().warn("Cancelling operation " + op + "because it has been "
-        + "retried (cloned) more than " + MAX_CLONE_COUNT + "times.");
-      op.cancel();
-      return;
-    }
-
     // The operation gets redistributed but has never been actually written,
     // it we just straight re-add it without cloning.
     if (op.getState() == OperationState.WRITE_QUEUED) {
@@ -1024,8 +1007,6 @@ public class MemcachedConnection extends SpyThread {
           KeyedOperation newKeyedOp = (KeyedOperation) newop;
           for (String k : newKeyedOp.getKeys()) {
             addOperation(k, newop);
-            op.addClone(newop);
-            newop.setCloneCount(op.getCloneCount()+1);
           }
         } else {
           newop.cancel();
@@ -1437,14 +1418,4 @@ public class MemcachedConnection extends SpyThread {
   public boolean isShutDown() {
     return shutDown;
   }
-
-  /**
-   * Add a operation to the retry queue.
-   *
-   * @param op the operation to retry.
-   */
-  public void retryOperation(Operation op) {
-    retryOps.add(op);
-  }
-
 }

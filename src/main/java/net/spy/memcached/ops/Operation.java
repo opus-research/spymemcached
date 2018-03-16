@@ -106,8 +106,12 @@ public interface Operation {
 	 * already, but it exceeded either the specified or the default timeout
 	 * value.
 	 *
-	 * @throws IllegalArgumentException if the operation has already timed out
-	 * and the ttl specified would allow it to become valid.
+	 * <p>In the rare case this may be called with a longer timeout value
+	 * after having been called with a shorter value that caused the
+	 * operation to be timed out, an IllegalArgumentException may be thrown.
+	 *
+	 * @param ttlMillis the max amount of time an operation may have existed
+	 * since its creation in milliseconds.
 	 */
-	public boolean isTimedOut(long ttl);
+	public boolean isTimedOut(long ttlMillis);
 }

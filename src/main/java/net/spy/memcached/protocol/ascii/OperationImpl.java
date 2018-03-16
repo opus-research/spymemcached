@@ -140,5 +140,4 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 	 * @see net.spy.memcached.protocol.ascii.Operation#handleLine(java.lang.String)
 	 */
 	public abstract void handleLine(String line);
-
 }

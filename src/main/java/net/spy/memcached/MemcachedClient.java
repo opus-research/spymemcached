@@ -207,7 +207,7 @@ public class MemcachedClient extends SpyThread
                     .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
                     .setHashAlg(HashAlgorithm.KETAMA_HASH)
                     .setLocatorType(ConnectionFactoryBuilder.Locator.VBUCKET)
-                    .setVBucketConfig(bucket.getConfig());
+                    .setVBucketConfig(bucket.getVbuckets());
         } else {
             cfb.setFailureMode(FailureMode.Retry)
                     .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
@@ -221,7 +221,7 @@ public class MemcachedClient extends SpyThread
             cfb.setAuthDescriptor(ad);
         }
         ConnectionFactory cf = cfb.build();
-        List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getConfig().getServers());
+        List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getVbuckets().getServers());
         if(cf == null) {
             throw new NullPointerException("Connection factory required");
         }

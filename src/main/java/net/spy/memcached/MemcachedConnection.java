@@ -496,7 +496,6 @@ public final class MemcachedConnection extends SpyObject {
 		final Map<MemcachedNode, Boolean> seen=
 			new IdentityHashMap<MemcachedNode, Boolean>();
 		final List<MemcachedNode> rereQueue=new ArrayList<MemcachedNode>();
-		SocketChannel ch = null;
 		for(Iterator<MemcachedNode> i=
 				reconnectQueue.headMap(now).values().iterator(); i.hasNext();) {
 			final MemcachedNode qa=i.next();
@@ -505,7 +504,7 @@ public final class MemcachedConnection extends SpyObject {
 				if(!seen.containsKey(qa)) {
 					seen.put(qa, Boolean.TRUE);
 					getLogger().info("Reconnecting %s", qa);
-					ch=SocketChannel.open();
+					final SocketChannel ch=SocketChannel.open();
 					ch.configureBlocking(false);
 					int ops=0;
 					if(ch.connect(qa.getSocketAddress())) {
@@ -524,18 +523,6 @@ public final class MemcachedConnection extends SpyObject {
 				getLogger().warn("Error on reconnect", e);
 				rereQueue.add(qa);
 			}
-			catch (Exception e) {
-                getLogger().error("Exception on reconnect, lost node %s", qa, e);
-            } finally {
-                if (ch != null && !ch.isConnected()
-                        && !ch.isConnectionPending()) {
-                    try {
-                        ch.close();
-                    } catch (IOException x) {
-                        getLogger().error("Exception closing channel: %s", qa, x);
-                    }
-                }
-            }
 		}
 		// Requeue any fast-failed connects.
 		for(MemcachedNode n : rereQueue) {

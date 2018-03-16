@@ -30,113 +30,113 @@ public enum ErrorCode {
   /**
    * The operation was successful.
    */
-  SUCCESS((byte) 0x00),
+  SUCCESS((short) 0x00),
 
   /**
    * The key was not found on the server.
    */
-  ERR_NOT_FOUND((byte) 0x01),
+  ERR_NOT_FOUND((short) 0x01),
 
   /**
    * The key already exists on the server.
    */
-  ERR_EXISTS((byte) 0x02),
+  ERR_EXISTS((short) 0x02),
 
   /**
    * The key or value was too big to store on the server.
    */
-  ERR_2BIG((byte) 0x03),
+  ERR_2BIG((short) 0x03),
 
   /**
    * The operation sent was not a valid operation.
    */
-  ERR_INVAL((byte) 0x04),
+  ERR_INVAL((short) 0x04),
 
   /**
    * The value sent in this operation was not stored.
    */
-  ERR_NOT_STORED((byte) 0x05),
+  ERR_NOT_STORED((short) 0x05),
 
   /**
    * The incr/decr value is bad.
    */
-  ERR_DELTA_BADVAL((byte) 0x06),
+  ERR_DELTA_BADVAL((short) 0x06),
 
   /**
    * This operation was sent to the wrong server.
    */
-  ERR_NOT_MY_VBUCKET((byte) 0x07),
+  ERR_NOT_MY_VBUCKET((short) 0x07),
 
   /**
    * An authentication error occurred.
    */
-  ERR_AUTH_ERROR((byte) 0x20),
+  ERR_AUTH_ERROR((short) 0x20),
 
   /**
    * Authentication can continue.
    */
-  ERR_AUTH_CONTINUE((byte) 0x21),
+  ERR_AUTH_CONTINUE((short) 0x21),
   /**
    * The server doesn't recognize this command.
    */
-  ERR_UNKNOWN_COMMAND((byte) 0x81),
+  ERR_UNKNOWN_COMMAND((short) 0x81),
 
   /**
    * The server is completely out of memory.
    */
-  ERR_NO_MEM((byte) 0x82),
+  ERR_NO_MEM((short) 0x82),
 
   /**
    * This operation is not supported by the server.
    */
-  ERR_NOT_SUPPORTED((byte) 0x83),
+  ERR_NOT_SUPPORTED((short) 0x83),
 
   /**
    * An internal error occurred on the server.
    */
-  ERR_INTERNAL((byte) 0x84),
+  ERR_INTERNAL((short) 0x84),
 
   /**
    * The server is busy and the operation should be tried again later.
    */
-  ERR_BUSY((byte) 0x85),
+  ERR_BUSY((short) 0x85),
 
   /**
    * The server is temporarily out of memory.
    */
-  ERR_TEMP_FAIL((byte) 0x86),
+  ERR_TEMP_FAIL((short) 0x86),
 
   /**
    * THIS IS A CLIENT SPECIFIC ERROR CODE.
-   * The client recieved an unknow error code from the server.
+   * The client received an unknown error code from the server.
    */
-  UNKNOWN_ERROR((byte) 0xF0),
+  UNKNOWN_ERROR((short) 0xF0),
 
   /**
    * THIS IS A CLIENT SPECIFIC ERROR CODE.
    * The operation was canceled by the client.
    */
-  CANCELLED((byte) 0xF1),
+  CANCELLED((short) 0xF1),
 
   /**
    * THIS IS A CLIENT SPECIFIC ERROR CODE.
    * The operation was timed out in the client.
    */
-  TIMED_OUT((byte) 0xF2),
+  TIMED_OUT((short) 0xF2),
 
   /**
    * THIS IS A CLIENT SPECIFIC ERROR CODE.
    * Client threw exception cause operation failure.
    */
-  EXCEPTION((byte) 0xF3);
+  EXCEPTION((short) 0xF3);
 
-  private final byte error;
+  private final short error;
 
-  ErrorCode(byte err) {
+  ErrorCode(short err) {
     error = err;
   }
 
-  public static ErrorCode getErrorCode(byte b) {
+  public static ErrorCode getErrorCode(short b) {
     if (b == ErrorCode.SUCCESS.error) {
       return ErrorCode.SUCCESS;
     } else if (b == ErrorCode.ERR_NOT_FOUND.error) {

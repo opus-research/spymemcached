@@ -48,7 +48,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
    */
   public static final OperationStatus CANCELLED =
       new CancelledOperationStatus();
-  private OperationState state = OperationState.WRITE_QUEUED;
+  private OperationState state = OperationState.WRITING;
   private ByteBuffer cmd = null;
   private boolean cancelled = false;
   private OperationException exception = null;
@@ -128,17 +128,12 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
     getLogger().debug("Transitioned state from %s to %s", state, newState);
     state = newState;
     // Discard our buffer when we no longer need it.
-    if (state != OperationState.WRITE_QUEUED
-        && state != OperationState.WRITING) {
+    if (state != OperationState.WRITING) {
       cmd = null;
     }
     if (state == OperationState.COMPLETE) {
       callback.complete();
     }
-  }
-
-  public final void writing() {
-    transitionState(OperationState.WRITING);
   }
 
   public final void writeComplete() {
@@ -188,6 +183,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
         != OperationState.COMPLETE);
     timedout = true;
     callback.complete();
+    cmd = null;
   }
 
   @Override
@@ -206,6 +202,7 @@ public abstract class BaseOperationImpl extends SpyObject implements Operation {
       timedOutUnsent = true;
       timedout = true;
       callback.complete();
+      cmd = null;
     } else {
       // timedout would be false, but we cannot allow you to untimeout an
       // operation

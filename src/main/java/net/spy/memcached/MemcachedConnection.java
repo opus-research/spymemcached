@@ -222,7 +222,12 @@ public class MemcachedConnection extends SpyThread {
     }
     getLogger().debug("Selecting with delay of %sms", delay);
     assert selectorsMakeSense() : "Selectors don't make sense.";
-    int selected = selector.select(delay);
+    //int selected = selector.select(delay);
+
+    // Never block, just return immediately when nothing can be selected.
+    // http://docs.oracle.com/javase/6/docs/api/java/nio/channels/Selector.html#selectNow()
+    int selected = selector.selectNow();
+
     Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
     if (selectedKeys.isEmpty() && !shutDown) {

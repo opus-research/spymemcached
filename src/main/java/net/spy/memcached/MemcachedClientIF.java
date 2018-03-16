@@ -9,6 +9,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.internal.BulkFuture;
+import net.spy.memcached.ops.Operation;
 import net.spy.memcached.transcoders.Transcoder;
 
 /**
@@ -26,7 +27,7 @@ public interface MemcachedClientIF {
 
 	Transcoder<Object> getTranscoder();
 
-	NodeLocator getNodeLocator();
+	NodeLocator<Operation> getNodeLocator();
 
 	Future<Boolean> append(long cas, String key, Object val);
 

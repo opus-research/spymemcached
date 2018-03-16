@@ -52,6 +52,10 @@ class StoreOperationImpl extends SingleKeyOperationImpl
 		prepareBuffer(key, cas, data, flags, exp);
 	}
 
+	public byte[] getBytes() {
+		return data;
+	}
+
 	public long getCasValue() {
 		return cas;
 	}
@@ -72,9 +76,4 @@ class StoreOperationImpl extends SingleKeyOperationImpl
 		return storeType;
 	}
 
-	@Override
-	public String toString() {
-		return super.toString() + " Cas: " + cas + " Exp: " + exp + " Flags: "
-			+ flags + " Data Length: " + data.length;
-	}
 }

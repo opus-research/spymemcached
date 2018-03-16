@@ -33,9 +33,4 @@ public class GetlOperationImpl extends SingleKeyOperationImpl
 		gcb.gotData(key, flags, responseCas, data);
 		getCallback().receivedStatus(STATUS_OK);
 	}
-
-	@Override
-	public String toString() {
-		return super.toString() + " Exp: " + exp;
-	}
 }

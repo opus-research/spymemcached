@@ -70,8 +70,4 @@ public abstract class SASLBaseOperationImpl extends OperationImpl {
 		}
 	}
 
-	@Override
-	public String toString() {
-		return "SASL base operation";
-	}
 }

@@ -12,7 +12,6 @@ import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.util.StringUtils;
 
 /**
  * Base class for get and gets handlers.
@@ -193,9 +192,4 @@ abstract class BaseGetOpImpl extends OperationImpl {
 		getCallback().receivedStatus(CANCELLED);
 	}
 
-	@Override
-	public String toString() {
-		return "Cmd: " + cmd + " Keys: " + StringUtils.join(keys, " ") + "Exp: "
-			+ exp;
-	}
 }

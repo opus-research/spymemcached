@@ -73,7 +73,7 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
 		assertEquals(727582, op2.getCasValue());
 		assertEquals(8174, op2.getFlags());
 		assertEquals(7175, op2.getExpiration());
-		assertBytes(op2.getData());
+		assertBytes(op2.getBytes());
 		assertCallback(op2);
 	}
 
@@ -252,4 +252,5 @@ public abstract class OperationFactoryTestBase extends MockObjectTestCase {
 	protected <T> T cloneOne(Class<T> c, KeyedOperation t) {
 		return assertOne(c, ofact.clone(t));
 	}
+
 }

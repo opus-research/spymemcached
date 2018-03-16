@@ -32,9 +32,7 @@ import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationState;
-import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VBucketAware;
-import net.spy.memcached.protocol.binary.TapAckOperationImpl;
 import net.spy.memcached.vbucket.VBucketNodeLocator;
 import net.spy.memcached.vbucket.Reconfigurable;
 import net.spy.memcached.vbucket.config.Bucket;
@@ -423,10 +421,10 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 					assert !channel.isConnected() : "connected";
 				}
 			} else {
-				if(sk.isValid() && sk.isReadable()) {
+				if(sk.isReadable()) {
 					handleReads(sk, qa);
 				}
-				if(sk.isValid() && sk.isWritable()) {
+				if(sk.isWritable()) {
 					handleWrites(sk, qa);
 				}
 			}
@@ -477,31 +475,13 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	private void handleReads(SelectionKey sk, MemcachedNode qa)
 		throws IOException {
 		Operation currentOp = qa.getCurrentReadOp();
-		// If it's a tap ack there is no response
-		if (currentOp instanceof TapAckOperationImpl) {
-			qa.removeCurrentReadOp();
-			return;
-		}
 		ByteBuffer rbuf=qa.getRbuf();
 		final SocketChannel channel = qa.getChannel();
 		int read=channel.read(rbuf);
 		if (read < 0) {
-			if (currentOp instanceof TapOperation) {
-				// If were doing tap then we won't throw an exception
-				currentOp.getCallback().complete();
-				((TapOperation)currentOp).streamClosed(OperationState.COMPLETE);
-				getLogger().debug(
-						"Completed read op: %s and giving the next %d bytes",
-						currentOp, rbuf.remaining());
-				Operation op=qa.removeCurrentReadOp();
-				assert op == currentOp : "Expected to pop " + currentOp + " got " + op;
-				queueReconnect(qa);
-				currentOp=qa.getCurrentReadOp();
-			} else {
-			    // our model is to keep the connection alive for future ops
-			    // so we'll queue a reconnect if disconnected via an IOException
-			    throw new IOException("Disconnected unexpected, will reconnect.");
-			}
+		    // our model is to keep the connection alive for future ops
+		    // so we'll queue a reconnect if disconnected via an IOException
+		    throw new IOException("Disconnected unexpected, will reconnect.");
 		}
 		while(read > 0) {
 			getLogger().debug("Read %d bytes", read);

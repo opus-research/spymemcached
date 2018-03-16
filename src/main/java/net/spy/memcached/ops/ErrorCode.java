@@ -108,6 +108,12 @@ public enum ErrorCode {
 
   /**
    * THIS IS A CLIENT SPECIFIC ERROR CODE.
+   * The client recieved an unknow error code from the server.
+   */
+  UNKNOWN_ERROR((byte) 0xF0),
+
+  /**
+   * THIS IS A CLIENT SPECIFIC ERROR CODE.
    * The operation was canceled by the client.
    */
   CANCELLED((byte) 0xF1),
@@ -119,6 +125,7 @@ public enum ErrorCode {
   TIMED_OUT((byte) 0xF2),
 
   /**
+   * THIS IS A CLIENT SPECIFIC ERROR CODE.
    * Client threw exception cause operation failure.
    */
   EXCEPTION((byte) 0xF3);
@@ -163,6 +170,6 @@ public enum ErrorCode {
     }  else if (b == ErrorCode.ERR_TEMP_FAIL.error) {
       return ErrorCode.ERR_TEMP_FAIL;
     }
-    return null;
+    return ErrorCode.UNKNOWN_ERROR;
   }
 }

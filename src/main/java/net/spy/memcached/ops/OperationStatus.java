@@ -29,13 +29,11 @@ public class OperationStatus {
 
   private final boolean isSuccess;
   private final String message;
-  private final ErrorCode errorCode;
 
-  public OperationStatus(boolean success, String msg, ErrorCode ec) {
+  public OperationStatus(boolean success, String msg) {
     super();
     isSuccess = success;
     message = msg;
-    errorCode = ec;
   }
 
   /**
@@ -50,13 +48,6 @@ public class OperationStatus {
    */
   public String getMessage() {
     return message;
-  }
-
-  /**
-   * Get the error code associated with this request.
-   */
-  public ErrorCode getErrorCode() {
-    return errorCode;
   }
 
   @Override

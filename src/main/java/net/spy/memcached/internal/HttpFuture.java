@@ -13,17 +13,18 @@ import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.couch.HttpOperation;
 
 public class HttpFuture<T> extends SpyObject implements Future<T>{
-	private final AtomicReference<T> objRef;
-	private final CountDownLatch latch;
-    private final long timeout;
-    private OperationStatus status;
-    private HttpOperation op;
+    protected final AtomicReference<T> objRef;
+    protected final CountDownLatch latch;
+    protected final long timeout;
+    protected OperationStatus status;
+    protected HttpOperation op;
 
     public HttpFuture(CountDownLatch latch, long timeout) {
         super();
         this.objRef = new AtomicReference<T>(null);
         this.latch = latch;
         this.timeout = timeout;
+        this.status = null;
     }
 
 	public boolean cancel(boolean c) {

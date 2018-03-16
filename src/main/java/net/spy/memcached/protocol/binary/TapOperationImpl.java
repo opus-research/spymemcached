@@ -45,7 +45,7 @@ public abstract class TapOperationImpl extends OperationImpl implements
   private byte[] header;
   private byte[] message;
 
-  static final int CMD = 0;
+  static final byte CMD = 0;
 
   protected TapOperationImpl(OperationCallback cb) {
     super(CMD, generateOpaque(), cb);

@@ -115,5 +115,12 @@ public interface Operation {
 	 */
 	public boolean isTimedOut(long ttlMillis);
 
+	/**
+	 * True if the operation has timed out and has not been sent.
+	 *
+	 * If the client has timed out this operation and knows it has not been
+	 * written to the network, this will be true.
+	 *
+	 */
 	public boolean isTimedOutUnsent();
 }

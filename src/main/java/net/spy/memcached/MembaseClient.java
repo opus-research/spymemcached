@@ -22,7 +22,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	private volatile boolean reconfiguring = false;
 
 	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server.
+	 * Get a MembaseClient based on the REST response from a Membase server.
 	 *
 	 * This constructor is merely a convenience for situations where the bucket
 	 * name is the same as the user name.  This is commonly the case.
@@ -46,7 +46,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	}
 
 	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server
+	 * Get a MembaseClient based on the REST response from a Membase server
 	 * where the username is different than the bucket name.
 	 *
 	 * To connect to the "default" special bucket for a given cluster, use an
@@ -70,7 +70,7 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 	}
 
 	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server
+	 * Get a MembaseClient based on the REST response from a Membase server
 	 * where the username is different than the bucket name.
 	 *
 	 * Note that when specifying a ConnectionFactory you must specify a
@@ -99,6 +99,10 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF, R
 		super(cf, AddrUtil.getAddresses(cf.getVBucketConfig().getServers()));
 	}
 
+	/**
+	 * This function is called when there is a topology change in the
+	 * cluster. This function is intended for internal use only.
+	 */
 	public void reconfigure(Bucket bucket) {
 		reconfiguring = true;
 		try {

@@ -21,7 +21,7 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached;
+package net.spy.memcached.ops;
 
 /**
  * Response codes for a Observe operation.

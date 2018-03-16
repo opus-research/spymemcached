@@ -46,9 +46,9 @@ final class MutatorOperationImpl extends OperationImpl implements
 
   private final Mutator mutator;
   private final String key;
-  private final long amount;
+  private final int amount;
 
-  public MutatorOperationImpl(Mutator m, String k, long amt,
+  public MutatorOperationImpl(Mutator m, String k, int amt,
       OperationCallback c) {
     super(c);
     mutator = m;
@@ -88,7 +88,7 @@ final class MutatorOperationImpl extends OperationImpl implements
     return Collections.singleton(key);
   }
 
-  public long getBy() {
+  public int getBy() {
     return amount;
   }
 

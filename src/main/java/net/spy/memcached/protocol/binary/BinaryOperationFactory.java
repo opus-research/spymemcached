@@ -30,11 +30,8 @@ import net.spy.memcached.ops.SASLStepOperation;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VersionOperation;
 import net.spy.memcached.ops.GetOperation.Callback;
-import net.spy.memcached.tapmessage.TapOpcode;
-import net.spy.memcached.tapmessage.RequestMessage;
 
 /**
  * Factory for binary operations.
@@ -52,7 +49,7 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 
 	public GetAndTouchOperation getAndTouch(String key, int expiration,
 			GetAndTouchOperation.Callback cb) {
-		return new GetAndTouchOperationImpl(key, expiration, cb);
+		return new GetOperationImpl(key, expiration, cb);
 	}
 
 	public GetOperation get(String key, Callback callback) {
@@ -64,11 +61,11 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 	}
 
 	public GetlOperation getl(String key, int exp, GetlOperation.Callback cb) {
-		return new GetlOperationImpl(key, exp, cb);
+		return new GetOperationImpl(key, exp, cb);
 	}
 
 	public GetsOperation gets(String key, GetsOperation.Callback cb) {
-		return new GetsOperationImpl(key, cb);
+		return new GetOperationImpl(key, cb);
 	}
 
 	public MutatorOperation mutate(Mutator m, String key, int by,
@@ -143,16 +140,4 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 				props, cbh, cb);
 	}
 
-	public TapOperation tapBackfill(String id, long date, OperationCallback cb) {
-		return new TapBackfillOperationImpl(id, date, cb);
-	}
-
-	public TapOperation tapCustom(String id, RequestMessage message,
-			OperationCallback cb) {
-		return new TapCustomOperationImpl(id, message, cb);
-	}
-
-	public TapOperation tapAck(TapOpcode opcode, int opaque, OperationCallback cb) {
-		return new TapAckOperationImpl(opcode, opaque, cb);
-	}
 }

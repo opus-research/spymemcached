@@ -1,11 +1,14 @@
 package net.spy.memcached.protocol.binary;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
 
-class StoreOperationImpl extends SingleKeyOperationImpl
+class StoreOperationImpl extends OperationImpl
 	implements StoreOperation, CASOperation {
 
 	private static final int SET=0x01;
@@ -19,6 +22,7 @@ class StoreOperationImpl extends SingleKeyOperationImpl
 	// 4-byte flags, 4-byte expiration
 	static final int EXTRA_LEN = 8;
 
+	private final String key;
 	private final StoreType storeType;
 	private final int flags;
 	private final int exp;
@@ -39,7 +43,8 @@ class StoreOperationImpl extends SingleKeyOperationImpl
 
 	public StoreOperationImpl(StoreType t, String k, int f, int e,
 			byte[] d, long c, OperationCallback cb) {
-		super(cmdMap(t), generateOpaque(), k, cb);
+		super(cmdMap(t), generateOpaque(), cb);
+		key=k;
 		flags=f;
 		exp=e;
 		data=d;
@@ -50,6 +55,10 @@ class StoreOperationImpl extends SingleKeyOperationImpl
 	@Override
 	public void initialize() {
 		prepareBuffer(key, cas, data, flags, exp);
+	}
+
+	public Collection<String> getKeys() {
+		return Collections.singleton(key);
 	}
 
 	public byte[] getBytes() {

@@ -9,14 +9,15 @@ import java.util.List;
 import java.util.Map;
 
 import net.spy.memcached.KeyUtil;
+import net.spy.memcached.protocol.BaseOperationImpl;
 import net.spy.memcached.ops.CASOperation;
+import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.VBucketAware;
 
-public class OptimizedSetImpl extends MultiKeyOperationImpl {
+public class OptimizedSetImpl extends OperationImpl implements Operation {
 
 	private static final OperationCallback NOOP_CALLBACK = new NoopCallback();
 
@@ -76,7 +77,7 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 			bb.putShort((short)keyBytes.length);
 			bb.put((byte)StoreOperationImpl.EXTRA_LEN); // extralen
 			bb.put((byte)0); // data type
-			bb.putShort(((VBucketAware)so).getVBucket(k)); // vbucket
+			bb.putShort((short) ((BaseOperationImpl)so).getVbucket()); // reserved
 			bb.putInt(keyBytes.length + data.length +
 						StoreOperationImpl.EXTRA_LEN);
 			bb.putInt(myOpaque);

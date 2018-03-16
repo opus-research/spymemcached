@@ -1,26 +1,31 @@
 package net.spy.memcached.protocol.binary;
 
+import java.util.Collection;
+import java.util.Collections;
+
 import net.spy.memcached.ops.MutatorOperation;
 import net.spy.memcached.ops.Mutator;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
 
-class MutatorOperationImpl extends SingleKeyOperationImpl implements
+class MutatorOperationImpl extends OperationImpl implements
 		MutatorOperation {
 
 	private static final int CMD_INCR=0x05;
 	private static final int CMD_DECR=0x06;
 
 	private final Mutator mutator;
+	private final String key;
 	private final long by;
 	private final int exp;
 	private final long def;
 
 	public MutatorOperationImpl(Mutator m, String k, long b,
 			long d, int e, OperationCallback cb) {
-		super(m == Mutator.incr ? CMD_INCR : CMD_DECR, generateOpaque(), k, cb);
+		super(m == Mutator.incr ? CMD_INCR : CMD_DECR, generateOpaque(), cb);
 		assert d >= 0 : "Default value is below zero";
 		mutator=m;
+		key=k;
 		by=b;
 		exp=e;
 		def=d;
@@ -45,6 +50,10 @@ class MutatorOperationImpl extends SingleKeyOperationImpl implements
 	protected void decodePayload(byte[] pl) {
 		getCallback().receivedStatus(new OperationStatus(true,
 			String.valueOf(decodeLong(pl, 0))));
+	}
+
+	public Collection<String> getKeys() {
+		return Collections.singleton(key);
 	}
 
 	public int getBy() {

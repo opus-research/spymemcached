@@ -1,12 +1,9 @@
 package net.spy.memcached;
 
-import java.net.InetSocketAddress;
-
 
 /**
  * This test assumes a binary server is running on the host specified
- * int the environment variable SPYMC_TEST_SERVER_V4 or
- * localhost:11211 by default.
+ * on the command line or localhost:11211 by default.
  */
 public class BinaryClientTest extends ProtocolBaseCase {
 
@@ -26,8 +23,7 @@ public class BinaryClientTest extends ProtocolBaseCase {
 
 	@Override
 	protected String getExpectedVersionSource() {
-		return String.valueOf(
-				new InetSocketAddress(TestConfig.IPV4_ADDR, 11211));
+		return "/" + TestConfig.IPV4_ADDR + ":11211";
 	}
 
 	@Override
@@ -69,7 +65,7 @@ public class BinaryClientTest extends ProtocolBaseCase {
 	}
 
 	public void testGATTimeout() throws Exception {
-		if (TestConfig.isMembase()) {
+		if (isMembase()) {
 			assertNull(client.get("gatkey"));
 			assert client.set("gatkey", 1, "gatvalue").get().booleanValue();
 			assert client.getAndTouch("gatkey", 2).getValue().equals("gatvalue");
@@ -81,7 +77,7 @@ public class BinaryClientTest extends ProtocolBaseCase {
 	}
 
 	public void testTouchTimeout() throws Exception {
-		if (TestConfig.isMembase()) {
+		if (isMembase()) {
 			assertNull(client.get("touchkey"));
 			assert client.set("touchkey", 1, "touchvalue").get().booleanValue();
 			assert client.touch("touchkey", 2).get().booleanValue();

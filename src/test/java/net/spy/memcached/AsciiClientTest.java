@@ -8,7 +8,8 @@ import net.spy.memcached.protocol.ascii.ExtensibleOperationImpl;
 
 /**
  * This test assumes a server is running on the host specified
- * on the command line or localhost:11211 by default.
+ * in the environment variable SPY_MC_TEST_SERVER or
+ * localhost:11211 by default.
  */
 public class AsciiClientTest extends ProtocolBaseCase {
 

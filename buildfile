@@ -10,19 +10,11 @@ COPYRIGHT = "2006-2011  Dustin Sallings, Matt Ingenthron"
 
 PROJECT_NAME = "spymemcached"
 
-if ENV['server'].nil? then
-  SERVER="127.0.0.1"
-else
-  SERVER=ENV['server']
-end
-puts "Using server at #{SERVER}"
+TEST_SERVER_V4 = ENV['SPYMC_TEST_SERVER_V4'] || "127.0.0.1"
+TEST_SERVER_V6 = ENV['SPYMC_TEST_SERVER_V6'] || ENV['SPYMC_TEST_SERVER_V4'] || "::1"
 
-if ENV['type'].nil? then
-  TYPE="memcached"
-else
-  TYPE=ENV['type']
-end
-puts "Server is type #{TYPE}"
+puts "Using server at ipv4 #{TEST_SERVER_V4}"
+puts "Using server at ipv6 #{TEST_SERVER_V6}"
 
 def compute_released_verions
   h = {}
@@ -65,7 +57,8 @@ define "spymemcached" do
 
   test.options[:java_args] = "-ea"
   test.include "*Test"
-  test.using :fork=>:each, :properties=>{ 'server.address'=>SERVER, 'server.type'=>TYPE}
+  test.using :fork=>:each, :properties=>{ 'server.address_v4'=>TEST_SERVER_V4,
+					'server.address_v6'=>TEST_SERVER_V6 }
   TREE_VER=tree_version
   puts "Tree version is #{TREE_VER}"
 

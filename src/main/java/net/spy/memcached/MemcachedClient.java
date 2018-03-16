@@ -285,7 +285,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @param op the operation to perform
    * @return the Operation
    */
-  Operation addOp(final String key, final Operation op) {
+  public Operation addOp(final String key, final Operation op) {
     validateKey(key);
     mconn.checkState();
     mconn.addOperation(key, op);

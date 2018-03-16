@@ -26,7 +26,7 @@ public class CouchbaseConnectionFactory extends MembaseConnectionFactory {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see
 	 * net.spy.memcached.ConnectionFactory#createMemcachedConnection(java.util
 	 * .List)
@@ -39,7 +39,7 @@ public class CouchbaseConnectionFactory extends MembaseConnectionFactory {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see
 	 * net.spy.memcached.ConnectionFactory#createCouchDBConnection(java.util
 	 * .List)

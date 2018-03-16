@@ -104,18 +104,14 @@ public final class CouchbaseConnection extends SpyThread implements
 		return nextNode = (++nextNode % nodes.size());
 	}
 
-	protected void checkState() {
+	public void checkState() {
 		if (shutDown) {
 			throw new IllegalStateException("Shutting down");
 		}
 		assert isAlive() : "IO Thread is not running.";
 	}
 
-	public boolean shutdown() throws IOException {
-		if (shutDown) {
-			getLogger().info("Suppressing duplicate attempt to shut down");
-			return false;
-		}
+	public void shutdown() throws IOException {
 		shutDown = true;
 		running = false;
 		for (CouchbaseNode n : nodes) {
@@ -127,7 +123,6 @@ public final class CouchbaseConnection extends SpyThread implements
 				}
 			}
 		}
-		return true;
 	}
 
 	@Override

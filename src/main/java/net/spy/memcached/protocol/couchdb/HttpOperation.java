@@ -12,7 +12,7 @@ public class HttpOperation {
 	private boolean cancelled;
 	private boolean errored;
 	private boolean timedOut;
-
+	
 	public HttpOperation(HttpRequest r, HttpCallback cb) {
 		request = r;
 		callback = cb;
@@ -21,39 +21,39 @@ public class HttpOperation {
 		errored = false;
 		timedOut = false;
 	}
-
+	
 	public HttpRequest getRequest() {
 		return request;
 	}
-
+	
 	public HttpCallback getCallback() {
 		return callback;
 	}
-
+	
 	public boolean isCancelled() {
 		return cancelled;
 	}
-
+	
 	public boolean hasErrored() {
 		return errored;
 	}
-
+	
 	public boolean isTimedOut() {
 		return timedOut;
 	}
-
+	
 	public void cancel() {
 		cancelled = true;
 	}
-
+	
 	public void timeOut() {
 		timedOut = true;
 	}
-
+	
 	public OperationException getException() {
 		return exception;
 	}
-
+	
 	public void setException(OperationException e) {
 		exception = e;
 		errored = true;

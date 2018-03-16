@@ -591,8 +591,6 @@ public class MemcachedConnection extends SpyThread {
           ch.configureBlocking(false);
           int ops = 0;
           if (ch.connect(qa.getSocketAddress())) {
-            connected(qa);
-            addedQueue.offer(qa);
             getLogger().info("Immediately reconnected to %s", qa);
             assert ch.isConnected();
           } else {

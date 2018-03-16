@@ -39,7 +39,13 @@ import net.spy.memcached.ops.OperationStatus;
 /**
  * Managed future for operations.
  *
- * Not intended for general use.
+ * <p>From an OperationFuture, application code can determine if the status of a
+ * given Operation in an asynchronous manner.
+ *
+ * <p>If for example we needed to update the keys "user:<userid>:name",
+ * "user:<userid>:friendlist" because later in the method we were going to
+ * verify the change occurred as expected interacting with the user, we can
+ * fire multiple IO operations simultaneously with this concept.
  *
  * @param <T> Type of object returned from this future.
  */
@@ -47,9 +53,6 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
 
   private final CountDownLatch latch;
   private final AtomicReference<T> objRef;
-  /**
-   *
-   */
   protected OperationStatus status;
   private final long timeout;
   private Operation op;
@@ -98,8 +101,6 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
   public boolean cancel(boolean ign) {
     assert op != null : "No operation";
     op.cancel();
-    // This isn't exactly correct, but it's close enough. If we're in
-    // a writing state, we *probably* haven't started.
     return op.getState() == OperationState.WRITE_QUEUED;
   }
 
@@ -111,8 +112,6 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
   public boolean cancel() {
     assert op != null : "No operation";
     op.cancel();
-    // This isn't exactly correct, but it's close enough. If we're in
-    // a writing state, we *probably* haven't started.
     return op.getState() == OperationState.WRITE_QUEUED;
   }
 
@@ -171,7 +170,7 @@ public class OperationFuture<T> extends SpyObject implements Future<T> {
       throw new ExecutionException(new CheckedOperationTimeoutException(
           "Operation timed out.", op));
     }
-    
+
     assert op.getState() == OperationState.COMPLETE;
 
     return objRef.get();

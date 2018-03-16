@@ -40,6 +40,7 @@ import net.spy.memcached.ops.CASOperationStatus;
 import net.spy.memcached.ops.CancelledOperationStatus;
 import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
+import net.spy.memcached.ops.GetAndTouchOperation;
 import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
@@ -57,6 +58,7 @@ import net.spy.memcached.vbucket.ConfigurationProvider;
 import net.spy.memcached.vbucket.ConfigurationProviderHTTP;
 import net.spy.memcached.vbucket.Reconfigurable;
 import net.spy.memcached.vbucket.config.Bucket;
+import net.spy.memcached.vbucket.config.Config;
 import net.spy.memcached.vbucket.config.ConfigType;
 
 /**
@@ -190,114 +192,157 @@ public class MemcachedClient extends SpyThread
 		start();
 	}
 
-	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server
-	 * where the username is different than the bucket name.
-	 *
-	 * To connect to the "default" special bucket for a given cluster, use an
-	 * empty string as the password.
-	 *
-	 * If a password has not been assigned to the bucket, it is typically an
-	 * empty string.
-	 *
-	 * @param baseList the URI list of one or more servers from the cluster
-	 * @param bucketName the bucket name in the cluster you wish to use
-	 * @param usr the username for the bucket; this nearly always be the same
-	 *        as the bucket name
-	 * @param pwd the password for the bucket
-	 * @throws IOException if connections could not be made
-	 * @throws ConfigurationException if the configuration provided by the
-	 *         server has issues or is not compatible
-	 */
-	public MemcachedClient(final List<URI> baseList,
-		final String bucketName,
-		final String usr, final String pwd) throws IOException, ConfigurationException {
-		for (URI bu : baseList) {
-			if (!bu.isAbsolute()) {
-				throw new IllegalArgumentException("The base URI must be absolute");
-			}
-		}
+    /**
+     * Get a MemcachedClient based on the REST response from a Membase server.
+     *
+     * @param baseList
+     * @param bucketName
+     * @param usr
+     * @param pwd
+     * @param isVBucketAware
+     * @throws IOException
+     * @throws ConfigurationException
+     * @deprecated Use the constructor without the isVbucketAware
+     */
+    public MemcachedClient(final List<URI> baseList,
+                           final String bucketName,
+                           final String usr, final String pwd,
+                           final boolean isVBucketAware) throws IOException, ConfigurationException {
+        for (URI bu : baseList) {
+            if (!bu.isAbsolute()) {
+                throw new IllegalArgumentException("The base URI must be absolute");
+            }
+        }
 
-		this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
-		Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
-		net.spy.memcached.vbucket.config.Config config = bucket.getConfig();
-		ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
-		if (config.getConfigType() == ConfigType.MEMBASE) {
-			cfb.setFailureMode(FailureMode.Retry)
-				.setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
-				.setHashAlg(HashAlgorithm.KETAMA_HASH)
-				.setLocatorType(ConnectionFactoryBuilder.Locator.VBUCKET)
-				.setVBucketConfig(bucket.getConfig());
-		} else if (config.getConfigType() == ConfigType.CACHE) {
-			cfb.setFailureMode(FailureMode.Retry)
-				.setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
-				.setHashAlg(HashAlgorithm.KETAMA_HASH)
-				.setLocatorType(ConnectionFactoryBuilder.Locator.CONSISTENT);
-		} else {
-			throw new ConfigurationException("Bucket type not supported or JSON response unexpected");
-		}
-		if (!this.configurationProvider.getAnonymousAuthBucket().equals(bucketName) && usr != null) {
-			AuthDescriptor ad = new AuthDescriptor(new String[]{"PLAIN"},
-				new PlainCallbackHandler(usr, pwd));
-			cfb.setAuthDescriptor(ad);
-		}
-		ConnectionFactory cf = cfb.build();
-		List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getConfig().getServers());
-		if(cf == null) {
-			throw new NullPointerException("Connection factory required");
-		}
-		if(addrs == null) {
-			throw new NullPointerException("Server list required");
-		}
-		if(addrs.isEmpty()) {
-			throw new IllegalArgumentException(
-			"You must have at least one server to connect to");
-		}
-		if(cf.getOperationTimeout() <= 0) {
-			throw new IllegalArgumentException(
-				"Operation timeout must be positive.");
-		}
-		tcService = new TranscodeService(cf.isDaemon());
-		transcoder=cf.getDefaultTranscoder();
-		opFact=cf.getOperationFactory();
-		assert opFact != null : "Connection factory failed to make op factory";
-		conn=cf.createConnection(addrs);
-		assert conn != null : "Connection factory failed to make a connection";
-		operationTimeout = cf.getOperationTimeout();
-		authDescriptor = cf.getAuthDescriptor();
-		if(authDescriptor != null) {
-			addObserver(this);
-		}
-		setName("Memcached IO over " + conn);
-		setDaemon(cf.isDaemon());
-		this.configurationProvider.subscribe(bucketName, this);
-		start();
-	}
+        configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
+        Bucket bucket = configurationProvider.getBucketConfiguration(bucketName);
+        ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
+        if (isVBucketAware) {
+            cfb.setFailureMode(FailureMode.Retry)
+                    .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
+                    .setHashAlg(HashAlgorithm.KETAMA_HASH)
+                    .setLocatorType(ConnectionFactoryBuilder.Locator.VBUCKET)
+                    .setVBucketConfig(bucket.getConfig());
+        } else {
+            cfb.setFailureMode(FailureMode.Retry)
+                    .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
+                    .setHashAlg(HashAlgorithm.KETAMA_HASH)
+                    .setLocatorType(ConnectionFactoryBuilder.Locator.CONSISTENT);
 
-	/**
-	 * Get a MemcachedClient based on the REST response from a Membase server.
-	 *
-	 * This constructor is merely a convenience for situations where the bucket
-	 * name is the same as the user name.  This is commonly the case.
-	 *
-	 * To connect to the "default" special bucket for a given cluster, use an
-	 * empty string as the password.
-	 *
-	 * If a password has not been assigned to the bucket, it is typically an
-	 * empty string.
-	 *
-	 * @param baseList the URI list of one or more servers from the cluster
-	 * @param bucketName the bucket name in the cluster you wish to use
-	 * @param pwd the password for the bucket
-	 * @throws IOException if connections could not be made
-	 * @throws ConfigurationException if the configuration provided by the
-	 *         server has issues or is not compatible
-	 */
-	public MemcachedClient(List<URI> baseList,
-		String bucketName,
-		String pwd) throws IOException, ConfigurationException {
-		this(baseList, bucketName, bucketName, pwd);
+        }
+        if (!configurationProvider.getAnonymousAuthBucket().equals(bucketName) && usr != null) {
+            AuthDescriptor ad = new AuthDescriptor(new String[]{"PLAIN"},
+                    new PlainCallbackHandler(usr, pwd));
+            cfb.setAuthDescriptor(ad);
+        }
+        ConnectionFactory cf = cfb.build();
+        List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getConfig().getServers());
+        if(cf == null) {
+            throw new NullPointerException("Connection factory required");
+        }
+        if(addrs == null) {
+            throw new NullPointerException("Server list required");
+        }
+        if(addrs.isEmpty()) {
+            throw new IllegalArgumentException(
+                "You must have at least one server to connect to");
+        }
+        if(cf.getOperationTimeout() <= 0) {
+            throw new IllegalArgumentException(
+                "Operation timeout must be positive.");
+        }
+        tcService = new TranscodeService(cf.isDaemon());
+        transcoder=cf.getDefaultTranscoder();
+        opFact=cf.getOperationFactory();
+        assert opFact != null : "Connection factory failed to make op factory";
+        conn=cf.createConnection(addrs);
+        assert conn != null : "Connection factory failed to make a connection";
+        operationTimeout = cf.getOperationTimeout();
+        authDescriptor = cf.getAuthDescriptor();
+        if(authDescriptor != null) {
+            addObserver(this);
+        }
+        setName("Memcached IO over " + conn);
+        setDaemon(cf.isDaemon());
+        configurationProvider.subscribe(bucketName, this);
+        start();
+    }
+
+    /**
+     * Get a MemcachedClient based on the REST response from a Membase server.
+     *
+     * @param baseList
+     * @param bucketName
+     * @param usr
+     * @param pwd
+     * @throws IOException
+     * @throws ConfigurationException
+     */
+    public MemcachedClient(final List<URI> baseList,
+                           final String bucketName,
+                           final String usr, final String pwd) throws IOException, ConfigurationException {
+        for (URI bu : baseList) {
+            if (!bu.isAbsolute()) {
+                throw new IllegalArgumentException("The base URI must be absolute");
+            }
+        }
+
+        this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
+        Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
+	Config config = bucket.getConfig();
+        ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
+        if (config.getConfigType() == ConfigType.MEMBASE) {
+            cfb.setFailureMode(FailureMode.Retry)
+                    .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
+                    .setHashAlg(HashAlgorithm.KETAMA_HASH)
+                    .setLocatorType(ConnectionFactoryBuilder.Locator.VBUCKET)
+                    .setVBucketConfig(bucket.getConfig());
+        } else if (config.getConfigType() == ConfigType.CACHE) {
+            cfb.setFailureMode(FailureMode.Retry)
+                    .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
+                    .setHashAlg(HashAlgorithm.KETAMA_HASH)
+                    .setLocatorType(ConnectionFactoryBuilder.Locator.CONSISTENT);
+
+        } else {
+	    throw new ConfigurationException("Bucket type not supported or JSON response unexpected");
 	}
+        if (!this.configurationProvider.getAnonymousAuthBucket().equals(bucketName) && usr != null) {
+            AuthDescriptor ad = new AuthDescriptor(new String[]{"PLAIN"},
+                    new PlainCallbackHandler(usr, pwd));
+            cfb.setAuthDescriptor(ad);
+        }
+        ConnectionFactory cf = cfb.build();
+        List<InetSocketAddress> addrs = AddrUtil.getAddresses(bucket.getConfig().getServers());
+        if(cf == null) {
+            throw new NullPointerException("Connection factory required");
+        }
+        if(addrs == null) {
+            throw new NullPointerException("Server list required");
+        }
+        if(addrs.isEmpty()) {
+            throw new IllegalArgumentException(
+                "You must have at least one server to connect to");
+        }
+        if(cf.getOperationTimeout() <= 0) {
+            throw new IllegalArgumentException(
+                "Operation timeout must be positive.");
+        }
+        tcService = new TranscodeService(cf.isDaemon());
+        transcoder=cf.getDefaultTranscoder();
+        opFact=cf.getOperationFactory();
+        assert opFact != null : "Connection factory failed to make op factory";
+        conn=cf.createConnection(addrs);
+        assert conn != null : "Connection factory failed to make a connection";
+        operationTimeout = cf.getOperationTimeout();
+        authDescriptor = cf.getAuthDescriptor();
+        if(authDescriptor != null) {
+            addObserver(this);
+        }
+        setName("Memcached IO over " + conn);
+        setDaemon(cf.isDaemon());
+        this.configurationProvider.subscribe(bucketName, this);
+        start();
+    }
 
 	public void reconfigure(Bucket bucket) {
 		reconfiguring = true;
@@ -1064,6 +1109,47 @@ public class MemcachedClient extends SpyThread
 	}
 
 	/**
+	 * Get with a single key and reset its expiration.
+	 *
+	 * @param <T>
+	 * @param key the key to get
+	 * @param exp the new expiration for the key
+	 * @param tc the transcoder to serialize and unserialize value
+	 * @return the result from the cache (null if there is none)
+	 * @throws OperationTimeoutException if the global operation timeout is
+	 *		   exceeded
+	 * @throws IllegalStateException in the rare circumstance where queue
+	 *         is too full to accept any more requests
+	 */
+	public <T> CASValue<T> getAndTouch(String key, int exp, Transcoder<T> tc) {
+		try {
+			return asyncGetAndTouch(key, exp, tc).get(operationTimeout,
+					TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			throw new RuntimeException("Interrupted waiting for value", e);
+		} catch (ExecutionException e) {
+			throw new RuntimeException("Exception waiting for value", e);
+		} catch (TimeoutException e) {
+			throw new OperationTimeoutException("Timeout waiting for value", e);
+		}
+	}
+
+	/**
+	 * Get a single key and reset its expiration using the default transcoder.
+	 *
+	 * @param key the key to get
+	 * @param exp the new expiration for the key
+	 * @return the result from the cache and CAS id (null if there is none)
+	 * @throws OperationTimeoutException if the global operation timeout is
+	 *		   exceeded
+	 * @throws IllegalStateException in the rare circumstance where queue
+	 *         is too full to accept any more requests
+	 */
+	public CASValue<Object> getAndTouch(String key, int exp) {
+		return getAndTouch(key, exp, transcoder);
+	}
+
+	/**
 	 * Gets (with CAS support) with a single key using the default transcoder.
 	 *
 	 * @param key the key to get
@@ -1315,6 +1401,54 @@ public class MemcachedClient extends SpyThread
 	 */
 	public BulkFuture<Map<String, Object>> asyncGetBulk(String... keys) {
 		return asyncGetBulk(Arrays.asList(keys), transcoder);
+	}
+
+	/**
+	 * Get the given key to reset its expiration time.
+	 *
+	 * @param key the key to fetch
+	 * @param exp the new expiration to set for the given key
+	 * @return a future that will hold the return value of the fetch
+	 * @throws IllegalStateException in the rare circumstance where queue
+	 *         is too full to accept any more requests
+	 */
+	public Future<CASValue<Object>> asyncGetAndTouch(final String key, final int exp) {
+		return asyncGetAndTouch(key, exp, transcoder);
+	}
+
+	/**
+	 * Get the given key to reset its expiration time.
+	 *
+	 * @param key the key to fetch
+	 * @param exp the new expiration to set for the given key
+	 * @param tc the transcoder to serialize and unserialize value
+	 * @return a future that will hold the return value of the fetch
+	 * @throws IllegalStateException in the rare circumstance where queue
+	 *         is too full to accept any more requests
+	 */
+	public <T> Future<CASValue<T>> asyncGetAndTouch(final String key, final int exp,
+			final Transcoder<T> tc) {
+		final CountDownLatch latch=new CountDownLatch(1);
+		final OperationFuture<CASValue<T>> rv=new OperationFuture<CASValue<T>>(latch,
+				operationTimeout);
+
+		Operation op=opFact.getAndTouch(key, exp, new GetAndTouchOperation.Callback() {
+			private CASValue<T> val=null;
+			public void receivedStatus(OperationStatus status) {
+				rv.set(val);
+			}
+			public void complete() {
+				latch.countDown();
+			}
+			public void gotData(String key, int flags, long cas, byte[] data) {
+				assert key.equals(key) : "Wrong key returned";
+				assert cas > 0 : "CAS was less than zero:  " + cas;
+				val=new CASValue<T>(cas, tc.decode(
+					new CachedData(flags, data, tc.getMaxSize())));
+			}});
+		rv.setOperation(op);
+		addOp(key, op);
+		return rv;
 	}
 
 	/**

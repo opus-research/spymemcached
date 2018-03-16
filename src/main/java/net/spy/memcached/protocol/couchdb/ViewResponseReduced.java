@@ -1,4 +1,4 @@
-package net.spy.memcached.protocol.couch;
+package net.spy.memcached.protocol.couchdb;
 
 import java.util.Collection;
 import java.util.Iterator;

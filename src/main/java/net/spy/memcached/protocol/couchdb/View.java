@@ -1,4 +1,4 @@
-package net.spy.memcached.protocol.couch;
+package net.spy.memcached.protocol.couchdb;
 
 public class View {
 	private final String viewName;

@@ -8,9 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
-import java.nio.channels.ClosedSelectorException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
@@ -21,13 +19,14 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 
-import net.spy.memcached.compat.SpyThread;
+import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.compat.log.LoggerFactory;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Operation;
@@ -43,7 +42,7 @@ import net.spy.memcached.vbucket.config.Bucket;
 /**
  * Connection to a cluster of memcached servers.
  */
-public final class MemcachedConnection extends SpyThread implements Reconfigurable {
+public final class MemcachedConnection extends SpyObject implements Reconfigurable {
 
 	// The number of empty selects we'll allow before assuming we may have
 	// missed one and should check the current selectors.  This generally
@@ -71,9 +70,6 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 	// reconnectQueue contains the attachments that need to be reconnected
 	// The key is the time at which they are eligible for reconnect
 	private final SortedMap<Long, MemcachedNode> reconnectQueue;
-
-	protected volatile boolean reconfiguring = false;
-	protected volatile boolean running=true;
 
 	private final Collection<ConnectionObserver> connObservers =
 		new ConcurrentLinkedQueue<ConnectionObserver>();
@@ -110,9 +106,6 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 		this.connectionFactory = f;
 		List<MemcachedNode> connections = createConnections(a);
 		locator=f.createLocator(connections);
-		setName("Memcached IO over " + this);
-		setDaemon(f.isDaemon());
-		start();
 		}
 
 	private List<MemcachedNode> createConnections(final Collection<InetSocketAddress> a)
@@ -148,7 +141,6 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 	}
 
 	public void reconfigure(Bucket bucket) {
-		reconfiguring = true;
 		try {
 			// get a new collection of addresses from the received config
 			List<String> servers = bucket.getConfig().getServers();
@@ -202,8 +194,6 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 			nodesToShutdown.addAll(oddNodes);
 		} catch (IOException e) {
 		    getLogger().error("Connection reconfiguration failed", e);
-		} finally {
-			reconfiguring = false;
 		}
 	}
 
@@ -336,9 +326,13 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 			// Transfer the queue into a hashset.  There are very likely more
 			// additions than there are nodes.
 			Collection<MemcachedNode> todo=new HashSet<MemcachedNode>();
-			MemcachedNode qaNode = null;
-			while ((qaNode = addedQueue.poll()) != null) {
-				todo.add(qaNode);
+			try {
+				MemcachedNode qa=null;
+				while((qa=addedQueue.remove()) != null) {
+					todo.add(qa);
+				}
+			} catch(NoSuchElementException e) {
+				// Found everything
 			}
 
 			// Now process the queue.
@@ -835,7 +829,6 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 				getLogger().debug("Shut down channel %s", qa.getChannel());
 			}
 		}
-		running = false;
 		selector.close();
 		getLogger().debug("Shut down selector %s", selector);
 	}
@@ -892,45 +885,5 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
             LoggerFactory.getLogger(MemcachedConnection.class).error(e.getMessage());
         }
     }
-
-	protected void checkState() {
-		if (shutDown) {
-			throw new IllegalStateException("Shutting down");
-		}
-		assert isAlive() : "IO Thread is not running.";
-	}
-
-	/**
-	 * Infinitely loop processing IO.
-	 */
-	@Override
-	public void run() {
-		while(running) {
-			if (!reconfiguring) {
-				try {
-					handleIO();
-				} catch (IOException e) {
-					logRunException(e);
-				} catch (CancelledKeyException e) {
-					logRunException(e);
-				} catch (ClosedSelectorException e) {
-					logRunException(e);
-				} catch (IllegalStateException e) {
-					logRunException(e);
-				}
-			}
-		}
-		getLogger().info("Shut down memcached client");
-	}
-
-	private void logRunException(Exception e) {
-		if(shutDown) {
-			// There are a couple types of errors that occur during the
-			// shutdown sequence that are considered OK.  Log at debug.
-			getLogger().debug("Exception occurred during shutdown", e);
-		} else {
-			getLogger().warn("Problem handling memcached IO", e);
-		}
-	}
 
 }

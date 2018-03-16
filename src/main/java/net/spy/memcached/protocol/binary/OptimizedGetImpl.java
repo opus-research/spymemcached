@@ -33,8 +33,4 @@ final class OptimizedGetImpl extends MultiGetOperationImpl {
 		}
 	}
 
-	public int size() {
-		return pcb.numKeys();
-	}
-
 }

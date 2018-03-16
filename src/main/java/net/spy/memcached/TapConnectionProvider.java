@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.nio.channels.CancelledKeyException;
+import java.nio.channels.ClosedSelectorException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -15,7 +17,7 @@ import javax.naming.ConfigurationException;
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.auth.AuthThreadMonitor;
 import net.spy.memcached.auth.PlainCallbackHandler;
-import net.spy.memcached.compat.SpyObject;
+import net.spy.memcached.compat.SpyThread;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationStatus;
@@ -28,7 +30,8 @@ import net.spy.memcached.vbucket.config.Bucket;
 import net.spy.memcached.vbucket.config.Config;
 import net.spy.memcached.vbucket.config.ConfigType;
 
-public class TapConnectionProvider extends SpyObject implements ConnectionObserver, Reconfigurable {
+public class TapConnectionProvider extends SpyThread implements ConnectionObserver, Reconfigurable {
+	private volatile boolean running=true;
 
 	private volatile boolean shuttingDown=false;
 
@@ -43,6 +46,8 @@ public class TapConnectionProvider extends SpyObject implements ConnectionObserv
 	final AuthDescriptor authDescriptor;
 
 	private final AuthThreadMonitor authMonitor = new AuthThreadMonitor();
+
+	private volatile boolean reconfiguring = false;
 
 	private ConfigurationProvider configurationProvider;
 
@@ -100,6 +105,9 @@ public class TapConnectionProvider extends SpyObject implements ConnectionObserv
 		if(authDescriptor != null) {
 			addObserver(this);
 		}
+		setName("Memcached IO over " + conn);
+		setDaemon(cf.isDaemon());
+		start();
 	}
 
 	/**
@@ -171,13 +179,56 @@ public class TapConnectionProvider extends SpyObject implements ConnectionObserv
 		if(authDescriptor != null) {
 			addObserver(this);
 		}
+		setName("Memcached IO over " + conn);
+		setDaemon(cf.isDaemon());
 		this.configurationProvider.subscribe(bucketName, this);
+		start();
+	}
+
+	private void logRunException(Exception e) {
+		if(shuttingDown) {
+			// There are a couple types of errors that occur during the
+			// shutdown sequence that are considered OK.  Log at debug.
+			getLogger().debug("Exception occurred during shutdown", e);
+		} else {
+			getLogger().warn("Problem handling memcached IO", e);
+		}
+	}
+
+	/**
+	 * Infinitely loop processing IO.
+	 */
+	@Override
+	public void run() {
+		while(running) {
+			if (!reconfiguring) {
+				try {
+					conn.handleIO();
+				} catch(IOException e) {
+					logRunException(e);
+				} catch(CancelledKeyException e) {
+					logRunException(e);
+				} catch(ClosedSelectorException e) {
+					logRunException(e);
+				} catch(IllegalStateException e) {
+					logRunException(e);
+				}
+			}
+		}
+		getLogger().info("Shut down memcached client");
 	}
 
 	Operation addOp(final Operation op) {
-		conn.checkState();
+		checkState();
 		conn.addOperation("", op);
 		return op;
+	}
+
+	private void checkState() {
+		if(shuttingDown) {
+			throw new IllegalStateException("Shutting down");
+		}
+		assert isAlive() : "IO Thread is not running.";
 	}
 
 	/**
@@ -237,7 +288,9 @@ public class TapConnectionProvider extends SpyObject implements ConnectionObserv
 	}
 
     public void reconfigure(Bucket bucket) {
+        this.reconfiguring = true;
         this.conn.reconfigure(bucket);
+        this.reconfiguring = false;
     }
 
 	/**
@@ -261,21 +314,22 @@ public class TapConnectionProvider extends SpyObject implements ConnectionObserv
 			return false;
 		}
 		shuttingDown=true;
-		String baseName=conn.getName();
-		conn.setName(baseName + " - SHUTTING DOWN");
+		String baseName=getName();
+		setName(baseName + " - SHUTTING DOWN");
 		boolean rv=false;
 		try {
 			// Conditionally wait
 			if(timeout > 0) {
-				conn.setName(baseName + " - SHUTTING DOWN (waiting)");
+				setName(baseName + " - SHUTTING DOWN (waiting)");
 				rv=waitForQueues(timeout, unit);
 			}
 		} finally {
 			// But always begin the shutdown sequence
 			try {
-				conn.setName(baseName + " - SHUTTING DOWN (telling client)");
+				setName(baseName + " - SHUTTING DOWN (telling client)");
+				running=false;
 				conn.shutdown();
-				conn.setName(baseName + " - SHUTTING DOWN (informed client)");
+				setName(baseName + " - SHUTTING DOWN (informed client)");
 				tcService.shutdown();
 				if (this.configurationProvider != null) {
 					this.configurationProvider.shutdown();

@@ -17,7 +17,6 @@ import net.spy.memcached.protocol.TCPMemcachedNodeImpl;
  */
 public class BinaryMemcachedNodeImpl extends TCPMemcachedNodeImpl {
 
-	private final int MAX_GET_OPTIMIZATION_COUNT = 4096;
 	private final int MAX_SET_OPTIMIZATION_COUNT = 65535;
 	private final int MAX_SET_OPTIMIZATION_BYTES = 2 * 1024 * 1024;
 
@@ -48,8 +47,7 @@ public class BinaryMemcachedNodeImpl extends TCPMemcachedNodeImpl {
 					(GetOperation)optimizedOp);
 			optimizedOp=og;
 
-			while(writeQ.peek() instanceof GetOperation
-					&& og.size() < MAX_GET_OPTIMIZATION_COUNT) {
+			while(writeQ.peek() instanceof GetOperation) {
 				GetOperation o=(GetOperation) writeQ.remove();
 				if(!o.isCancelled()) {
 					og.addOperation(o);

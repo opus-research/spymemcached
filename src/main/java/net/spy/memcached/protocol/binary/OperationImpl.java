@@ -351,6 +351,11 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 
   @Override
   public String toString() {
-    return "Cmd: " + cmd + " Opaque: " + opaque;
+    StringBuilder sb = new StringBuilder();
+    sb.append("Cmd: ");
+    sb.append(cmd);
+    sb.append(" Opaque: ");
+    sb.append(opaque);
+    return sb.toString();
   }
 }

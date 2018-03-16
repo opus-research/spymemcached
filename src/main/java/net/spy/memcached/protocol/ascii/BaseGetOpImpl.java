@@ -218,13 +218,19 @@ abstract class BaseGetOpImpl extends OperationImpl {
 
   @Override
   public String toString() {
-    String s = "Cmd: " + cmd + " Keys: ";
+    StringBuilder sb = new StringBuilder();
+    sb.append("Cmd: ");
+    sb.append(cmd);
+    sb.append(" Keys: ");
     for (String key : keys) {
-      s += key + " ";
+      sb.append(key);
+      sb.append(" ");
     }
     if (hasExp) {
-      s += "Exp: " + exp + " ";
+      sb.append("Exp: ");
+      sb.append(exp);
+      sb.append(" ");
     }
-    return s;
+    return sb.toString();
   }
 }

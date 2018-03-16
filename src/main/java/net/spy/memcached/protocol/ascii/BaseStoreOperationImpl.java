@@ -100,8 +100,17 @@ abstract class BaseStoreOperationImpl extends OperationImpl {
 
   @Override
   public String toString() {
-    String s = "Cmd: " + type + " Key: " + key + " Flags: " + flags + " Exp: "
-      + exp + " Data Length: " + data.length;
-    return s;
+    StringBuilder sb = new StringBuilder();
+    sb.append("Cmd: ");
+    sb.append(type);
+    sb.append(" Key: ");
+    sb.append(key);
+    sb.append(" Flags: ");
+    sb.append(flags);
+    sb.append(" Exp: ");
+    sb.append(exp);
+    sb.append(" Data: ");
+    sb.append(new String(data));
+    return sb.toString();
   }
 }

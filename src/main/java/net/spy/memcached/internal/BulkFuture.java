@@ -23,6 +23,7 @@
 
 package net.spy.memcached.internal;
 
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -72,4 +73,9 @@ public interface BulkFuture<V> extends Future<V> {
    * @return the operation status.
    */
   OperationStatus getStatus();
+
+  Future<V> addListener(BulkGetCompletionListener listener);
+
+  Future<V> removeListener(BulkGetCompletionListener listener);
+
 }

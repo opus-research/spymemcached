@@ -29,6 +29,7 @@ import java.nio.channels.SocketChannel;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
 
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.ops.Operation;
@@ -78,6 +79,8 @@ public interface ConnectionFactory {
    * wait to add a new item to a queue.
    */
   long getOpQueueMaxBlockTime();
+
+  ExecutorService getListenerExecutorService();
 
   /**
    * Create a NodeLocator instance for the given list of nodes.

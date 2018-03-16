@@ -36,6 +36,10 @@ public class Bucket {
         return streamingURI;
     }
 
+    public List<Node> getNodes() {
+        return nodes;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

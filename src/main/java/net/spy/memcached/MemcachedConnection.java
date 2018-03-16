@@ -399,7 +399,21 @@ public class MemcachedConnection extends SpyThread {
     Set<SelectionKey> selectedKeys = selector.selectedKeys();
 
     if (selectedKeys.isEmpty() && !shutDown) {
-      handleEmptySelects();
+      getLogger().debug("No selectors ready, interrupted: "
+        + Thread.interrupted());
+      if (++emptySelects > DOUBLE_CHECK_EMPTY) {
+        for (SelectionKey sk : selector.keys()) {
+          getLogger().debug("%s has %s, interested in %s", sk, sk.readyOps(),
+            sk.interestOps());
+          if (sk.readyOps() != 0) {
+            getLogger().debug("%s has a ready op, handling IO", sk);
+            handleIO(sk);
+          } else {
+            lostConnection((MemcachedNode) sk.attachment());
+          }
+        }
+        assert emptySelects < EXCESSIVE_EMPTY : "Too many empty selects";
+      }
     } else {
       getLogger().debug("Selected %d, selected %d keys", selected,
         selectedKeys.size());
@@ -408,20 +422,10 @@ public class MemcachedConnection extends SpyThread {
       for (SelectionKey sk : selectedKeys) {
         handleIO(sk);
       }
+
       selectedKeys.clear();
     }
 
-    handleOperationalTasks();
-  }
-
-  /**
-   * Helper method for {@link #handleIO()} to encapsulate everything that
-   * needs to be checked on a regular basis that has nothing to do directly
-   * with reading and writing data.
-   *
-   * @throws IOException if an error happens during shutdown queue handling.
-   */
-  private void handleOperationalTasks() throws IOException {
     checkPotentiallyTimedOutConnection();
 
     if (!shutDown && !reconnectQueue.isEmpty()) {
@@ -431,28 +435,6 @@ public class MemcachedConnection extends SpyThread {
     retryOps.clear();
 
     handleShutdownQueue();
-  }
-
-  /**
-   * Helper method for {@link #handleIO()} to handle empty select calls.
-   */
-  private void handleEmptySelects() {
-    getLogger().debug("No selectors ready, interrupted: "
-      + Thread.interrupted());
-
-    if (++emptySelects > DOUBLE_CHECK_EMPTY) {
-      for (SelectionKey sk : selector.keys()) {
-        getLogger().debug("%s has %s, interested in %s", sk, sk.readyOps(),
-          sk.interestOps());
-        if (sk.readyOps() != 0) {
-          getLogger().debug("%s has a ready op, handling IO", sk);
-          handleIO(sk);
-        } else {
-          lostConnection((MemcachedNode) sk.attachment());
-        }
-      }
-      assert emptySelects < EXCESSIVE_EMPTY : "Too many empty selects";
-    }
   }
 
   /**
@@ -632,7 +614,12 @@ public class MemcachedConnection extends SpyThread {
           assert !channel.isConnected() : "connected";
         }
       } else {
-        handdleReadsAndWrites(sk, node);
+        if (sk.isValid() && sk.isReadable()) {
+          handleReads(node);
+        }
+        if (sk.isValid() && sk.isWritable()) {
+          handleWrites(node);
+        }
       }
     } catch (ClosedChannelException e) {
       if (!shutDown) {
@@ -655,26 +642,6 @@ public class MemcachedConnection extends SpyThread {
       lostConnection(node);
     }
     node.fixupOps();
-  }
-
-  /**
-   * A helper method for {@link #handleIO(java.nio.channels.SelectionKey)} to
-   * handle reads and writes if appropriate.
-   *
-   * @param sk the selection key to use.
-   * @param node th enode to read write from.
-   * @throws IOException if an error occurs during read/write.
-   */
-  private void handdleReadsAndWrites(final SelectionKey sk,
-    final MemcachedNode node) throws IOException {
-    if (sk.isValid()) {
-      if (sk.isReadable()) {
-        handleReads(node);
-      }
-      if (sk.isWritable()) {
-        handleWrites(node);
-      }
-    }
   }
 
   /**
@@ -789,7 +756,32 @@ public class MemcachedConnection extends SpyThread {
           (int)(timeOnWire / 1000));
         metrics.markMeter(OVERALL_RESPONSE_METRIC);
         synchronized(currentOp) {
-          readBufferAndLogMetrics(currentOp, rbuf, node);
+          currentOp.readFromBuffer(rbuf);
+
+          if (currentOp.getState() == OperationState.COMPLETE) {
+            getLogger().debug("Completed read op: %s and giving the next %d "
+              + "bytes", currentOp, rbuf.remaining());
+            Operation op = node.removeCurrentReadOp();
+            assert op == currentOp : "Expected to pop " + currentOp + " got "
+              + op;
+
+            if (op.hasErrored()) {
+              metrics.markMeter(OVERALL_RESPONSE_FAIL_METRIC);
+            } else {
+              metrics.markMeter(OVERALL_RESPONSE_SUCC_METRIC);
+            }
+          } else if (currentOp.getState() == OperationState.RETRY) {
+            getLogger().debug("Reschedule read op due to NOT_MY_VBUCKET error: "
+              + "%s ", currentOp);
+            ((VBucketAware) currentOp).addNotMyVbucketNode(
+              currentOp.getHandlingNode());
+            Operation op = node.removeCurrentReadOp();
+            assert op == currentOp : "Expected to pop " + currentOp + " got "
+              + op;
+
+            retryOps.add(currentOp);
+            metrics.markMeter(OVERALL_RESPONSE_RETRY_METRIC);
+          }
         }
 
         currentOp = node.getCurrentReadOp();
@@ -797,43 +789,6 @@ public class MemcachedConnection extends SpyThread {
       rbuf.clear();
       read = channel.read(rbuf);
       node.completedRead();
-    }
-  }
-
-  /**
-   * Read from the buffer and add metrics information.
-   *
-   * @param currentOp the current operation to read.
-   * @param rbuf the read buffer to read from.
-   * @param node the node to read from.
-   * @throws IOException if reading was not successful.
-   */
-  private void readBufferAndLogMetrics(final Operation currentOp,
-    final ByteBuffer rbuf, final MemcachedNode node) throws IOException {
-    currentOp.readFromBuffer(rbuf);
-    if (currentOp.getState() == OperationState.COMPLETE) {
-      getLogger().debug("Completed read op: %s and giving the next %d "
-        + "bytes", currentOp, rbuf.remaining());
-      Operation op = node.removeCurrentReadOp();
-      assert op == currentOp : "Expected to pop " + currentOp + " got "
-        + op;
-
-      if (op.hasErrored()) {
-        metrics.markMeter(OVERALL_RESPONSE_FAIL_METRIC);
-      } else {
-        metrics.markMeter(OVERALL_RESPONSE_SUCC_METRIC);
-      }
-    } else if (currentOp.getState() == OperationState.RETRY) {
-      getLogger().debug("Reschedule read op due to NOT_MY_VBUCKET error: "
-        + "%s ", currentOp);
-      ((VBucketAware) currentOp).addNotMyVbucketNode(
-        currentOp.getHandlingNode());
-      Operation op = node.removeCurrentReadOp();
-      assert op == currentOp : "Expected to pop " + currentOp + " got "
-        + op;
-
-      retryOps.add(currentOp);
-      metrics.markMeter(OVERALL_RESPONSE_RETRY_METRIC);
     }
   }
 

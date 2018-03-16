@@ -628,7 +628,7 @@ public class MemcachedConnection extends SpyThread {
   /**
    * Get the node locator used by this connection.
    */
-  public NodeLocator getLocator() {
+  NodeLocator getLocator() {
     return locator;
   }
 
@@ -808,7 +808,7 @@ public class MemcachedConnection extends SpyThread {
     }
   }
 
-  public void checkState() {
+  protected void checkState() {
     if (shutDown) {
       throw new IllegalStateException("Shutting down");
     }

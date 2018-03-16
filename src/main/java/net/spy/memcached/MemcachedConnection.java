@@ -824,7 +824,6 @@ public class MemcachedConnection extends SpyThread {
         metrics.markMeter(OVERALL_RESPONSE_SUCC_METRIC);
       }
     } else if (currentOp.getState() == OperationState.RETRY) {
-      handleRetryInformation(currentOp.getErrorMsg());
       getLogger().debug("Reschedule read op due to NOT_MY_VBUCKET error: "
         + "%s ", currentOp);
       ((VBucketAware) currentOp).addNotMyVbucketNode(
@@ -884,19 +883,6 @@ public class MemcachedConnection extends SpyThread {
       }
     }
     return sb.toString();
-  }
-
-  /**
-   * Optionally handle retry (NOT_MY_VBUKET) responses.
-   *
-   * This method can be overridden in subclasses to handle the content
-   * of the retry message appropriately.
-   *
-   * @param retryMessage the body of the retry message.
-   */
-  protected void handleRetryInformation(final byte[] retryMessage) {
-    getLogger().debug("Got RETRY message: " + new String(retryMessage)
-      + ", but not handled.");
   }
 
   /**
@@ -1377,4 +1363,12 @@ public class MemcachedConnection extends SpyThread {
     }
   }
 
+  /**
+   * Returns whether the connection is shut down or not.
+   *
+   * @return true if the connection is shut down, false otherwise.
+   */
+  public boolean isShutDown() {
+    return shutDown;
+  }
 }

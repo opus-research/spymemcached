@@ -186,26 +186,24 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
       getWbuf().clear();
       Operation o = getNextWritableOp();
       while (o != null && toWrite < getWbuf().capacity()) {
-        synchronized(o) {
-          assert o.getState() == OperationState.WRITING;
+        assert o.getState() == OperationState.WRITING;
 
-          ByteBuffer obuf = o.getBuffer();
-          assert obuf != null : "Didn't get a write buffer from " + o;
-          int bytesToCopy = Math.min(getWbuf().remaining(), obuf.remaining());
-          byte[] b = new byte[bytesToCopy];
-          obuf.get(b);
-          getWbuf().put(b);
-          getLogger().debug("After copying stuff from %s: %s", o, getWbuf());
-          if (!o.getBuffer().hasRemaining()) {
-            o.writeComplete();
-            transitionWriteItem();
+        ByteBuffer obuf = o.getBuffer();
+        assert obuf != null : "Didn't get a write buffer from " + o;
+        int bytesToCopy = Math.min(getWbuf().remaining(), obuf.remaining());
+        byte[] b = new byte[bytesToCopy];
+        obuf.get(b);
+        getWbuf().put(b);
+        getLogger().debug("After copying stuff from %s: %s", o, getWbuf());
+        if (!o.getBuffer().hasRemaining()) {
+          o.writeComplete();
+          transitionWriteItem();
 
-            preparePending();
-            if (shouldOptimize) {
-              optimize();
-            }
-            o = getNextWritableOp();
+          preparePending();
+          if (shouldOptimize) {
+            optimize();
           }
+          o = getNextWritableOp();
         }
         toWrite += bytesToCopy;
       }
@@ -222,24 +220,22 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   private Operation getNextWritableOp() {
     Operation o = getCurrentWriteOp();
     while (o != null && o.getState() == OperationState.WRITE_QUEUED) {
-      synchronized(o) {
-        if (o.isCancelled()) {
-          getLogger().debug("Not writing cancelled op.");
-          Operation cancelledOp = removeCurrentWriteOp();
-          assert o == cancelledOp;
-        } else if (o.isTimedOut(defaultOpTimeout)) {
-          getLogger().debug("Not writing timed out op.");
-          Operation timedOutOp = removeCurrentWriteOp();
-          assert o == timedOutOp;
-        } else {
-          o.writing();
-          if (!(o instanceof TapAckOperationImpl)) {
-            readQ.add(o);
-          }
-          return o;
+      if (o.isCancelled()) {
+        getLogger().debug("Not writing cancelled op.");
+        Operation cancelledOp = removeCurrentWriteOp();
+        assert o == cancelledOp;
+      } else if (o.isTimedOut(defaultOpTimeout)) {
+        getLogger().debug("Not writing timed out op.");
+        Operation timedOutOp = removeCurrentWriteOp();
+        assert o == timedOutOp;
+      } else {
+        o.writing();
+        if (!(o instanceof TapAckOperationImpl)) {
+          readQ.add(o);
         }
-        o = getCurrentWriteOp();
+        return o;
       }
+      o = getCurrentWriteOp();
     }
     return o;
   }

@@ -191,7 +191,7 @@ public class CouchbaseClientTest {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
     HttpFuture<ViewResponse> future =
-        client.asyncQuery(view, query);
+        client.asyncQueryAndExcludeDocs(view, query);
     assert future.getStatus().isSuccess() : future.getStatus();
     ViewResponse response = future.get();
 
@@ -210,7 +210,7 @@ public class CouchbaseClientTest {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
     HttpFuture<ViewResponse> future =
-        client.asyncQuery(view, query);
+        client.asyncQueryAndReduce(view, query);
     ViewResponse reduce = future.get();
 
     Iterator<ViewRow> itr = reduce.iterator();
@@ -247,7 +247,7 @@ public class CouchbaseClientTest {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
     HttpFuture<ViewResponse> future =
-        client.asyncQuery(view, query.setGroup(true));
+        client.asyncQueryAndReduce(view, query.setGroup(true));
     ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
@@ -257,7 +257,7 @@ public class CouchbaseClientTest {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
     HttpFuture<ViewResponse> future =
-        client.asyncQuery(view, query.setGroup(true, 1));
+        client.asyncQueryAndReduce(view, query.setGroup(true, 1));
     ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
@@ -367,7 +367,7 @@ public class CouchbaseClientTest {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_WO_REDUCE, VIEW_NAME_WO_REDUCE);
     try {
-      client.asyncQuery(view, query);
+      client.asyncQueryAndReduce(view, query);
     } catch (RuntimeException e) {
       return; // Pass, no reduce exists.
     }

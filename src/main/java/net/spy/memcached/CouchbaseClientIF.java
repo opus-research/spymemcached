@@ -46,7 +46,17 @@ public interface CouchbaseClientIF extends MembaseClientIF {
   List<View> getViews(final String designDocumentName);
 
   // Query
+// Query
   HttpFuture<ViewResponse> asyncQuery(View view, Query query);
 
+  HttpFuture<ViewResponse> asyncQueryAndExcludeDocs(View view, Query query);
+
+  HttpFuture<ViewResponse> asyncQueryAndReduce(View view, Query query);
+
   ViewResponse query(View view, Query query);
+
+  ViewResponse queryAndExcludeDocs(View view, Query query);
+
+  ViewResponse queryAndReduce(View view, Query query);
+
 }

@@ -40,9 +40,6 @@ public class ViewResponseWithDocs extends ViewResponse {
       final Collection<RowError> errors) {
     super(rows, errors);
     map = null;
-    for (ViewRow row : rows) {
-      map.put(row.getId(), row.getDocument());
-    }
   }
 
   @Override

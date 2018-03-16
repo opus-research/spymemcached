@@ -32,26 +32,20 @@ public class ViewRowNoDocs implements ViewRow {
   private final String value;
 
   public ViewRowNoDocs(String id, String key, String value) {
-    // The id can be the string "null" so convert it to null
-    if (id != null && id.equals("null")) {
-      this.id = null;
+    this.id = parseField(id);
+    this.key = parseField(key);
+    this.value = parseField(value);
+  }
+
+  private String parseField(String field) {
+    if (field != null && field.equals("null")) {
+      return null;
     } else {
-      this.id = id;
-    }
-    // The key can be the string "null" so convert it to null
-    if (key != null && key.equals("null")) {
-      this.key = null;
-    } else {
-      this.key = key;
-    }
-    // The value can be the string "null" so convert it to null
-    if (value != null && value.equals("null")) {
-      this.value = null;
-    } else {
-      this.value = value;
+      return field;
     }
   }
 
+  @Override
   public String getId() {
     return id;
   }

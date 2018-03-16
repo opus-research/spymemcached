@@ -40,9 +40,7 @@ public class VBucketNodeLocator implements NodeLocator {
         int serverNumber = config.getMaster(vbucket);
         String server = config.getServer(serverNumber);
         // choose appropriate MemecachedNode according to config data
-        MemcachedNode pNode = nodesMap.get(server);
-        assert (pNode != null);
-        return pNode;
+        return nodesMap.get(server);
     }
 
     /**
@@ -80,7 +78,7 @@ public class VBucketNodeLocator implements NodeLocator {
     }
 
     private void setNodes(Collection<MemcachedNode> nodes) {
-        Map<String, MemcachedNode> vbnodesMap = new HashMap<String, MemcachedNode>();
+        HashMap<String, MemcachedNode> vbnodesMap = new HashMap<String, MemcachedNode>();
         for (MemcachedNode node : nodes) {
             InetSocketAddress addr = (InetSocketAddress) node.getSocketAddress();
             String address = addr.getAddress().getHostName() + ":" + addr.getPort();

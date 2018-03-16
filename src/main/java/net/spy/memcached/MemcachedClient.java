@@ -433,12 +433,12 @@ public class MemcachedClient extends SpyThread
 						   int exp, T value, Transcoder<T> tc) {
 		CachedData co=tc.encode(value);
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(key, latch,
+		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
 				operationTimeout);
 		Operation op=opFact.store(storeType, key, co.getFlags(),
 				exp, co.getData(), new OperationCallback() {
 					public void receivedStatus(OperationStatus val) {
-						rv.set(val.isSuccess(), val);
+						rv.set(val.isSuccess());
 					}
 					public void complete() {
 						latch.countDown();
@@ -458,12 +458,12 @@ public class MemcachedClient extends SpyThread
 			T value, Transcoder<T> tc) {
 		CachedData co=tc.encode(value);
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(key, latch,
+		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
 				operationTimeout);
 		Operation op=opFact.cat(catType, cas, key, co.getData(),
 				new OperationCallback() {
 			public void receivedStatus(OperationStatus val) {
-				rv.set(val.isSuccess(), val);
+				rv.set(val.isSuccess());
 			}
 			public void complete() {
 				latch.countDown();
@@ -502,12 +502,12 @@ public class MemcachedClient extends SpyThread
 	public <T> Future<Boolean> touch(final String key, final int exp,
 			final Transcoder<T> tc) {
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(key, latch,
+		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
 				operationTimeout);
 
 		Operation op=opFact.touch(key, exp, new OperationCallback() {
 			public void receivedStatus(OperationStatus status) {
-				rv.set(status.isSuccess(), status);
+				rv.set(status.isSuccess());
 		}
 			public void complete() {
 				latch.countDown();
@@ -627,12 +627,12 @@ public class MemcachedClient extends SpyThread
 		CachedData co=tc.encode(value);
 		final CountDownLatch latch=new CountDownLatch(1);
 		final OperationFuture<CASResponse> rv=new OperationFuture<CASResponse>(
-				key, latch, operationTimeout);
+				latch, operationTimeout);
 		Operation op=opFact.cas(StoreType.set, key, casId, co.getFlags(), exp,
 				co.getData(), new OperationCallback() {
 					public void receivedStatus(OperationStatus val) {
 						if(val instanceof CASOperationStatus) {
-							rv.set(((CASOperationStatus)val).getCASResponse(), val);
+							rv.set(((CASOperationStatus)val).getCASResponse());
 						} else if(val instanceof CancelledOperationStatus) {
 							// Cancelled, ignore and let it float up
 						} else {
@@ -954,13 +954,13 @@ public class MemcachedClient extends SpyThread
 	public <T> Future<T> asyncGet(final String key, final Transcoder<T> tc) {
 
 		final CountDownLatch latch=new CountDownLatch(1);
-		final GetFuture<T> rv=new GetFuture<T>(latch, operationTimeout, key);
+		final GetFuture<T> rv=new GetFuture<T>(latch, operationTimeout);
 
 		Operation op=opFact.get(key,
 				new GetOperation.Callback() {
 			private Future<T> val=null;
 			public void receivedStatus(OperationStatus status) {
-				rv.set(val, status);
+				rv.set(val);
 			}
 			public void gotData(String k, int flags, byte[] data) {
 				assert key.equals(k) : "Wrong key returned";
@@ -1003,13 +1003,13 @@ public class MemcachedClient extends SpyThread
 
 		final CountDownLatch latch=new CountDownLatch(1);
 		final OperationFuture<CASValue<T>> rv=
-			new OperationFuture<CASValue<T>>(key, latch, operationTimeout);
+			new OperationFuture<CASValue<T>>(latch, operationTimeout);
 
 		Operation op=opFact.gets(key,
 				new GetsOperation.Callback() {
 			private CASValue<T> val=null;
 			public void receivedStatus(OperationStatus status) {
-				rv.set(val, status);
+				rv.set(val);
 			}
 			public void gotData(String k, int flags, long cas, byte[] data) {
 				assert key.equals(k) : "Wrong key returned";
@@ -1172,13 +1172,13 @@ public class MemcachedClient extends SpyThread
 			final Transcoder<T> tc) {
 		final CountDownLatch latch=new CountDownLatch(1);
 		final OperationFuture<CASValue<T>> rv=
-			new OperationFuture<CASValue<T>>(key, latch, operationTimeout);
+			new OperationFuture<CASValue<T>>(latch, operationTimeout);
 
 		Operation op=opFact.getl(key, exp,
 				new GetlOperation.Callback() {
 			private CASValue<T> val=null;
 			public void receivedStatus(OperationStatus status) {
-				rv.set(val, status);
+				rv.set(val);
 			}
 			public void gotData(String k, int flags, long cas, byte[] data) {
 				assert key.equals(k) : "Wrong key returned";
@@ -1384,13 +1384,13 @@ public class MemcachedClient extends SpyThread
 	public <T> Future<CASValue<T>> asyncGetAndTouch(final String key, final int exp,
 			final Transcoder<T> tc) {
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<CASValue<T>> rv=new OperationFuture<CASValue<T>>(key, latch,
+		final OperationFuture<CASValue<T>> rv=new OperationFuture<CASValue<T>>(latch,
 				operationTimeout);
 
 		Operation op=opFact.getAndTouch(key, exp, new GetAndTouchOperation.Callback() {
 			private CASValue<T> val=null;
 			public void receivedStatus(OperationStatus status) {
-				rv.set(val, status);
+				rv.set(val);
 			}
 			public void complete() {
 				latch.countDown();
@@ -1742,12 +1742,12 @@ public class MemcachedClient extends SpyThread
 	private Future<Long> asyncMutate(Mutator m, String key, int by, long def,
 			int exp) {
 		final CountDownLatch latch = new CountDownLatch(1);
-		final OperationFuture<Long> rv = new OperationFuture<Long>(key,
+		final OperationFuture<Long> rv = new OperationFuture<Long>(
 				latch, operationTimeout);
 		Operation op = addOp(key, opFact.mutate(m, key, by, def, exp,
 				new OperationCallback() {
 			public void receivedStatus(OperationStatus s) {
-				rv.set(new Long(s.isSuccess() ? s.getMessage() : "-1"), s);
+				rv.set(new Long(s.isSuccess() ? s.getMessage() : "-1"));
 			}
 			public void complete() {
 				latch.countDown();
@@ -1851,12 +1851,12 @@ public class MemcachedClient extends SpyThread
 	 */
 	public Future<Boolean> delete(String key) {
 		final CountDownLatch latch=new CountDownLatch(1);
-		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(key, latch,
+		final OperationFuture<Boolean> rv=new OperationFuture<Boolean>(latch,
 			operationTimeout);
 		DeleteOperation op=opFact.delete(key,
 				new OperationCallback() {
 					public void receivedStatus(OperationStatus s) {
-						rv.set(s.isSuccess(), s);
+						rv.set(s.isSuccess());
 					}
 					public void complete() {
 						latch.countDown();
@@ -1891,7 +1891,7 @@ public class MemcachedClient extends SpyThread
 				ops.add(op);
 				return op;
 			}});
-		return new OperationFuture<Boolean>(null, blatch, flushResult,
+		return new OperationFuture<Boolean>(blatch, flushResult,
 				operationTimeout) {
 			@Override
 			public boolean cancel(boolean ign) {

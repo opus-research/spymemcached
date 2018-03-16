@@ -293,7 +293,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
             }
           });
     rv.setOperation(op);
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     return rv;
   }
 
@@ -319,7 +319,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
           }
         });
     rv.setOperation(op);
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     return rv;
   }
 
@@ -365,7 +365,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       }
     });
     rv.setOperation(op);
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     return rv;
   }
 
@@ -503,7 +503,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
             }
           });
     rv.setOperation(op);
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     return rv;
   }
 
@@ -832,7 +832,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       }
     });
     rv.setOperation(op);
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     return rv;
   }
 
@@ -885,7 +885,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       }
     });
     rv.setOperation(op);
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     return rv;
   }
 
@@ -1220,7 +1220,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
           }
         });
     rv.setOperation(op);
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     return rv;
   }
 
@@ -1386,7 +1386,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   private long mutate(Mutator m, String key, long by, long def, int exp) {
     final AtomicLong rv = new AtomicLong();
     final CountDownLatch latch = new CountDownLatch(1);
-    mconn.addOperation(key, opFact.mutate(m, key, by, def, exp,
+    mconn.enqueueOperation(key, opFact.mutate(m, key, by, def, exp,
         new OperationCallback() {
         public void receivedStatus(OperationStatus s) {
           // XXX: Potential abstraction leak.
@@ -1613,7 +1613,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
             latch.countDown();
           }
         });
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     rv.setOperation(op);
     return rv;
   }
@@ -1780,7 +1780,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       }
     });
     rv.setOperation(op);
-    mconn.addOperation(key, op);
+    mconn.enqueueOperation(key, op);
     return rv;
   }
 

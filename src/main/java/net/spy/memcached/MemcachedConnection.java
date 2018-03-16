@@ -629,8 +629,14 @@ public class MemcachedConnection extends SpyThread {
   /**
    * Get the node locator used by this connection.
    */
-  public NodeLocator getLocator() {
+  NodeLocator getLocator() {
     return locator;
+  }
+
+  public void enqueueOperation(final String key, final Operation o) {
+    StringUtils.validateKey(key);
+    checkState();
+    addOperation(key, o);
   }
 
   /**
@@ -639,9 +645,7 @@ public class MemcachedConnection extends SpyThread {
    * @param key the key the operation is operating upon
    * @param o the operation
    */
-  public void addOperation(final String key, final Operation o) {
-    StringUtils.validateKey(key);
-    checkState();
+  protected void addOperation(final String key, final Operation o) {
 
     MemcachedNode placeIn = null;
     MemcachedNode primary = locator.getPrimary(key);

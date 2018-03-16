@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,51 +20,37 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached;
+package net.spy.memcached.protocol.couch;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
-
-import net.spy.memcached.vbucket.config.Config;
+import java.util.Map;
 
 /**
- * Interface for locating a node by hash value.
+ * Holds the response of a queried view.
  */
-public interface NodeLocator {
+public abstract class ViewResponse implements Iterable<ViewRow> {
+  protected final Collection<ViewRow> rows;
+  protected final Collection<RowError> errors;
 
-  /**
-   * Get the primary location for the given key.
-   *
-   * @param k the object key
-   * @return the QueueAttachment containing the primary storage for a key
-   */
-  MemcachedNode getPrimary(String k);
+  public ViewResponse(final Collection<ViewRow> r,
+      final Collection<RowError> e) {
+    rows = r;
+    errors = e;
+  }
 
-  /**
-   * Get an iterator over the sequence of nodes that make up the backup
-   * locations for a given key.
-   *
-   * @param k the object key
-   * @return the sequence of backup nodes.
-   */
-  Iterator<MemcachedNode> getSequence(String k);
+  public Collection<RowError> getErrors() {
+    return errors;
+  }
 
-  /**
-   * Get all memcached nodes. This is useful for broadcasting messages.
-   */
-  Collection<MemcachedNode> getAll();
+  @Override
+  public Iterator<ViewRow> iterator() {
+    return rows.iterator();
+  }
 
-  /**
-   * Create a read-only copy of this NodeLocator.
-   */
-  NodeLocator getReadonlyCopy();
+  public int size() {
+    return rows.size();
+  }
 
-  /**
-   * Update locator status.
-   *
-   * @param nodes New locator nodes.
-   * @param conf Locator configuration.
-   */
-  void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+  public abstract Map<String, Object> getMap();
 }

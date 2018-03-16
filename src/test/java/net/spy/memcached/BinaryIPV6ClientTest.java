@@ -8,15 +8,12 @@ public class BinaryIPV6ClientTest extends BinaryClientTest {
 	@Override
 	protected void initClient(ConnectionFactory cf) throws Exception {
 		client=new MemcachedClient(cf,
-			AddrUtil.getAddresses(TestConfig.IPV6_ADDR + ":11211"));
+			AddrUtil.getAddresses("::1:11211"));
 	}
 
 	@Override
 	protected String getExpectedVersionSource() {
-		if (TestConfig.defaultToIPV4()) {
-			return "/" + TestConfig.IPV4_ADDR + ":11211";
-		}
-		return "/" + TestConfig.IPV6_ADDR + ":11211";
+		return "/0:0:0:0:0:0:0:1:11211";
 	}
 
 }

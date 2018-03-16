@@ -49,10 +49,6 @@ class DeleteOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString());
-    sb.append(" Cas: ");
-    sb.append(cas);
-    return sb.toString();
+    return super.toString() + " Cas: " + cas;
   }
 }

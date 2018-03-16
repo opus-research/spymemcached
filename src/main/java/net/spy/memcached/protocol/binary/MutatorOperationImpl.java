@@ -88,14 +88,7 @@ class MutatorOperationImpl extends SingleKeyOperationImpl implements
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString());
-    sb.append(" Amount: ");
-    sb.append(by);
-    sb.append(" Default: ");
-    sb.append(def);
-    sb.append(" Exp: ");
-    sb.append(exp);
-    return sb.toString();
+    return super.toString() + " Amount: " + by + " Default: " + def + " Exp: "
+      + exp;
   }
 }

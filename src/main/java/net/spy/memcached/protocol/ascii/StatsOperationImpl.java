@@ -74,9 +74,6 @@ final class StatsOperationImpl extends OperationImpl implements StatsOperation {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Cmd: ");
-    sb.append(msg);
-    return sb.toString();
+    return "Cmd: " + msg;
   }
 }

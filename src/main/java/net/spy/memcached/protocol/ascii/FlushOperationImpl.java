@@ -67,10 +67,6 @@ final class FlushOperationImpl extends OperationImpl implements FlushOperation {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Cmd: flush_all");
-    sb.append(" Delay: ");
-    sb.append(delay);
-    return sb.toString();
+    return "Cmd: flush_all Delay: " + delay;
   }
 }

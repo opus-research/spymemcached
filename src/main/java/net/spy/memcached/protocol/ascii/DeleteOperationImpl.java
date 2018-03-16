@@ -74,10 +74,6 @@ final class DeleteOperationImpl extends OperationImpl implements
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Cmd: delete");
-    sb.append(" Key: ");
-    sb.append(key);
-    return sb.toString();
+    return "Cmd: delete Key: " + key;
   }
 }

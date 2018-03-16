@@ -32,6 +32,7 @@ import java.util.Map.Entry;
 
 import net.spy.memcached.TestConfig;
 import net.spy.memcached.internal.HttpFuture;
+import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.couch.DocsOperation.DocsCallback;
 import net.spy.memcached.protocol.couch.DocsOperationImpl;
@@ -176,7 +177,7 @@ public class CouchbaseClientTest {
   public void testQueryWithDocs() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future = client.asyncQuery(view, query);
+    ViewFuture future = client.asyncQuery(view, query);
     ViewResponseWithDocs response = future.get();
     assert future.getStatus().isSuccess() : future.getStatus();
 
@@ -230,8 +231,7 @@ public class CouchbaseClientTest {
   public void testQuerySetDescending() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setDescending(true));
+    ViewFuture future = client.asyncQuery(view, query.setDescending(true));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -240,8 +240,7 @@ public class CouchbaseClientTest {
   public void testQuerySetEndKeyDocID() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setEndkeyDocID("an_id"));
+    ViewFuture future = client.asyncQuery(view, query.setEndkeyDocID("an_id"));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -270,8 +269,7 @@ public class CouchbaseClientTest {
   public void testQuerySetInclusiveEnd() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setInclusiveEnd(true));
+    ViewFuture future = client.asyncQuery(view, query.setInclusiveEnd(true));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -280,8 +278,7 @@ public class CouchbaseClientTest {
   public void testQuerySetKey() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setKey("a_key"));
+    ViewFuture future = client.asyncQuery(view, query.setKey("a_key"));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -290,8 +287,7 @@ public class CouchbaseClientTest {
   public void testQuerySetLimit() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setLimit(10));
+    ViewFuture future = client.asyncQuery(view, query.setLimit(10));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -300,8 +296,7 @@ public class CouchbaseClientTest {
   public void testQuerySetRange() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setRange("key0", "key2"));
+    ViewFuture future = client.asyncQuery(view, query.setRange("key0", "key2"));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -310,8 +305,7 @@ public class CouchbaseClientTest {
   public void testQuerySetRangeStart() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setRangeStart("start"));
+    ViewFuture future = client.asyncQuery(view, query.setRangeStart("start"));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -320,8 +314,7 @@ public class CouchbaseClientTest {
   public void testQuerySetRangeEnd() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setRangeEnd("end"));
+    ViewFuture future = client.asyncQuery(view, query.setRangeEnd("end"));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -330,8 +323,7 @@ public class CouchbaseClientTest {
   public void testQuerySetSkip() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setSkip(0));
+    ViewFuture future = client.asyncQuery(view, query.setSkip(0));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -340,8 +332,7 @@ public class CouchbaseClientTest {
   public void testQuerySetStale() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setStale(Stale.OK));
+    ViewFuture future = client.asyncQuery(view, query.setStale(Stale.OK));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -350,8 +341,7 @@ public class CouchbaseClientTest {
   public void testQuerySetStartkeyDocID() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setStartkeyDocID("key0"));
+    ViewFuture future = client.asyncQuery(view, query.setStartkeyDocID("key0"));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }
@@ -360,8 +350,7 @@ public class CouchbaseClientTest {
   public void testQuerySetUpdateSeq() throws Exception {
     Query query = new Query();
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseWithDocs> future =
-        client.asyncQuery(view, query.setUpdateSeq(true));
+    ViewFuture future = client.asyncQuery(view, query.setUpdateSeq(true));
     ViewResponseWithDocs response = future.get();
     assert response != null : future.getStatus();
   }

@@ -1,6 +1,7 @@
 package net.spy.memcached.protocol.ascii;
 
 import net.spy.memcached.ops.GetAndTouchOperation;
+import net.spy.memcached.ops.GetlOperation;
 
 public class GetAndTouchOperationImpl extends BaseGetOpImpl
 	implements GetAndTouchOperation{

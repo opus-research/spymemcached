@@ -1,22 +1,24 @@
 package net.spy.memcached.protocol.binary;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.UUID;
 
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.TapOperation;
-import net.spy.memcached.tapmessage.TapFlag;
-import net.spy.memcached.tapmessage.TapMagic;
-import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.tapmessage.Flag;
+import net.spy.memcached.tapmessage.Magic;
+import net.spy.memcached.tapmessage.Opcode;
 import net.spy.memcached.tapmessage.RequestMessage;
 
 public class TapBackfillOperationImpl extends TapOperationImpl implements TapOperation {
 	private final String id;
-	private final long date;
+	private final Date date;
 
-	TapBackfillOperationImpl(String id, long date, OperationCallback cb) {
-		super(cb);
+	TapBackfillOperationImpl(String id, Date date, String keyFilter, String valueFilter,
+			OperationCallback cb) {
+		super(cb, keyFilter, valueFilter);
 		this.id = id;
 		this.date = date;
 	}
@@ -24,10 +26,10 @@ public class TapBackfillOperationImpl extends TapOperationImpl implements TapOpe
 	@Override
 	public void initialize() {
 		RequestMessage message = new RequestMessage();
-		message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
-		message.setOpcode(TapOpcode.REQUEST);
-		message.setFlags(TapFlag.BACKFILL);
-		message.setFlags(TapFlag.SUPPORT_ACK);
+		message.setMagic(Magic.PROTOCOL_BINARY_REQ);
+		message.setOpcode(Opcode.REQUEST);
+		message.setFlags(Flag.BACKFILL);
+		message.setFlags(Flag.SUPPORT_ACK);
 		if (id != null) {
 			message.setName(id);
 		} else {
@@ -38,10 +40,6 @@ public class TapBackfillOperationImpl extends TapOperationImpl implements TapOpe
 		setBuffer(message.getBytes());
 	}
 
-	/**
-	 * Since the tap backfill doesn't specify any specific keys to get
-	 * this function always returns null;
-	 */
 	@Override
 	public Collection<String> getKeys() {
 		return null;

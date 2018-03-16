@@ -4,7 +4,7 @@ package net.spy.memcached.tapmessage;
  * The Flag enum contains a list all of the different flags that can be passed
  * in a tap message in the flag field.
  */
-public enum TapFlag {
+public enum Flag {
 	/**
 	 * Tap backfill flag definition
 	 */
@@ -50,7 +50,7 @@ public enum TapFlag {
 	 *
 	 * @param flag - The new flag value
 	 */
-	TapFlag(byte flag) {
+	Flag(byte flag) {
 		this.flag = flag;
 	}
 
@@ -63,9 +63,13 @@ public enum TapFlag {
 	 * @return Returns true if the flag is contained in the flag field
 	 */
 	boolean hasFlag(int f) {
-		if ((f & (int) flag) == 1) {
-			return false;
+		int bit = 0;
+		for (int i = 1; i <= this.flag; i *= 2) {
+			bit += f % 2;
+			f = f / 2;
 		}
+		if (bit == 0)
+			return false;
 		return true;
 	}
 }

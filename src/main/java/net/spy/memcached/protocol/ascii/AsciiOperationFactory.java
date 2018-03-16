@@ -2,6 +2,7 @@ package net.spy.memcached.protocol.ascii;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -31,7 +32,7 @@ import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VersionOperation;
-import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.tapmessage.Opcode;
 import net.spy.memcached.tapmessage.RequestMessage;
 
 /**
@@ -49,8 +50,8 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 
 	public GetAndTouchOperation getAndTouch(String key, int expiration,
 			GetAndTouchOperation.Callback cb) {
-		throw new UnsupportedOperationException("Get and touch is not supported " +
-				"for ASCII protocol");
+		throw new UnsupportedOperationException("Get and Touch not supported " +
+				"with ascii protocol");
 	}
 
 	public GetOperation get(String key, GetOperation.Callback cb) {
@@ -84,8 +85,8 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 	}
 
 	public KeyedOperation touch(String key, int expiration, OperationCallback cb) {
-		throw new UnsupportedOperationException("Touch is not supported for " +
-				"ASCII protocol");
+		throw new UnsupportedOperationException("Touch is only supported in" +
+				" the binary protocol");
 	}
 
 	public VersionOperation version(OperationCallback cb) {
@@ -119,40 +120,35 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 	}
 
 	public SASLMechsOperation saslMechs(OperationCallback cb) {
-		throw new UnsupportedOperationException("SASL is not supported for " +
-				"ASCII protocol");
+		throw new UnsupportedOperationException();
 	}
 
 	public SASLStepOperation saslStep(String[] mech, byte[] challenge,
 			String serverName, Map<String, ?> props, CallbackHandler cbh,
 			OperationCallback cb) {
-		throw new UnsupportedOperationException("SASL is not supported for " +
-				"ASCII protocol");
+		throw new UnsupportedOperationException();
 	}
 
 	public SASLAuthOperation saslAuth(String[] mech, String serverName,
 			Map<String, ?> props, CallbackHandler cbh, OperationCallback cb) {
-		throw new UnsupportedOperationException("SASL is not supported for " +
-				"ASCII protocol");
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public TapOperation tapBackfill(String id, long date, OperationCallback cb) {
-		throw new UnsupportedOperationException("Tap is not supported for ASCII" +
-				" protocol");
+	public TapOperation tapBackfill(String id, Date date, String keyFilter,
+			String valueFilter, OperationCallback cb) {
+		throw new UnsupportedOperationException("Tap is not supported for ascii");
 	}
 
 	@Override
 	public TapOperation tapCustom(String id, RequestMessage message,
-			OperationCallback cb) {
-		throw new UnsupportedOperationException("Tap is not supported for ASCII" +
-				" protocol");
+			String keyFilter, String valueFilter, OperationCallback cb) {
+		throw new UnsupportedOperationException("Tap is not supported for ascii");
 	}
 
 	@Override
-	public TapOperation tapAck(TapOpcode opcode, int opaque, OperationCallback cb) {
-		throw new UnsupportedOperationException("Tap is not supported for ASCII" +
-				" protocol");
+	public TapOperation tapAck(Opcode opcode, int opaque, OperationCallback cb) {
+		throw new UnsupportedOperationException("Tap is not supported for ascii");
 	}
 
 }

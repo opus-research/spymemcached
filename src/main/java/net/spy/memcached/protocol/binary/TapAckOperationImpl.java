@@ -5,16 +5,16 @@ import java.util.Collection;
 
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
-import net.spy.memcached.tapmessage.TapMagic;
-import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.tapmessage.Magic;
+import net.spy.memcached.tapmessage.Opcode;
 import net.spy.memcached.tapmessage.RequestMessage;
 
 public class TapAckOperationImpl extends TapOperationImpl {
-	private final TapOpcode opcode;
+	private final Opcode opcode;
 	private final int opaque;
 
-	TapAckOperationImpl(TapOpcode opcode, int opaque, OperationCallback cb) {
-		super(cb);
+	TapAckOperationImpl(Opcode opcode, int opaque, OperationCallback cb) {
+		super(cb, null, null);
 		this.opcode = opcode;
 		this.opaque = opaque;
 	}
@@ -22,7 +22,7 @@ public class TapAckOperationImpl extends TapOperationImpl {
 	@Override
 	public void initialize() {
 		RequestMessage message = new RequestMessage();
-		message.setMagic(TapMagic.PROTOCOL_BINARY_RES);
+		message.setMagic(Magic.PROTOCOL_BINARY_RES);
 		message.setOpcode(opcode);
 		message.setOpaque(opaque);
 		setBuffer(message.getBytes());
@@ -33,10 +33,6 @@ public class TapAckOperationImpl extends TapOperationImpl {
 		// Do Nothing
 	}
 
-	/**
-	 * Since the tap ack doesn't specify any specific keys to get
-	 * this function always returns null;
-	 */
 	@Override
 	public Collection<String> getKeys() {
 		return null;

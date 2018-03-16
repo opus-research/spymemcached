@@ -11,8 +11,8 @@ import net.spy.memcached.ops.OperationStatus;
 class MutatorOperationImpl extends OperationImpl implements
 		MutatorOperation {
 
-	private static final int CMD_INCR=0x05;
-	private static final int CMD_DECR=0x06;
+	private static final int CMD_INCR=5;
+	private static final int CMD_DECR=6;
 
 	private final Mutator mutator;
 	private final String key;
@@ -44,6 +44,15 @@ class MutatorOperationImpl extends OperationImpl implements
 		defBytes[6]=(byte)((def >> 8) & 0xff);
 		defBytes[7]=(byte)(def & 0xff);
 		prepareBuffer(key, 0, EMPTY_BYTES, by, defBytes, exp);
+	}
+
+	@Override
+	protected OperationStatus getStatusForErrorCode(int errCode, byte[] errPl) {
+        OperationStatus baseStatus = super.getStatusForErrorCode(errCode, errPl);
+        if (baseStatus != null) {
+            return baseStatus;
+        }
+		return errCode == ERR_NOT_FOUND ? NOT_FOUND_STATUS : null;
 	}
 
 	@Override

@@ -3,7 +3,7 @@ package net.spy.memcached.tapmessage;
 /**
  * The Opcode enum contains a list all of the different opcodes that can be passed in a tap message in the flag field.
  */
-public enum TapOpcode {
+public enum Opcode {
 	/**
 	 * Defines a tap no-op message
 	 */
@@ -58,29 +58,29 @@ public enum TapOpcode {
 	 * Defines the magic value
 	 * @param magic - The new magic value
 	 */
-	TapOpcode(byte opcode) {
+	Opcode(byte opcode) {
 		this.opcode = opcode;
 	}
 
-	public static TapOpcode getOpcodeByByte(byte b) {
-		if (b == TapOpcode.DELETE.opcode) {
-			return TapOpcode.DELETE;
-		} else if (b == TapOpcode.FLUSH.opcode){
-			return TapOpcode.DELETE;
-		} else if (b == TapOpcode.MUTATION.opcode){
-			return TapOpcode.MUTATION;
-		} else if (b == TapOpcode.NOOP.opcode){
-			return TapOpcode.NOOP;
-		} else if (b == TapOpcode.OPAQUE.opcode){
-			return TapOpcode.OPAQUE;
-		} else if (b == TapOpcode.REQUEST.opcode){
-			return TapOpcode.REQUEST;
-		} else if (b == TapOpcode.SASLAUTH.opcode){
-			return TapOpcode.SASLAUTH;
-		} else if (b == TapOpcode.SASLLIST.opcode){
-			return TapOpcode.SASLLIST;
-		} else if (b == TapOpcode.VBUCKETSET.opcode){
-			return TapOpcode.VBUCKETSET;
+	public static Opcode getOpcodeByByte(byte b) {
+		if (b == Opcode.DELETE.opcode) {
+			return Opcode.DELETE;
+		} else if (b == Opcode.FLUSH.opcode){
+			return Opcode.DELETE;
+		} else if (b == Opcode.MUTATION.opcode){
+			return Opcode.MUTATION;
+		} else if (b == Opcode.NOOP.opcode){
+			return Opcode.NOOP;
+		} else if (b == Opcode.OPAQUE.opcode){
+			return Opcode.OPAQUE;
+		} else if (b == Opcode.REQUEST.opcode){
+			return Opcode.REQUEST;
+		} else if (b == Opcode.SASLAUTH.opcode){
+			return Opcode.SASLAUTH;
+		} else if (b == Opcode.SASLLIST.opcode){
+			return Opcode.SASLLIST;
+		} else if (b == Opcode.VBUCKETSET.opcode){
+			return Opcode.VBUCKETSET;
 		} else {
 			return null;
 		}

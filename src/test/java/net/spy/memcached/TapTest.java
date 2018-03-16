@@ -1,10 +1,7 @@
 package net.spy.memcached;
 
-import java.net.URI;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.tapmessage.ResponseMessage;
 
@@ -26,10 +23,11 @@ public class TapTest extends ClientBaseCase {
 
 	public void testBackfill() throws Exception {
 		TapClient tc = new TapClient(AddrUtil.getAddresses("127.0.0.1:11210"));
-		tc.tapBackfill(null, 5, TimeUnit.SECONDS);
+		tc.tapBackfill(null, null, 10, null, null);
 
 		HashMap<String, Boolean> items = new HashMap<String, Boolean>();
 		for (int i = 0; i < 25; i++) {
+			System.out.println("key"+i);
 			client.set("key" + i, 0, "value" + i);
 			items.put("key" + i + ",value" + i, new Boolean(false));
 		}
@@ -47,18 +45,6 @@ public class TapTest extends ClientBaseCase {
 		}
 		checkTapKeys(items);
 		assertTrue(client.flush().get().booleanValue());
-	}
-
-	public void testTapBucketDoesNotExist() throws Exception {
-		TapClient client = new TapClient(Arrays.asList(new URI("http://localhost:8091/pools")),
-					"abucket", "abucket", "apassword");
-
-		try {
-			client.tapBackfill(null, 5, TimeUnit.SECONDS);
-		} catch (RuntimeException e) {
-			System.err.println(e.getMessage());
-			return;
-		}
 	}
 
 	private void checkTapKeys(HashMap<String, Boolean> items) {

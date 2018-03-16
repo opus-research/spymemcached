@@ -1,39 +1,47 @@
 package net.spy.memcached.tapmessage;
 
+import java.util.Date;
+
+import net.spy.memcached.compat.log.Logger;
+import net.spy.memcached.compat.log.LoggerFactory;
+
+
 public class MessageBuilder {
+	private Logger LOG = LoggerFactory.getLogger(MessageBuilder.class);
+
 	RequestMessage message;
 
 	public MessageBuilder() {
 		this.message = new RequestMessage();
-		message.setMagic(TapMagic.PROTOCOL_BINARY_REQ);
-		message.setOpcode(TapOpcode.REQUEST);
+		message.setMagic(Magic.PROTOCOL_BINARY_REQ);
+		message.setOpcode(Opcode.REQUEST);
 	}
 
-	public void doBackfill(long date) {
+	public void doBackfill(Date date) {
 		message.setBackfill(date);
-		message.setFlags(TapFlag.BACKFILL);
+		message.setFlags(Flag.BACKFILL);
 	}
 
 	public void doDump() {
-		message.setFlags(TapFlag.DUMP);
+		message.setFlags(Flag.DUMP);
 	}
 
 	public void specifyVbuckets(int[] vbucketlist) {
 		message.setVbucketlist(vbucketlist);
-		message.setFlags(TapFlag.LIST_VBUCKETS);
+		message.setFlags(Flag.LIST_VBUCKETS);
 	}
 
 	public void supportAck() {
-		message.setFlags(TapFlag.SUPPORT_ACK);
+		message.setFlags(Flag.SUPPORT_ACK);
 	}
 
 	public void keysOnly() {
-		message.setFlags(TapFlag.KEYS_ONLY);
+		message.setFlags(Flag.KEYS_ONLY);
 	}
 
 	public void takeoverVbuckets(int[] vbucketlist) {
 		message.setVbucketlist(vbucketlist);
-		message.setFlags(TapFlag.TAKEOVER_VBUCKETS);
+		message.setFlags(Flag.TAKEOVER_VBUCKETS);
 	}
 
 	public RequestMessage getMessage() {

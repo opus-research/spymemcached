@@ -12,8 +12,9 @@ public class TapCustomOperationImpl extends TapOperationImpl implements TapOpera
 	private final String id;
 	private final RequestMessage message;
 
-	TapCustomOperationImpl(String id, RequestMessage message, OperationCallback cb) {
-		super(cb);
+	TapCustomOperationImpl(String id, RequestMessage message, String keyFilter,
+			String valueFilter, OperationCallback cb) {
+		super(cb, keyFilter, valueFilter);
 		this.id = id;
 		this.message = message;
 	}
@@ -28,10 +29,6 @@ public class TapCustomOperationImpl extends TapOperationImpl implements TapOpera
 		setBuffer(message.getBytes());
 	}
 
-	/**
-	 * Since the tap custom doesn't specify any specific keys to get
-	 * this function always returns null;
-	 */
 	@Override
 	public Collection<String> getKeys() {
 		return null;

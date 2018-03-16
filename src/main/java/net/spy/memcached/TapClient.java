@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -20,13 +20,13 @@ import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.TapOperation;
-import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.tapmessage.Opcode;
 import net.spy.memcached.tapmessage.RequestMessage;
 import net.spy.memcached.tapmessage.ResponseMessage;
 
 public class TapClient {
 	private boolean vBucketAware;
-	private BlockingQueue<ResponseMessage> rqueue;
+	public BlockingQueue<ResponseMessage> rqueue;
 	private HashMap<Operation, TapConnectionProvider> omap;
 	private List<InetSocketAddress> addrs;
 	private List<URI> baseList;
@@ -35,30 +35,10 @@ public class TapClient {
 	private String pwd;
 	private long messagesRead;
 
-	/**
-	 * Creates a TapClient against the specified servers.
-	 *
-	 * This type of TapClient will TAP the specified servers, but will not be
-	 * able to react to changes in the number of cluster nodes. Using the
-	 * constructor which bootstraps itself from the cluster REST interface is
-	 * preferred.
-	 *
-	 * @param ia the addresses of each node in the cluster.
-	 */
 	public TapClient(InetSocketAddress... ia) {
 		this(Arrays.asList(ia));
 	}
 
-	/**
-	 * Creates a TapClient against the specified servers.
-	 *
-	 * This type of TapClient will TAP the specified servers, but will not be
-	 * able to react to changes in the number of cluster nodes. Using the
-	 * constructor which bootstraps itself from the cluster REST interface is
-	 * preferred.
-	 *
-	 * @param addrs a list of addresses containing each node in the cluster.
-	 */
 	public TapClient(List<InetSocketAddress> addrs) {
 		this.rqueue = new LinkedBlockingQueue<ResponseMessage>();
 		this.omap = new HashMap<Operation, TapConnectionProvider>();
@@ -71,24 +51,8 @@ public class TapClient {
 		this.messagesRead = 0;
 	}
 
-	/**
-	 * Creates a cluster aware TapClient
-	 *
-	 * This type of TapClient will TAP all servers in the specified cluster and
-	 * will react to changes in the number of cluster nodes.
-	 *
-	 * @param baseList a list of servers to get the cluster configuration from.
-	 * @param bucketName the name of the bucket to tap.
-	 * @param usr the buckets username.
-	 * @param pwd the buckets password.
-	 */
 	public TapClient(final List<URI> baseList, final String bucketName,
 			final String usr, final String pwd) {
-		for (URI bu : baseList) {
-			if (!bu.isAbsolute()) {
-				throw new IllegalArgumentException("The base URI must be absolute");
-			}
-		}
 		this.rqueue = new LinkedBlockingQueue<ResponseMessage>();
 		this.omap = new HashMap<Operation, TapConnectionProvider>();
 		this.vBucketAware = true;
@@ -98,7 +62,7 @@ public class TapClient {
 		this.usr = usr;
 		this.pwd = pwd;
 		this.messagesRead = 0;
-	}
+    }
 
 	/**
 	 * Gets the next tap message from the queue of received tap messages.
@@ -107,24 +71,11 @@ public class TapClient {
 	 * queue is empty for more than one second.
 	 */
 	public ResponseMessage getNextMessage() {
-		return getNextMessage(1, TimeUnit.SECONDS);
-	}
-
-	/**
-	 * Gets the next tap message from the queue of received tap messages.
-	 *
-	 * @param time the amount of time to wait for a message.
-	 * @param timeunit the unit of time to use.
-	 * @return The tap message at the head of the queue or null if the
-	 * queue is empty for the given amount of time.
-	 */
-	public ResponseMessage getNextMessage(long time, TimeUnit timeunit) {
 		try {
 			messagesRead++;
-			return rqueue.poll(time, timeunit);
+			return rqueue.poll(1, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			messagesRead--;
-			shutdown();
 			return null;
 		}
 	}
@@ -159,16 +110,20 @@ public class TapClient {
 	}
 
 	/**
-	 * Allows the user to specify a custom tap message.
+	 * Allows the user to specify as custom tap message.
 	 *
-	 * @param id the named tap id that can be used to resume a disconnected
+	 * @param id The named tap id that can be used to resume a disconnected
 	 * tap stream
-	 * @param message the custom tap message that will be used to initiate the
+	 * @param message The custom tap message that will be used to initiate the
 	 * tap stream.
-	 * @return the operation that controls the tap stream.
-	 * @throws ConfigurationException a bad configuration was recieved from the
+	 * @param keyFilter A java regex that can be used to filter keys recieved
+	 * from the Membase cluster. Null specifies no filtering of keys.
+	 * @param valueFilter A java regex that can be used to filter values recieved
+	 * from the Membase cluster. Null specifies no filtering of values.
+	 * @return The operation that controls the tap stream.
+	 * @throws ConfigurationException If a bad configuration was recieved from the
 	 * Membase cluster.
-	 * @throws IOException if there are errors connecting to the cluster.
+	 * @throws IOException If there are errors connecting to the cluster.
 	 */
 	public Operation tapCustom(String id, RequestMessage message,
 			String keyFilter, String valueFilter)
@@ -181,8 +136,8 @@ public class TapClient {
 		}
 
 		final CountDownLatch latch=new CountDownLatch(1);
-		final Operation op=conn.opFact.tapCustom(id, message,
-				new TapOperation.Callback() {
+		final Operation op=conn.opFact.tapCustom(id, message, keyFilter,
+				valueFilter, new TapOperation.Callback() {
 
 			public void receivedStatus(OperationStatus status) {
 			}
@@ -190,56 +145,38 @@ public class TapClient {
 				rqueue.add(tapMessage);
 				messagesRead++;
 			}
-			public void gotAck(TapOpcode opcode, int opaque) {
+			public void gotAck(Opcode opcode, int opaque) {
 				tapAck(conn, opcode, opaque, this);
 			}
 			public void complete() {
 				latch.countDown();
 			}});
-		synchronized(omap) {
-			omap.put(op, conn);
-		}
+		omap.put(op, conn);
 		conn.addOp(op);
 		return op;
-	}
-
-	/**
-	 * Specifies a tap stream that will send all key-value mutations that take
-	 * place in the future.
-	 *
-	 * @param id the named tap id that can be used to resume a disconnected
-	 * tap stream
-	 * @param runTime the amount of time to do backfill for. Set to 0 for
-	 * infinite backfill.
-	 * @param timeunit the unit of time for the runtime parameter.
-	 * @return the operation that controls the tap stream.
-	 * @throws ConfigurationException a bad configuration was recieved from the
-	 * Membase cluster.
-	 * @throws IOException If there are errors connecting to the cluster.
-	 */
-	public Operation tapBackfill(String id, final int runTime, final TimeUnit timeunit)
-			throws IOException, ConfigurationException {
-		return tapBackfill(id, -1, runTime, timeunit);
 	}
 
 	/**
 	 * Specifies a tap stream that will send all key-value mutations that took
 	 * place after a specific date.
 	 *
-	 * @param id the named tap id that can be used to resume a disconnected
+	 * @param id The named tap id that can be used to resume a disconnected
 	 * tap stream
-	 * @param date the date to begin sending key mutations from. Specify -1
+	 * @param date The date to begin sending key mutations from. Specify null
 	 * to send all future key-value mutations.
-	 * @param runTime the amount of time to do backfill for. Set to 0 for
+	 * @param runTime The amount of time to do backfill for. Set to 0 for
 	 * infinite backfill.
-	 * @param timeunit the unit of time for the runtime parameter.
-	 * @return the operation that controls the tap stream.
-	 * @throws ConfigurationException a bad configuration was recieved from the
+	 * @param keyFilter A java regex that can be used to filter keys recieved
+	 * from the Membase cluster. Null specifies no filtering of keys.
+	 * @param valueFilter A java regex that can be used to filter values recieved
+	 * from the Membase cluster. Null specifies no filtering of values.
+	 * @return The operation that controls the tap stream.
+	 * @throws ConfigurationException If a bad configuration was recieved from the
 	 * Membase cluster.
 	 * @throws IOException If there are errors connecting to the cluster.
 	 */
-	public Operation tapBackfill(final String id, final long date, final int runTime,
-			final TimeUnit timeunit) throws IOException, ConfigurationException {
+	public Operation tapBackfill(String id, Date date, final int runTime, String keyFilter,
+			String valueFilter) throws IOException, ConfigurationException {
 		final TapConnectionProvider conn;
 		if (vBucketAware) {
 			conn = new TapConnectionProvider(baseList, bucketName, usr, pwd);
@@ -248,8 +185,8 @@ public class TapClient {
 		}
 
 		final CountDownLatch latch=new CountDownLatch(1);
-		final Operation op=conn.opFact.tapBackfill(id, date,
-				new TapOperation.Callback() {
+		final Operation op=conn.opFact.tapBackfill(id, date, keyFilter,
+				valueFilter, new TapOperation.Callback() {
 
 			public void receivedStatus(OperationStatus status) {
 			}
@@ -257,15 +194,13 @@ public class TapClient {
 				rqueue.add(tapMessage);
 				messagesRead++;
 			}
-			public void gotAck(TapOpcode opcode, int opaque) {
+			public void gotAck(Opcode opcode, int opaque) {
 				tapAck(conn, opcode, opaque, this);
 			}
 			public void complete() {
 				latch.countDown();
 			}});
-		synchronized(omap) {
-			omap.put(op, conn);
-		}
+		omap.put(op, conn);
 		conn.addOp(op);
 
 		if (runTime > 0) {
@@ -273,14 +208,12 @@ public class TapClient {
 				@Override
 				public void run() {
 					try {
-						Thread.sleep(TimeUnit.MILLISECONDS.convert(runTime, timeunit));
+						Thread.sleep(runTime * 1000);
 					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
+
 					}
 					conn.shutdown();
-					synchronized(omap) {
-						omap.remove(op);
-					}
+					omap.remove(op);
 				}
 			};
 			new Thread(r).start();
@@ -288,7 +221,7 @@ public class TapClient {
 		return op;
 	}
 
-	private void tapAck(TapConnectionProvider conn, TapOpcode opcode, int opaque,
+	private void tapAck(TapConnectionProvider conn, Opcode opcode, int opaque,
 			OperationCallback cb) {
 		final Operation op=conn.opFact.tapAck(opcode, opaque, cb);
 		conn.addOp(op);
@@ -298,18 +231,15 @@ public class TapClient {
 	 * Shuts down all tap streams that are currently running.
 	 */
 	public void shutdown() {
-		synchronized(omap) {
-			for (Map.Entry<Operation,TapConnectionProvider> me: omap.entrySet()) {
-				me.getValue().shutdown();
-		    }
+		Iterator<Operation> itr = omap.keySet().iterator();
+		while (itr.hasNext()) {
+			omap.get(itr.next()).shutdown();
 		}
 	}
 
 	/**
 	 * The number of messages read by all of the tap streams created
-	 * with this client. This will include a count of all tap
-	 * response types.
-	 *
+	 * with this client.
 	 * @return The number of messages read
 	 */
 	public long getMessagesRead() {

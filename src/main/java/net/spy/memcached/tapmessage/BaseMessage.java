@@ -1,8 +1,12 @@
+/*
+ * Copyright (c) 2010 Membase. All Rights Reserved.
+ */
+
 package net.spy.memcached.tapmessage;
 
 import java.nio.ByteBuffer;
 
-import net.spy.memcached.compat.SpyObject;
+import net.spy.memcached.tapmessage.Util;
 
 /**
  * The HeaderMessage implements the header of a tap message. This class cannot be instantiated.
@@ -10,7 +14,7 @@ import net.spy.memcached.compat.SpyObject;
  * who want to take advantage of customizing their own tap messages should use the
  * CustomTapStream class since it provides flexibility to create all valid tap messages.
  */
-public class BaseMessage extends SpyObject {
+public class BaseMessage {
 	/**
 	 * The index of the magic field in a tap header.
 	 */
@@ -122,7 +126,7 @@ public class BaseMessage extends SpyObject {
 	 * Sets the value of the tap messages magic field.
 	 * @param m The new value for the magic field.
 	 */
-	public final void setMagic(TapMagic m) {
+	public final void setMagic(Magic m) {
 		mbytes[MAGIC_INDEX] = (byte) m.magic;
 	}
 
@@ -138,7 +142,7 @@ public class BaseMessage extends SpyObject {
 	 * Sets the value of the tap messages opcode field
 	 * @param o The new value of the opcode field.
 	 */
-	public final void setOpcode(TapOpcode o) {
+	public final void setOpcode(Opcode o) {
 		mbytes[OPCODE_INDEX] = (byte) o.opcode;
 	}
 
@@ -146,8 +150,8 @@ public class BaseMessage extends SpyObject {
 	 * Gets the value of the tap messages opaque field.
 	 * @return The value of the opaque field.
 	 */
-	public final TapOpcode getOpcode() {
-		return TapOpcode.getOpcodeByByte(mbytes[OPCODE_INDEX]);
+	public final Opcode getOpcode() {
+		return Opcode.getOpcodeByByte(mbytes[OPCODE_INDEX]);
 	}
 
 	/**
@@ -157,7 +161,7 @@ public class BaseMessage extends SpyObject {
 	 * @param l The new value for the key length field.
 	 */
 	protected final void setKeylength(long l) {
-		Util.valueToFieldOffest(mbytes, KEY_LENGTH_INDEX, KEY_LENGTH_FIELD_LENGTH, l);
+		Util.valueToField(mbytes, KEY_LENGTH_INDEX, KEY_LENGTH_FIELD_LENGTH, l);
 	}
 
 	/**
@@ -205,7 +209,7 @@ public class BaseMessage extends SpyObject {
 	 * @param vb The new value for the vbucket field.
 	 */
 	public final void setVbucket(int vb) {
-		Util.valueToFieldOffest(mbytes, VBUCKET_INDEX, VBUCKET_FIELD_LENGTH, vb);
+		Util.valueToField(mbytes, VBUCKET_INDEX, VBUCKET_FIELD_LENGTH, vb);
 	}
 
 	/**
@@ -221,7 +225,7 @@ public class BaseMessage extends SpyObject {
 	 * @param l The new value for the total body field.
 	 */
 	public final void setTotalbody(long l) {
-		Util.valueToFieldOffest(mbytes, TOTAL_BODY_INDEX, TOTAL_BODY_FIELD_LENGTH, l);
+		Util.valueToField(mbytes, TOTAL_BODY_INDEX, TOTAL_BODY_FIELD_LENGTH, l);
 	}
 
 	/**
@@ -237,7 +241,7 @@ public class BaseMessage extends SpyObject {
 	 * @param op The new value for the opaque field.
 	 */
 	public final void setOpaque(int op) {
-		Util.valueToFieldOffest(mbytes, OPAQUE_INDEX, OPAQUE_FIELD_LENGTH, op);
+		Util.valueToField(mbytes, OPAQUE_INDEX, OPAQUE_FIELD_LENGTH, op);
 	}
 
 	/**
@@ -253,7 +257,7 @@ public class BaseMessage extends SpyObject {
 	 * @param cas The new value for the cas field.
 	 */
 	public final void setCas(long cas) {
-		Util.valueToFieldOffest(mbytes, CAS_INDEX, CAS_FIELD_LENGTH, cas);
+		Util.valueToField(mbytes, CAS_INDEX, CAS_FIELD_LENGTH, cas);
 	}
 
 	/**
@@ -278,5 +282,43 @@ public class BaseMessage extends SpyObject {
 	 */
 	public final ByteBuffer getBytes() {
 		return ByteBuffer.wrap(mbytes);
+	}
+
+	/**
+	 * Prints the message in byte form in a pretty way. This function is mainly used for
+	 * debugging.\ purposes.
+	 */
+	public void printMessage() {
+		int colNum = 0;
+		System.out.printf("   %5s%5s%5s%5s\n", "0", "1", "2", "3");
+		System.out.print("   ----------------------");
+		for (int i = 0; i < mbytes.length; i++) {
+			if ((i % 4) == 0) {
+				System.out.printf("\n%3d|", colNum);
+				colNum += 4;
+			}
+			int field = mbytes[i];
+			if (field < 0)
+				field = field + 256;
+			System.out.printf("%5x", field);
+		}
+		System.out.print("\n\n");
+	}
+
+	/**
+	 * Prints the detailed view of the message by printing out each field in
+	 * a human readable way. Mostly used for debugging purposes.
+	 */
+	public void printMessageDetails() {
+		System.out.println("----------Message----------");
+		System.out.printf("Magic: 0x%x\n", mbytes[MAGIC_INDEX]);
+		System.out.printf("Opcode: 0x%x\n", mbytes[OPCODE_INDEX]);
+		System.out.printf("Key Length: %d\n", getKeylength());
+		System.out.printf("Extra Length: %d\n", getExtralength());
+		System.out.printf("Data Type: 0x%x\n", getDatatype());
+		System.out.printf("VBucket: %d\n", getVbucket());
+		System.out.printf("Total Body: %d\n", getTotalbody());
+		System.out.printf("Opaque: %d\n", getOpaque());
+		System.out.printf("CAS: %d\n", getCas());
 	}
 }

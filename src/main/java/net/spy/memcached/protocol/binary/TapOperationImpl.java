@@ -2,11 +2,13 @@ package net.spy.memcached.protocol.binary;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.regex.Pattern;
 
 import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.tapmessage.BaseMessage;
-import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.tapmessage.FieldDoesNotExistException;
+import net.spy.memcached.tapmessage.Opcode;
 import net.spy.memcached.tapmessage.ResponseMessage;
 import net.spy.memcached.tapmessage.Util;
 
@@ -20,10 +22,15 @@ public abstract class TapOperationImpl extends OperationImpl implements TapOpera
 
 	static final int CMD=0;
 
-	protected TapOperationImpl(OperationCallback cb) {
+	private final String keyFilter;
+	private final String valueFilter;
+
+	protected TapOperationImpl(OperationCallback cb, String keyFilter, String valueFilter) {
 		super(CMD, generateOpaque(), cb);
 		this.header = new byte[BaseMessage.HEADER_LENGTH];
 		this.message = null;
+		this.keyFilter = keyFilter;
+		this.valueFilter = valueFilter;
 	}
 
 	public abstract void initialize();
@@ -48,16 +55,36 @@ public abstract class TapOperationImpl extends OperationImpl implements TapOpera
 				if (bytesProcessed >= message.length) {
 					ResponseMessage response = new ResponseMessage(message);
 
-					if (response.getOpcode() != TapOpcode.OPAQUE && response.getOpcode() != TapOpcode.NOOP) {
+					if (response.getOpcode() != Opcode.OPAQUE && response.getOpcode() != Opcode.NOOP) {
 						if (response.getFlags() == TAP_FLAG_ACK) {
 							((Callback)getCallback()).gotAck(response.getOpcode(), response.getOpaque());
 						}
-						((Callback)getCallback()).gotData(response);
+						if (filter(response)) {
+							((Callback)getCallback()).gotData(response);
+						}
 					}
 					message = null;
 					bytesProcessed = 0;
 				}
 			}
 		}
+	}
+
+	private boolean filter(ResponseMessage tapMessage) {
+		if (keyFilter != null) {
+			if (!Pattern.matches(keyFilter, tapMessage.getKey())) {
+				return false;
+			}
+		}
+		try {
+			if (valueFilter != null) {
+				if (!Pattern.matches(valueFilter, new String(tapMessage.getValue()))) {
+					return false;
+				}
+			}
+		} catch (FieldDoesNotExistException e) {
+			// There is no value for this packet so continue
+		}
+		return true;
 	}
 }

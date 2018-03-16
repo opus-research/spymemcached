@@ -2,6 +2,7 @@ package net.spy.memcached.protocol.binary;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -33,7 +34,7 @@ import net.spy.memcached.ops.StoreType;
 import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VersionOperation;
 import net.spy.memcached.ops.GetOperation.Callback;
-import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.tapmessage.Opcode;
 import net.spy.memcached.tapmessage.RequestMessage;
 
 /**
@@ -143,16 +144,17 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 				props, cbh, cb);
 	}
 
-	public TapOperation tapBackfill(String id, long date, OperationCallback cb) {
-		return new TapBackfillOperationImpl(id, date, cb);
+	public TapOperation tapBackfill(String id, Date date, String keyFilter,
+			String valueFilter, OperationCallback cb) {
+		return new TapBackfillOperationImpl(id, date, keyFilter, valueFilter, cb);
 	}
 
-	public TapOperation tapCustom(String id, RequestMessage message,
-			OperationCallback cb) {
-		return new TapCustomOperationImpl(id, message, cb);
+	public TapOperation tapCustom(String id, RequestMessage message, String keyFilter,
+			String valueFilter, OperationCallback cb) {
+		return new TapCustomOperationImpl(id, message, keyFilter, valueFilter, cb);
 	}
 
-	public TapOperation tapAck(TapOpcode opcode, int opaque, OperationCallback cb) {
+	public TapOperation tapAck(Opcode opcode, int opaque, OperationCallback cb) {
 		return new TapAckOperationImpl(opcode, opaque, cb);
 	}
 }

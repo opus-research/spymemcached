@@ -1,11 +1,11 @@
 package net.spy.memcached.ops;
 
-import net.spy.memcached.tapmessage.TapOpcode;
+import net.spy.memcached.tapmessage.Opcode;
 import net.spy.memcached.tapmessage.ResponseMessage;
 
 
 /**
- * Tap operation.
+ * Tap backfill operation.
  */
 public interface TapOperation extends KeyedOperation {
 
@@ -20,7 +20,7 @@ public interface TapOperation extends KeyedOperation {
 		 */
 		public void gotData(ResponseMessage message);
 
-		public void gotAck(TapOpcode opcode, int opaque);
+		public void gotAck(Opcode opcode, int opaque);
 	}
 
 	public void streamClosed(OperationState state);

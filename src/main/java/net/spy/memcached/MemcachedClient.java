@@ -26,6 +26,7 @@ package net.spy.memcached;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -678,7 +679,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
         throw new RuntimeException("Exception waiting for value", e);
       }
     } catch (TimeoutException e) {
-      throw new OperationTimeoutException("Timeout waiting for value", e);
+      throw new OperationTimeoutException("Timeout waiting for value: "
+        + buildTimeoutMessage(operationTimeout, TimeUnit.MILLISECONDS), e);
     }
   }
 
@@ -1130,7 +1132,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
         throw new RuntimeException("Exception waiting for value", e);
       }
     } catch (TimeoutException e) {
-      throw new OperationTimeoutException("Timeout waiting for value", e);
+      throw new OperationTimeoutException("Timeout waiting for value: "
+        + buildTimeoutMessage(operationTimeout, TimeUnit.MILLISECONDS), e);
     }
   }
 
@@ -1430,7 +1433,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
         throw new RuntimeException("Exception waiting for bulk values", e);
       }
     } catch (TimeoutException e) {
-      throw new OperationTimeoutException("Timeout waiting for bulk values", e);
+      throw new OperationTimeoutException("Timeout waiting for bulk values: "
+        + buildTimeoutMessage(operationTimeout, TimeUnit.MILLISECONDS), e);
     }
   }
 
@@ -1811,7 +1815,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
         }
       } catch (TimeoutException e) {
         throw new OperationTimeoutException("Timeout waiting to mutate or init"
-            + " value", e);
+          + " value" + buildTimeoutMessage(operationTimeout,
+            TimeUnit.MILLISECONDS), e);
       }
     }
     return rv;
@@ -1986,10 +1991,24 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    *           full to accept any more requests
    */
   public OperationFuture<Boolean> delete(String key) {
+    return delete(key, (long) 0);
+  }
+
+  /**
+   * Delete the given key from the cache of the given CAS value applies.
+   *
+   * @param key the key to delete
+   * @param cas the CAS value to apply.
+   * @return whether or not the operation was performed
+   * @throws IllegalStateException in the rare circumstance where queue is too
+   *           full to accept any more requests
+   */
+  public OperationFuture<Boolean> delete(String key, long cas) {
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Boolean> rv = new OperationFuture<Boolean>(key,
         latch, operationTimeout);
-    DeleteOperation op = opFact.delete(key, new DeleteOperation.Callback() {
+
+    DeleteOperation.Callback callback = new DeleteOperation.Callback() {
       public void receivedStatus(OperationStatus s) {
         rv.set(s.isSuccess(), s);
       }
@@ -2001,7 +2020,15 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
       public void complete() {
         latch.countDown();
       }
-    });
+    };
+
+    DeleteOperation op = null;
+    if(cas == 0) {
+      op = opFact.delete(key, callback);
+    } else {
+      op = opFact.delete(key, cas, callback);
+    }
+
     rv.setOperation(op);
     mconn.enqueueOperation(key, op);
     return rv;
@@ -2243,6 +2270,15 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
     }
     assert node != null : "Couldn't find node connected to " + sa;
     return node;
+  }
+
+  private String buildTimeoutMessage(long timeWaited, TimeUnit unit) {
+    StringBuilder message = new StringBuilder();
+
+    message.append(MessageFormat.format("waited {0} ms.",
+      unit.convert(timeWaited, TimeUnit.MILLISECONDS)));
+    message.append(" Node status: ").append(mconn.connectionsStatus());
+    return message.toString();
   }
 
   public void connectionLost(SocketAddress sa) {

@@ -1,6 +1,5 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2011 Couchbase, Inc.
+ * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,35 +22,47 @@
 
 package net.spy.memcached.protocol.binary;
 
-import net.spy.memcached.ops.OperationCallback;
-import static net.spy.memcached.protocol.binary.OperationImpl.STATUS_OK;
+import net.spy.memcached.ops.ReplicaGetOperation;
 
 /**
- * Operation to reset a timeout in Membase server.
+ * Implementation of the replica get operation.
  */
-public class TouchOperationImpl extends SingleKeyOperationImpl {
+public class ReplicaGetOperationImpl extends SingleKeyOperationImpl
+  implements ReplicaGetOperation {
 
-  static final byte CMD = 0x1c;
+  static final byte GET_CMD = (byte)0x83;
 
-  private final int exp;
+  private final int replicaIndex;
 
-  protected TouchOperationImpl(String k, int e, OperationCallback cb) {
-    super(CMD, generateOpaque(), k, cb);
-    exp = e;
+  /**
+   * Length of the extra header stuff for a GET response.
+   */
+  static final int EXTRA_HDR_LEN = 4;
+
+  public ReplicaGetOperationImpl(String k, int index,
+    ReplicaGetOperation.Callback cb) {
+    super(GET_CMD, generateOpaque(), k, cb);
+    replicaIndex = index;
   }
 
   @Override
   public void initialize() {
-    prepareBuffer(key, 0, EMPTY_BYTES, exp);
+    prepareBuffer(key, 0, EMPTY_BYTES);
   }
 
   @Override
   protected void decodePayload(byte[] pl) {
+    final int flags = decodeInt(pl, 0);
+    final byte[] data = new byte[pl.length - EXTRA_HDR_LEN - keyLen];
+    System.arraycopy(pl, (EXTRA_HDR_LEN + keyLen), data, 0,
+      pl.length - EXTRA_HDR_LEN - keyLen);
+    ReplicaGetOperation.Callback gcb =
+      (ReplicaGetOperation.Callback) getCallback();
+    gcb.gotData(key, flags, data);
     getCallback().receivedStatus(STATUS_OK);
   }
 
-  @Override
-  public String toString() {
-    return super.toString() + " Exp: " + exp;
+  public int getReplicaIndex() {
+    return replicaIndex;
   }
 }

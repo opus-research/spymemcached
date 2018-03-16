@@ -47,6 +47,7 @@ import net.spy.memcached.ops.NoopOperation;
 import net.spy.memcached.ops.ObserveOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationCallback;
+import net.spy.memcached.ops.ReplicaGetOperation;
 import net.spy.memcached.ops.SASLAuthOperation;
 import net.spy.memcached.ops.SASLMechsOperation;
 import net.spy.memcached.ops.SASLStepOperation;
@@ -67,6 +68,12 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 
   public DeleteOperation delete(String key, DeleteOperation.Callback cb) {
     return new DeleteOperationImpl(key, cb);
+  }
+
+  public DeleteOperation delete(String key, long cas,
+    DeleteOperation.Callback cb) {
+    throw new UnsupportedOperationException("Delete with CAS is not supported "
+        + "for ASCII protocol");
   }
 
   public FlushOperation flush(int delay, OperationCallback cb) {
@@ -127,8 +134,7 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 
   public KeyedOperation touch(String key, int expiration,
       OperationCallback cb) {
-    throw new UnsupportedOperationException("Touch is not supported for "
-        + "ASCII protocol");
+    return new TouchOperationImpl(key, expiration, cb);
   }
 
   public VersionOperation version(OperationCallback cb) {
@@ -202,5 +208,12 @@ public class AsciiOperationFactory extends BaseOperationFactory {
   public TapOperation tapDump(String id, OperationCallback cb) {
     throw new UnsupportedOperationException("Tap is not supported for ASCII"
         + " protocol");
+  }
+
+  @Override
+  public ReplicaGetOperation replicaGet(String key, int index,
+  ReplicaGetOperation.Callback callback) {
+    throw new UnsupportedOperationException("Replica get is not supported "
+        + "for ASCII protocol");
   }
 }

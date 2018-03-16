@@ -578,6 +578,14 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
     assertNull(client.get("test2"));
   }
 
+  public void testTouch() throws Exception {
+    assertNull(client.get("touchtest"));
+    assertNull(client.get("nonexistent"));
+    assertTrue(client.set("touchtest", 5, "touchtest").get());
+    assertTrue(client.touch("touchtest", 2).get());
+    assertFalse(client.touch("nonexistent", 2).get());
+  }
+
   public void testGracefulShutdown() throws Exception {
     for (int i = 0; i < 1000; i++) {
       client.set("t" + i, 10, i);
@@ -843,8 +851,8 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 
   public void testUTF8Value() throws Exception {
     final String key = "junit.plaintext." + System.currentTimeMillis();
-    final String value = "Здравствуйте Здравствуйте �"
-        + "�дравствуйте Skiing rocks if you can find the time "
+    final String value = "Здравствуйте!"
+        + " Skiing rocks if you can find the time "
         + "to go!";
 
     assertTrue(client.set(key, 6000, value).get());

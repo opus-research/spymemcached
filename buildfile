@@ -12,6 +12,7 @@ PROJECT_NAME = "spymemcached"
 
 TEST_SERVER_V4 = ENV['SPYMC_TEST_SERVER_V4'] || "127.0.0.1"
 TEST_SERVER_V6 = ENV['SPYMC_TEST_SERVER_V6'] || ENV['SPYMC_TEST_SERVER_V4'] || "::1"
+
 SERVER_TYPE=ENV['SPYMC_SERVER_TYPE'] || "memcached"
 
 puts "Using server at ipv4 #{TEST_SERVER_V4}"
@@ -59,9 +60,14 @@ define "spymemcached" do
 
   test.options[:java_args] = "-ea"
   test.include "*Test"
+  if SERVER_TYPE == 'memcached' then
+    test.exclude '*VBucketMemcachedClientTest', '*BucketMonitorTest',
+              '*ConfigurationProviderHTTPTest'
+  end
   test.using :fork=>:each, :properties=>{ 'server.address_v4'=>TEST_SERVER_V4,
-					'server.address_v6'=>TEST_SERVER_V6,
-					'server.type'=>SERVER_TYPE }
+               'server.address_v6'=>TEST_SERVER_V6,
+               'server.type'=>SERVER_TYPE }
+
   TREE_VER=tree_version
   puts "Tree version is #{TREE_VER}"
 

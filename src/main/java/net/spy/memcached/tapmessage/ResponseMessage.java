@@ -25,8 +25,6 @@ package net.spy.memcached.tapmessage;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
-import net.spy.memcached.CachedData;
-import net.spy.memcached.transcoders.SerializingTranscoder;
 
 /**
  * A representation of a tap stream message sent from a tap stream server.
@@ -52,7 +50,6 @@ public class ResponseMessage extends BaseMessage {
   private final int itemflags;
   private int itemexpiry;
   private final int vbucketstate;
-  private final long checkpoint;
   private final byte[] key;
   private final byte[] value;
   private final byte[] revid;
@@ -83,15 +80,9 @@ public class ResponseMessage extends BaseMessage {
     }
 
     if (opcode.equals(TapOpcode.MUTATION)) {
-      if (flags.contains(TapResponseFlag.TAP_FLAG_NETWORK_BYTE_ORDER)) {
-        itemflags = decodeInt(b, ITEM_FLAGS_OFFSET);
-      } else {
-        // handles Couchbase bug MB-4834
-        itemflags = decodeIntHostOrder(b, ITEM_FLAGS_OFFSET);
-      }
+      itemflags = decodeInt(b, ITEM_FLAGS_OFFSET);
       itemexpiry = decodeInt(b, ITEM_EXPIRY_OFFSET);
       vbucketstate = 0;
-      checkpoint = 0;
       revid = new byte[engineprivate];
       System.arraycopy(b, KEY_OFFSET, revid, 0, engineprivate);
       key = new byte[keylength];
@@ -102,34 +93,14 @@ public class ResponseMessage extends BaseMessage {
       itemflags = 0;
       itemexpiry = 0;
       vbucketstate = 0;
-      revid = new byte[engineprivate];
-      System.arraycopy(b, 32, revid, 0, engineprivate);
-      checkpoint = 0;
       key = new byte[keylength];
-      System.arraycopy(b, 32 + engineprivate, key, 0, keylength);
+      System.arraycopy(b, ITEM_FLAGS_OFFSET, key, 0, keylength);
       value = new byte[0];
+      revid = new byte[0];
     } else if (opcode.equals(TapOpcode.VBUCKETSET)) {
       itemflags = 0;
       itemexpiry = 0;
       vbucketstate = decodeInt(b, ITEM_FLAGS_OFFSET);
-      checkpoint = 0;
-      key = new byte[0];
-      value = new byte[0];
-      revid = new byte[0];
-    } else if (opcode.equals(TapOpcode.START_CHECKPOINT)
-      || opcode.equals(TapOpcode.END_CHECKPOINT)) {
-      itemflags = 0;
-      itemexpiry = 0;
-      vbucketstate = 0;
-      checkpoint = decodeLong(b, KEY_OFFSET);
-      key = new byte[0];
-      value = new byte[0];
-      revid = new byte[0];
-    } else if (opcode.equals(TapOpcode.OPAQUE)) {
-      itemflags = 0;
-      itemexpiry = 0;
-      vbucketstate = decodeInt(b, ITEM_FLAGS_OFFSET);
-      checkpoint = 0;
       key = new byte[0];
       value = new byte[0];
       revid = new byte[0];
@@ -137,7 +108,6 @@ public class ResponseMessage extends BaseMessage {
       itemflags = 0;
       itemexpiry = 0;
       vbucketstate = 0;
-      checkpoint = 0;
       key = new byte[0];
       value = new byte[0];
       revid = new byte[0];
@@ -210,16 +180,6 @@ public class ResponseMessage extends BaseMessage {
   }
 
   /**
-   * Gets the checkpoint of the vbucket.  Only returned with a start/end
-   * checkpoint message.
-   *
-   * @return the checkpoint
-   */
-  public long getCheckpoint() {
-    return checkpoint;
-  }
-
-  /**
    * Gets the value of the items flag field. Only returned with a tap mutation
    * message.
    *
@@ -270,14 +230,7 @@ public class ResponseMessage extends BaseMessage {
   }
 
   public ByteBuffer getBytes() {
-    int bufSize = 0;
-    bufSize += HEADER_LENGTH;
-    if (opcode.equals(TapOpcode.MUTATION)) {
-      bufSize += 16;
-    }
-    bufSize += getTotalbody();
-
-    ByteBuffer bb = ByteBuffer.allocate(bufSize);
+    ByteBuffer bb = ByteBuffer.allocate(HEADER_LENGTH + getTotalbody());
     bb.put(magic.getMagic());
     bb.put(opcode.getOpcode());
     bb.putShort(keylength);
@@ -296,7 +249,7 @@ public class ResponseMessage extends BaseMessage {
 
     short flag = 0;
     for (int i = 0; i < flags.size(); i++) {
-      flag |= flags.get(i).getFlags();
+      flag |= flags.get(i).getFlag();
     }
 
     bb.putShort(flag);
@@ -312,30 +265,10 @@ public class ResponseMessage extends BaseMessage {
       bb.put(key);
       bb.put(value);
     } else if (opcode.equals(TapOpcode.DELETE)) {
-      bb.put(revid);
       bb.put(key);
     } else if (opcode.equals(TapOpcode.VBUCKETSET)) {
       bb.putInt(vbucketstate);
     }
     return bb;
   }
-
-  @Override
-  public String toString() {
-    return String.format("Key: %s, Flags: %d, TTL: %d, Size: %d\nValue: %s",
-      getKey(), getItemFlags(), getTTL(), getValue().length, deserialize());
-  }
-
-  /**
-   * Attempt to get the object represented by the given serialized bytes.
-   */
-  private Object deserialize() {
-    SerializingTranscoder tc = new SerializingTranscoder();
-    CachedData d = new CachedData(this.getItemFlags(), this.getValue(),
-      CachedData.MAX_SIZE);
-    Object rv = null;
-    rv = tc.decode(d);
-    return rv;
-  }
-
 }

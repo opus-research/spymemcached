@@ -71,17 +71,7 @@ public enum TapOpcode {
    * Defines a vBucket set message to set the state of a vBucket in the
    * consumer.
    */
-  VBUCKETSET((byte) 0x45),
-
-  /**
-   * Defines the start of a checkpoint
-   */
-  START_CHECKPOINT((byte) 0x46),
-
-  /**
-   * Defines the end of a checkpoint
-   */
-  END_CHECKPOINT((byte) 0x47);
+  VBUCKETSET((byte) 0x45);
 
   /**
    * The opcode value.
@@ -120,12 +110,7 @@ public enum TapOpcode {
       return TapOpcode.SASLLIST;
     } else if (b == TapOpcode.VBUCKETSET.opcode) {
       return TapOpcode.VBUCKETSET;
-    } else if (b == TapOpcode.START_CHECKPOINT.opcode) {
-      return TapOpcode.START_CHECKPOINT;
-    } else if (b == TapOpcode.END_CHECKPOINT.opcode) {
-      return TapOpcode.END_CHECKPOINT;
-    }
-    else {
+    } else {
       return null;
     }
   }

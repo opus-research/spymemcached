@@ -23,7 +23,6 @@
 package net.spy.memcached.util;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import net.spy.memcached.KeyUtil;
 import net.spy.memcached.MemcachedClientIF;
@@ -39,13 +38,9 @@ public final class StringUtils {
 
   public static String join(Collection<String> keys, String delimiter) {
     StringBuilder sb = new StringBuilder();
-    if (!keys.isEmpty()) {
-      Iterator<String> itr = keys.iterator();
-      sb.append(itr.next());
-      while (itr.hasNext()) {
-        sb.append(delimiter);
-        sb.append(itr.next());
-      }
+    for (String key : keys) {
+      sb.append(key);
+      sb.append(delimiter);
     }
     return sb.toString();
   }

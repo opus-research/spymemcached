@@ -17,7 +17,7 @@ abstract class SingleKeyOperationImpl extends OperationImpl
 
 	protected final String key;
 
-	protected SingleKeyOperationImpl(int c, int o, String k, OperationCallback cb) {
+	protected SingleKeyOperationImpl(byte c, int o, String k, OperationCallback cb) {
 		super(c, o, cb);
 		key = k;
 	}
@@ -46,5 +46,10 @@ abstract class SingleKeyOperationImpl extends OperationImpl
 	public short getVBucket(String k) {
 		assert k.equals(key) : (k + " doesn't match the key " + key + " for this operation");
 		return vbucket;
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + " Key: " + key;
 	}
 }

@@ -32,7 +32,7 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 	 * Construct an optimized get starting with the given get operation.
 	 */
 	public OptimizedSetImpl(CASOperation firstStore) {
-		super(-1, -1, NOOP_CALLBACK);
+		super(DUMMY_OPCODE, -1, NOOP_CALLBACK);
 		addOperation(firstStore);
 	}
 
@@ -45,7 +45,7 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 		int keylen = KeyUtil.getKeyBytes(k).length;
 
 		byteCount += MIN_RECV_PACKET + StoreOperationImpl.EXTRA_LEN
-			+ keylen + op.getBytes().length;
+			+ keylen + op.getData().length;
 	}
 
 	public int size() {
@@ -68,11 +68,11 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 
 			int myOpaque = generateOpaque();
 			callbacks.put(myOpaque, so.getCallback());
-			byte[] data = so.getBytes();
+			byte[] data = so.getData();
 
 			// Custom header
 			bb.put(REQ_MAGIC);
-			bb.put((byte)cmdMap(so.getStoreType()));
+			bb.put(cmdMap(so.getStoreType()));
 			bb.putShort((short)keyBytes.length);
 			bb.put((byte)StoreOperationImpl.EXTRA_LEN); // extralen
 			bb.put((byte)0); // data type
@@ -104,15 +104,15 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 		setBuffer(bb);
 	}
 
-	private static int cmdMap(StoreType t) {
-		int rv=-1;
+	private static byte cmdMap(StoreType t) {
+		byte rv=DUMMY_OPCODE;
 		switch(t) {
 			case set: rv=StoreOperationImpl.SETQ; break;
 			case add: rv=StoreOperationImpl.ADDQ; break;
 			case replace: rv=StoreOperationImpl.REPLACEQ; break;
 		}
 		// Check fall-through.
-		assert rv != -1 : "Unhandled store type:  " + t;
+		assert rv != DUMMY_OPCODE : "Unhandled store type:  " + t;
 		return rv;
 	}
 
@@ -153,5 +153,4 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 		}
 
 	}
-
 }

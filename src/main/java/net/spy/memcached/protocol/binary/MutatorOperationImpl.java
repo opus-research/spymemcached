@@ -8,8 +8,8 @@ import net.spy.memcached.ops.OperationStatus;
 class MutatorOperationImpl extends SingleKeyOperationImpl implements
 		MutatorOperation {
 
-	private static final int CMD_INCR=0x05;
-	private static final int CMD_DECR=0x06;
+	private static final byte CMD_INCR=0x05;
+	private static final byte CMD_DECR=0x06;
 
 	private final Mutator mutator;
 	private final long by;
@@ -63,4 +63,9 @@ class MutatorOperationImpl extends SingleKeyOperationImpl implements
 		return mutator;
 	}
 
+	@Override
+	public String toString() {
+		return super.toString() + " Amount: " + by + " Default: " + def + " Exp: "
+			+ exp;
+	}
 }

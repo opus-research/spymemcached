@@ -32,9 +32,7 @@ import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationState;
-import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VBucketAware;
-import net.spy.memcached.protocol.binary.TapAckOperationImpl;
 import net.spy.memcached.vbucket.VBucketNodeLocator;
 import net.spy.memcached.vbucket.Reconfigurable;
 import net.spy.memcached.vbucket.config.Bucket;
@@ -477,31 +475,13 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 	private void handleReads(SelectionKey sk, MemcachedNode qa)
 		throws IOException {
 		Operation currentOp = qa.getCurrentReadOp();
-		// If it's a tap ack there is no response
-		if (currentOp instanceof TapAckOperationImpl) {
-			qa.removeCurrentReadOp();
-			return;
-		}
 		ByteBuffer rbuf=qa.getRbuf();
 		final SocketChannel channel = qa.getChannel();
 		int read=channel.read(rbuf);
 		if (read < 0) {
-			if (currentOp instanceof TapOperation) {
-				// If were doing tap then we won't throw an exception
-				currentOp.getCallback().complete();
-				((TapOperation)currentOp).streamClosed(OperationState.COMPLETE);
-				getLogger().debug(
-						"Completed read op: %s and giving the next %d bytes",
-						currentOp, rbuf.remaining());
-				Operation op=qa.removeCurrentReadOp();
-				assert op == currentOp : "Expected to pop " + currentOp + " got " + op;
-				queueReconnect(qa);
-				currentOp=qa.getCurrentReadOp();
-			} else {
-			    // our model is to keep the connection alive for future ops
-			    // so we'll queue a reconnect if disconnected via an IOException
-			    throw new IOException("Disconnected unexpected, will reconnect.");
-			}
+		    // our model is to keep the connection alive for future ops
+		    // so we'll queue a reconnect if disconnected via an IOException
+		    throw new IOException("Disconnected unexpected, will reconnect.");
 		}
 		while(read > 0) {
 			getLogger().debug("Read %d bytes", read);
@@ -723,10 +703,10 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 			// add the vbucketIndex to the operation
 			if (locator instanceof VBucketNodeLocator) {
 				VBucketNodeLocator vbucketLocator = (VBucketNodeLocator) locator;
-				short vbucketIndex = (short)vbucketLocator.getVBucketIndex(key);
+				int vbucketIndex = vbucketLocator.getVBucketIndex(key);
 				if (o instanceof VBucketAware) {
 					VBucketAware vbucketAwareOp = (VBucketAware) o;
-					vbucketAwareOp.setVBucket(key, vbucketIndex);
+					vbucketAwareOp.setVBucket(vbucketIndex);
 					if (!vbucketAwareOp.getNotMyVbucketNodes().isEmpty()) {
 						MemcachedNode alternative = vbucketLocator.
 						getAlternative(key, vbucketAwareOp.getNotMyVbucketNodes());
@@ -753,7 +733,7 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		getLogger().debug("Added %s to %s", o, node);
 	}
 
-	private void addOperation(final MemcachedNode node, final Operation o) {
+	public void addOperation(final MemcachedNode node, final Operation o) {
 		o.setHandlingNode(node);
 		o.initialize();
 		node.addOp(o);
@@ -768,18 +748,6 @@ public final class MemcachedConnection extends SpyObject implements Reconfigurab
 		for(Map.Entry<MemcachedNode, Operation> me : ops.entrySet()) {
 			final MemcachedNode node=me.getKey();
 			Operation o=me.getValue();
-			// add the vbucketIndex to the operation
-			if (locator instanceof VBucketNodeLocator) {
-				if (o instanceof KeyedOperation && o instanceof VBucketAware) {
-					Collection<String> keys = ((KeyedOperation)o).getKeys();
-					VBucketNodeLocator vbucketLocator = (VBucketNodeLocator) locator;
-					for (String key : keys) {
-						short vbucketIndex = (short)vbucketLocator.getVBucketIndex(key);
-						VBucketAware vbucketAwareOp = (VBucketAware) o;
-						vbucketAwareOp.setVBucket(key, vbucketIndex);
-					}
-				}
-			}
 			o.setHandlingNode(node);
 			o.initialize();
 			node.addOp(o);

@@ -51,7 +51,6 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 
 	// request header fields
 	private final int cmd;
-	protected short vbucket=0;
 	protected final int opaque;
 
 	private final byte[] header=new byte[MIN_RECV_PACKET];
@@ -283,7 +282,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 		bb.putShort((short)keyBytes.length);
 		bb.put((byte)extraLen);
 		bb.put((byte)0); // data type
-		bb.putShort(vbucket); // vbucket
+		bb.putShort((short) vbucket); // reserved
 		bb.putInt(keyBytes.length + val.length + extraLen);
 		bb.putInt(opaque);
 		bb.putLong(cas);

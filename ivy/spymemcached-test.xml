@@ -22,11 +22,11 @@
   SOFTWARE.
 -->
 <ivy-module version="1.0">
-  <info organisation="net.spy.memcached" module="${name}">
+  <info organisation="net.spy.memcached" module="${name}-test">
     <license name="Apache 2.0"/>
     <ivyauthor name="Couchbase" url="http://github.com/dustin/java-memcached-client" />
     <description>
-        Spymemcached
+        Spymemcached Tests
     </description>
   </info>
   <configurations defaultconfmapping="default">
@@ -45,6 +45,8 @@
   </publications>
   <dependencies>
     <dependency org="log4j" name="log4j" rev="${log4j.version}" conf="default" />
+    <dependency org="jmock" name="jmock" rev="${jmock.version}" conf="default" />
+    <dependency org="junit" name="junit" rev="${junit.version" conf="default" />
     <dependency org="org.springframework" name="spring-beans" rev="${spring-beans.version}" conf="default" />
   </dependencies>
 </ivy-module>

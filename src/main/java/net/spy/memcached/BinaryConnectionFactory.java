@@ -46,8 +46,7 @@ public class BinaryConnectionFactory extends DefaultConnectionFactory {
 			createWriteOperationQueue(),
 			createOperationQueue(),
 			getOpQueueMaxBlockTime(),
-			doAuth,
-			getOperationTimeout());
+			doAuth);
 	}
 
 	@Override

@@ -39,7 +39,6 @@ import net.spy.memcached.protocol.couchdb.ViewResponseWithDocs;
 
 
 import net.spy.memcached.vbucket.ConfigurationException;
-import net.spy.memcached.vbucket.config.Bucket;
 
 public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF {
 
@@ -53,7 +52,7 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 
 	public CouchbaseClient(List<URI> baseList, String bucketName, String usr, String pwd)
 			throws IOException, ConfigurationException {
-		super(new CouchbaseConnectionFactory(baseList, bucketName, usr, pwd), false);
+		super(new CouchbaseConnectionFactory(baseList, bucketName, usr, pwd));
 		this.bucketName = bucketName;
 		CouchbaseConnectionFactory cf = (CouchbaseConnectionFactory)connFactory;
 		List<InetSocketAddress> addrs = AddrUtil.getAddresses(cf.getVBucketConfig().getServers());
@@ -63,7 +62,6 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 		while (!conv.isEmpty()) { addrs.add(new InetSocketAddress(conv.remove(0).getHostName(), 5984)); }
 
 		cconn = cf.createCouchDBConnection(addrs);
-		cf.getConfigurationProvider().subscribe(cf.getBucket(), this);
 	}
 
 	/**
@@ -298,23 +296,6 @@ public class CouchbaseClient extends MembaseClient implements CouchbaseClientIF 
 	public void addOp(final HttpOperation op) {
 		cconn.checkState();
 		cconn.addOp(op);
-	}
-
-	/**
-	 * This function is called when there is a topology change in the
-	 * cluster. This function is intended for internal use only.
-	 */
-	@Override
-	public void reconfigure(Bucket bucket) {
-		reconfiguring = true;
-		try {
-			mconn.reconfigure(bucket);
-			cconn.reconfigure(bucket);
-		} catch (IllegalArgumentException ex) {
-			getLogger().warn("Failed to reconfigure client, staying with previous configuration.", ex);
-		} finally {
-			reconfiguring = false;
-		}
 	}
 
 	/**

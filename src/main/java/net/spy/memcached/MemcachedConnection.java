@@ -21,6 +21,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -203,7 +204,7 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 		} catch (IOException e) {
 		    getLogger().error("Connection reconfiguration failed", e);
 		} finally {
-			reconfiguring = false;
+			reconfiguring = true;
 		}
 	}
 
@@ -336,9 +337,13 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 			// Transfer the queue into a hashset.  There are very likely more
 			// additions than there are nodes.
 			Collection<MemcachedNode> todo=new HashSet<MemcachedNode>();
-			MemcachedNode qaNode = null;
-			while ((qaNode = addedQueue.poll()) != null) {
-				todo.add(qaNode);
+			try {
+				MemcachedNode qa=null;
+				while((qa=addedQueue.remove()) != null) {
+					todo.add(qa);
+				}
+			} catch(NoSuchElementException e) {
+				// Found everything
 			}
 
 			// Now process the queue.
@@ -906,18 +911,18 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 	@Override
 	public void run() {
 		while(running) {
-			if (!reconfiguring) {
-				try {
-					handleIO();
-				} catch (IOException e) {
-					logRunException(e);
-				} catch (CancelledKeyException e) {
-					logRunException(e);
-				} catch (ClosedSelectorException e) {
-					logRunException(e);
-				} catch (IllegalStateException e) {
-					logRunException(e);
-				}
+            if (!reconfiguring) {
+                try {
+                    handleIO();
+                } catch (IOException e) {
+                    logRunException(e);
+                } catch (CancelledKeyException e) {
+                    logRunException(e);
+                } catch (ClosedSelectorException e) {
+                    logRunException(e);
+                } catch (IllegalStateException e) {
+                    logRunException(e);
+                }
 			}
 		}
 		getLogger().info("Shut down memcached client");

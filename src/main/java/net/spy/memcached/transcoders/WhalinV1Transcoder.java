@@ -26,7 +26,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
 import net.spy.memcached.CachedData;
-import net.spy.memcached.util.StringUtils;
 
 /**
  * Handles old whalin (tested with v1.6) encoding: data type is in the first
@@ -62,9 +61,6 @@ public class WhalinV1Transcoder extends BaseSerializingTranscoder implements
     int flags = 0;
     if (o instanceof String) {
       b = encodeW1String((String) o);
-      if (StringUtils.isJsonObject((String) o)) {
-        return new CachedData(flags, b, getMaxSize());
-      }
     } else if (o instanceof StringBuffer) {
       b = encodeStringBuffer((StringBuffer) o);
     } else if (o instanceof StringBuilder) {

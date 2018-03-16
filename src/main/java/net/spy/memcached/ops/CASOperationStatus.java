@@ -31,9 +31,8 @@ public class CASOperationStatus extends OperationStatus {
 
   private final CASResponse casResponse;
 
-  public CASOperationStatus(boolean success, String msg, CASResponse cres,
-    StatusCode code) {
-    super(success, msg, code);
+  public CASOperationStatus(boolean success, String msg, CASResponse cres) {
+    super(success, msg);
     casResponse = cres;
   }
 

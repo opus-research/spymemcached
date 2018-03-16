@@ -1,7 +1,6 @@
 package net.spy.memcached;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -27,10 +26,7 @@ import net.spy.memcached.ops.SASLStepOperation;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VersionOperation;
-import net.spy.memcached.tapmessage.Opcode;
-import net.spy.memcached.tapmessage.RequestMessage;
 
 /**
  * Factory that builds operations for protocol handlers.
@@ -231,39 +227,4 @@ public interface OperationFactory {
 	 * @return a new operation for each key in the original operation
 	 */
 	Collection<Operation> clone(KeyedOperation op);
-
-	/**
-	 * Creates a tap backfill stream.
-	 * @param id The namenode id that can be used to restart a interrupted tap
-	 * connection
-	 * @param date The date to start backfill from.
-	 * @param cb The status callback.
-	 * @return The tap operation used to create and handle the stream.
-	 */
-	TapOperation tapBackfill(String id, Date date, String keyFilter,
-			String valueFilter, OperationCallback cb);
-
-	/**
-	 * Creates a custom tap stream.
-	 * @param id The namenode id that can be used to restart a interrupted tap
-	 * connection
-	 * @param message The tap message to send.
-	 * @param keyFilter A regular expression to filter key names with
-	 * @param valueFilter A regular expression to filter values with
-	 * @param cb The status callback.
-	 * @return The tap operation used to create and handle the stream.
-	 */
-	TapOperation tapCustom(String id, RequestMessage message, String keyFilter, 
-			String valueFilter, OperationCallback cb);
-
-	/**
-	 * Sends a tap ack message to the server.
-	 * 
-	 * @param opcode the opcode sent to the client by the server.
-	 * @param opaque the opaque value sent to the client by the server.
-	 * @param cb the callback for the tap stream.
-	 * @return a tap ack operation.
-	 */
-	TapOperation tapAck(Opcode opcode, int opaque,
-			OperationCallback cb);
 }

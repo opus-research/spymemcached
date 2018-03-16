@@ -25,6 +25,10 @@ import net.spy.memcached.vbucket.config.ConfigurationParserJSON;
 import net.spy.memcached.vbucket.config.ConfigurationParser;
 
 public class ConfigurationProviderHTTP extends SpyObject implements ConfigurationProvider {
+/**
+ * Configuration management class that provides methods for retrieving vbucket configuration and receiving
+ * configuration updates.
+ */
     private static final String DEFAULT_POOL_NAME = "default";
     private static final String ANONYMOUS_AUTH_BUCKET = "default";
     /**
@@ -44,16 +48,34 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
     private ConfigurationParser configurationParser = new ConfigurationParserJSON();
     private Map<String, BucketMonitor> monitors = new HashMap<String, BucketMonitor>();
 
+    /**
+     * Constructs a configuration provider with disabled authentication for the REST service
+     * @param baseList list of urls to treat as base
+     * @throws IOException
+     */
     public ConfigurationProviderHTTP(List<URI> baseList) throws IOException {
         this(baseList, null, null);
     }
 
+    /**
+     * Constructs a configuration provider with a given credentials for the REST service
+     * @param baseList list of urls to treat as base
+     * @param restUsr username
+     * @param restPwd password
+     * @throws IOException
+     */
     public ConfigurationProviderHTTP(List<URI> baseList, String restUsr, String restPwd) throws IOException {
         this.baseList = baseList;
         this.restUsr = restUsr;
         this.restPwd = restPwd;
     }
 
+    /**
+     * Connects to the REST service and retrieves the bucket configuration from the first pool available
+     * @param bucketname bucketname
+     * @return vbucket configuration
+     * @throws ConfigurationException
+     */
     public Bucket getBucketConfiguration(final String bucketname) throws ConfigurationException {
         if (bucketname == null || bucketname.isEmpty()) {
             throw new IllegalArgumentException("Bucket name can not be blank.");
@@ -72,7 +94,7 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
      * @param bucketToFind
      * @throws ConfigurationException
      */
-    private void readPools(String bucketToFind) throws ConfigurationException {
+    private void readPools(final String bucketToFind) throws ConfigurationException {
 	// the intent with this method is to encapsulate all of the walking of URIs
 	// and populating an internal object model of the configuration to one place
         for (URI baseUri : baseList) {
@@ -107,7 +129,6 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
                 for (Pool pool : pools.values()) {
                     if (pool.hasBucket(bucketToFind)) {
                         bucketFound = true;
-			break;
                     }
                 }
                 if (bucketFound) {
@@ -133,12 +154,18 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
         List<String> servers = bucket.getVbuckets().getServers();
         StringBuilder serversString = new StringBuilder();
         for (String server : servers) {
-            serversString.append(server).append(' ');
+            serversString.append(server).append(" ");
         }
         return AddrUtil.getAddresses(serversString.toString());
     }
 
-    public void subscribe(String bucketName, Reconfigurable rec) throws ConfigurationException {
+    /**
+     * Subscribes for configuration updates
+     * @param bucketName bucket name to receive configuration for
+     * @param rec reconfigurable that will receive updates
+     * @throws ConfigurationException
+     */
+    public void subscribe(final String bucketName, final Reconfigurable rec) throws ConfigurationException {
 
         Bucket bucket = getBucketConfiguration(bucketName);
 
@@ -155,6 +182,11 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
         }
     }
 
+    /**
+     * Unsubscribe from updates on a given bucket and given reconfigurable
+     * @param vbucketName bucket name
+     * @param rec reconfigurable
+     */
     public void unsubscribe(String vbucketName, Reconfigurable rec) {
         BucketMonitor monitor = this.monitors.get(vbucketName);
         if (monitor != null) {
@@ -171,6 +203,9 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
         return ANONYMOUS_AUTH_BUCKET;
     }
 
+    /**
+     * Shutdowns a monitor connections to the REST service
+     */
     public void shutdown() {
         for (BucketMonitor monitor : this.monitors.values()) {
             monitor.shutdown();
@@ -204,32 +239,34 @@ public class ConfigurationProviderHTTP extends SpyObject implements Configuratio
 
     }
 
+    /**
+     * Helper method that reads content from url connection to the string
+     * @param connection a given url connection
+     * @return content string
+     * @throws IOException
+     */
     private String readToString(URLConnection connection) throws IOException {
-	BufferedReader reader = null;
-	try {
-		InputStream inStream = connection.getInputStream();
-		if (connection instanceof java.net.HttpURLConnection) {
-			HttpURLConnection httpConnection = (HttpURLConnection) connection;
-			if (httpConnection.getResponseCode() == 403) {
-				throw new IOException("Service does not accept the authentication credentials: "
-					+ httpConnection.getResponseCode() + httpConnection.getResponseMessage());
-			} else if (httpConnection.getResponseCode() >= 400) {
-				throw new IOException("Service responded with a failure code: "
-					+ httpConnection.getResponseCode() + httpConnection.getResponseMessage());
-			}
-		} else {
-			throw new IOException("Unexpected URI type encountered");
-		}
-		reader = new BufferedReader(new InputStreamReader(inStream));
-		String str;
-		StringBuilder buffer = new StringBuilder();
-		while ((str = reader.readLine()) != null) {
-			buffer.append(str);
-		}
-		return buffer.toString();
-	    } finally {
-	    reader.close();
-	}
+        InputStream inStream = connection.getInputStream();
+        if (connection instanceof java.net.HttpURLConnection) {
+            HttpURLConnection httpConnection = (HttpURLConnection) connection;
+            if (httpConnection.getResponseCode() == 403) {
+                throw new IOException("Service does not accept the authentication credentials: "
+                        + httpConnection.getResponseCode() + httpConnection.getResponseMessage());
+            } else if (httpConnection.getResponseCode() >= 400) {
+                throw new IOException("Service responded with a failure code: "
+                        + httpConnection.getResponseCode() + httpConnection.getResponseMessage());
+            }
+        } else {
+            throw new IOException("Unexpected URI type encountered");
+        }
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inStream));
+        String str;
+        StringBuilder buffer = new StringBuilder();
+        while ((str = reader.readLine()) != null) {
+            buffer.append(str);
+        }
+        reader.close();
+        return buffer.toString();
     }
 
 }

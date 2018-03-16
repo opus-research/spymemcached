@@ -173,6 +173,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 	 */
 	protected OperationStatus getStatusForErrorCode(int errCode, byte[] errPl) {
         if (errCode == ERR_NOT_MY_VBUCKET) {
+            getLogger().warn("Not_my_vbucket on operation " + this);
             return NOT_MY_VBUCKET_STATUS;
         }
 		return null;
@@ -268,7 +269,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 		bb.putShort((short)keyBytes.length);
 		bb.put((byte)extraLen);
 		bb.put((byte)0); // data type
-		bb.putShort((short) vbucket); // reserved
+		bb.putShort((short) this.vbucket); // reserved
 		bb.putInt(keyBytes.length + val.length + extraLen);
 		bb.putInt(opaque);
 		bb.putLong(cas);

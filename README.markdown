@@ -1,23 +1,30 @@
 Building:
 
-	Spymemcached can be compiled using Apache Ant by running the
-	following command:
+	Spymemcached can be compiled using Apache buildr and requires a
+	running memcached or Membase instance in order for all unit tests
+	to pass successfully. To build Spymemcached with a memcached instance
+	running on localhost on port 11211 use the following command:
 
-	ant
+	buildr package
 
-	This will generate binary, source, and javadoc jars in the build
+	This will generate binary source, and javadoc jars in the target
 	directory of the project.
 
-	To run the Spymemcached tests against Membase Server run the
-	following command:
+	To compile the Spymemcached against Membase running on localhost use
+	the following command:
 
-	ant test -Dserver.type=membase
+	buildr package SPYMC_SERVER_TYPE="membase"
 
-	To test Spymemcached against Membase running on a different host
+	To compile Spymemcached against Membase running on a different host
 	use the following command:
 
-	ant test -Dserver.type=membase \
-	-Dserver.address_v4=ip_address_of_membase
+	buildr package SPYMC_SERVER_TYPE="membase" \
+	SPYMC_TEST_SERVER_V4="ip_address_of_membase"
+
+	To compile Spymemcached on localhost against memcached and skip all
+	tests run the following command:
+
+	buildr TEST=no
 
 Testing:
 
@@ -25,23 +32,27 @@ Testing:
 	arguments that can be used to configure the location and type of your
 	testing server. The arguments are listed below.
 
-	-Dserver.type=server_type
+	SPYMC_SERVER_TYPE="server_type"
 
 	This argument is used to specify the type of testing server you are
 	using. By default this argument is set to memcached. It can be set to
-	either "memcached", "membase" or "couchbase". Invalid testing server
-	types will default to memcached.
+	either "memcached" or "membase". Invalid testing server types will
+	default to memcached.
 
-	-Dserver.address_v4=ipv4_address_of_testing_server
+	SPYMC_TEST_SERVER_V4="ip_address_of_testing_server"
 
 	This argument is used to specify the ipv4 address of your testing
 	server. By default it is set to localhost.
 
-	-Dserver.address_v6=ipv6_address_of_testing_server
+	SPYMC_TEST_SERVER_V6
 
 	This argument is used to set the ipv6 address of your testing server.
-	By default it is set to ::1. If an ipv6 address is specified then an
-	ipv4 address must be specified otherwise there may be test failures.
+	By default it is set to ::1. This argument does not need to be
+	specified if SPYMC_TEST_SERVER_V4 is specified. If an ipv4 address is
+	specified, but an ipv6 address is not specified then the ipv6 address
+	will default to the ipv4 address. If an ipv6 address is specified
+	then an ipv4 address must be specified otherwise there may be test
+	failures.
 
 More Information:
 

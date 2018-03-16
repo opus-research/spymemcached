@@ -8,31 +8,21 @@ import java.util.concurrent.ConcurrentHashMap;
  * Pool represents a collection of buckets
  */
 public class Pool {
-    // it's base uri
-    private URI base;
     // pool name
-    private String name;
+    private final String name;
     // pool's uri
-    private URI uri;
+    private final URI uri;
     // pool's streaming uri
-    private URI streamingUri;
+    private final URI streamingUri;
     // buckets uri
-    private Map<String, Bucket> buckets = new ConcurrentHashMap<String, Bucket>();
+    private final Map<String, Bucket> buckets = new ConcurrentHashMap<String, Bucket>();
     // buckets related to this pool
     private URI bucketsUri;
-
-    public Pool() {
-        super();
-    }
 
     public Pool(String name, URI uri, URI streamingUri) {
         this.name = name;
         this.uri = uri;
         this.streamingUri = streamingUri;
-    }
-
-    public URI getBase() {
-        return base;
     }
 
     public String getName() {

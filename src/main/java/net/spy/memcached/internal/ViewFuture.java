@@ -1,5 +1,7 @@
 package net.spy.memcached.internal;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -10,22 +12,28 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.spy.memcached.OperationTimeoutException;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.protocol.couchdb.HttpOperation;
+import net.spy.memcached.protocol.couchdb.ViewResponseWithDocs;
+import net.spy.memcached.protocol.couchdb.HttpOperationImpl;
+import net.spy.memcached.protocol.couchdb.RowWithDocs;
 
-public class HttpFuture<T> extends SpyObject implements Future<T>{
-	private final AtomicReference<T> objRef;
+public class ViewFuture extends SpyObject implements Future<ViewResponseWithDocs> {
+	private final AtomicReference<ViewResponseWithDocs> viewRef;
+	private final AtomicReference<BulkFuture<Map<String, Object>>> objRef;
+	private OperationStatus status;
 	private final CountDownLatch latch;
-    private final long timeout;
-    private OperationStatus status;
-    private HttpOperation op;
-
+	
+	private final long timeout;
+    private HttpOperationImpl op;
+    
     private volatile boolean completed;
-
-    public HttpFuture(CountDownLatch latch, long timeout) {
+    
+    public ViewFuture(CountDownLatch latch, long timeout) {
         super();
-        this.objRef = new AtomicReference<T>(null);
+        this.viewRef = new AtomicReference<ViewResponseWithDocs>(null);
+        this.objRef = new AtomicReference<BulkFuture<Map<String, Object>>>(null);
         this.latch = latch;
         this.timeout = timeout;
+        this.status = null;
     }
 
     public boolean isCompleted() {
@@ -38,7 +46,7 @@ public class HttpFuture<T> extends SpyObject implements Future<T>{
 	}
 
 	@Override
-	public T get() throws InterruptedException, ExecutionException {
+	public ViewResponseWithDocs get() throws InterruptedException, ExecutionException {
 		try {
 			return get(timeout, TimeUnit.MILLISECONDS);
 		} catch (TimeoutException e) {
@@ -49,8 +57,9 @@ public class HttpFuture<T> extends SpyObject implements Future<T>{
 	}
 
 	@Override
-	public T get(long duration, TimeUnit units) throws InterruptedException,
+	public ViewResponseWithDocs get(long duration, TimeUnit units) throws InterruptedException,
 			ExecutionException, TimeoutException {
+		
 		if(!latch.await(duration, units)) {
 			if (op != null) {
 				op.timeOut();
@@ -59,7 +68,7 @@ public class HttpFuture<T> extends SpyObject implements Future<T>{
 			throw new TimeoutException(
 					"Timed out waiting for operation");
 		}
-
+		
 		if(op != null && op.hasErrored()) {
 			status = new OperationStatus(false, op.getException().getMessage());
 			throw new ExecutionException(op.getException());
@@ -74,8 +83,21 @@ public class HttpFuture<T> extends SpyObject implements Future<T>{
 			status = new OperationStatus(false, "Timed out");
             throw new ExecutionException(new OperationTimeoutException("Operation timed out."));
 		}
+		if (objRef.get() == null || !(viewRef.get() instanceof ViewResponseWithDocs)) {
+			return viewRef.get();
+		}
 
-		return objRef.get();
+		Map<String, Object> docMap = objRef.get().get();
+		ViewResponseWithDocs view = (ViewResponseWithDocs)viewRef.get();
+		ViewResponseWithDocs newView = new ViewResponseWithDocs();
+		Iterator<RowWithDocs> itr = view.iterator();
+
+		while(itr.hasNext()) {
+			RowWithDocs r = itr.next();
+			newView.add(new RowWithDocs(r.getId(), r.getKey(), r.getValue(), docMap.get(r.getId())));
+		}
+		
+		return (ViewResponseWithDocs)newView;
 	}
 
 	public OperationStatus getStatus() {
@@ -91,10 +113,11 @@ public class HttpFuture<T> extends SpyObject implements Future<T>{
 		}
 		return status;
 	}
-	
-	public void set(T op, OperationStatus s) {
-		objRef.set(op);
-		status = s;
+
+	@Override
+	public boolean isCancelled() {
+		assert op != null : "No operation";
+		return op.isCancelled();
 	}
 
 	@Override
@@ -103,14 +126,16 @@ public class HttpFuture<T> extends SpyObject implements Future<T>{
 		return latch.getCount() == 0 ||
 			op.isCancelled() || op.hasErrored();
 	}
-
-	public void setOperation(HttpOperation to) {
+	
+	public void setOperation(HttpOperationImpl to) {
 		this.op = to;
 	}
 
-	@Override
-	public boolean isCancelled() {
-		assert op != null : "No operation";
-		return op.isCancelled();
+	public void set(ViewResponseWithDocs viewResponse,
+			BulkFuture<Map<String, Object>> op,
+			OperationStatus s) {
+		viewRef.set(viewResponse);
+		objRef.set(op);
+		status = s;
 	}
 }

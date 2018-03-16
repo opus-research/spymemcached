@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,10 +29,6 @@ public enum PersistTo {
    * Persist to the Master. ONE implies MASTER.
    */
   MASTER,
-  /**
-   * ONE implies MASTER.
-   */
-  ONE,
   /**
    * Persist to at least two nodes including Master.
    */

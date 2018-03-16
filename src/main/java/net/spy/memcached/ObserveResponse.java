@@ -1,6 +1,5 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2012 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,35 +29,27 @@ public enum ObserveResponse {
   /**
    * Response indicating the key was uninitialized.
    */
-  UNINITIALIZED((byte) 0xff),
+  UNINITIALIZED,
   /**
    * Response indicating the key was modified.
    */
-  MODIFIED((byte) 0xfe),
+  MODIFIED,
   /**
    * Response indicating the key was persisted.
    */
-  FOUND_PERSISTED((byte) 0x01),
+  FOUND_PERSISTED,
   /**
    * Response indicating the key was found but not persisted.
    */
-  FOUND_NOT_PERSISTED((byte) 0x00),
+  FOUND_NOT_PERSISTED,
   /**
    * Response indicating the key was not found and persisted, as in
    * the case of deletes - a real delete.
    */
-  NOT_FOUND_PERSISTED((byte) 0x80),
+  NOT_FOUND_PERSISTED,
   /**
    * Response indicating the key was not found and not
    * persisted, as in the case of deletes - a logical delete.
    */
-  NOT_FOUND_NOT_PERSISTED((byte) 0x11);
-
-  private final byte value;
-
-
-  ObserveResponse(byte b) {
-    value = b;
-  }
-
+  NOT_FOUND_NOT_PERSISTED
 }

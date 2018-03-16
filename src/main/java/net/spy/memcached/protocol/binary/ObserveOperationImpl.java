@@ -36,8 +36,10 @@ class ObserveOperationImpl extends SingleKeyOperationImpl implements
   private final long cas;
   private final String key;
   private final int index;
-  private byte keystate = (byte)0xff;
-  private long retCas = 0;
+  private short keystate=0x0;
+  private long retCas=0;
+
+  private static final int EXTRA_HDR_LEN = 16;
 
   public ObserveOperationImpl(String k, long c, int i,
           OperationCallback cb) {
@@ -61,10 +63,23 @@ class ObserveOperationImpl extends SingleKeyOperationImpl implements
   @Override
   protected void decodePayload(byte[] pl) {
     final short  keylen = (short) decodeShort(pl, 2);
-    keystate = (byte) decodeByte(pl, keylen+4);
+    keystate = (short) decodeByte(pl, keylen+4);
     retCas = (long) decodeLong(pl, keylen+5);
 
-    ObserveResponse r = ObserveResponse.values()[keystate];
+    ObserveResponse r = ObserveResponse.FOUND_NOT_PERSISTED;
+    switch (keystate) {
+    case 0x00 :
+      r = ObserveResponse.FOUND_NOT_PERSISTED;
+      break;
+    case 0x01 :
+      r = ObserveResponse.FOUND_PERSISTED;
+      break;
+    case 0x80 :
+      r = ObserveResponse.NOT_FOUND_NOT_PERSISTED;
+      break;
+    default:
+      r = ObserveResponse.NOT_FOUND_PERSISTED;
+    }
 
     ((ObserveOperation.Callback) getCallback()).gotData(key, retCas, r);
     getCallback().receivedStatus(STATUS_OK);

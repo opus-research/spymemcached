@@ -89,8 +89,8 @@ public interface OperationFactory {
   UnlockOperation unlock(String key, long casId,
           OperationCallback operationCallback);
 
-  /**
-   * Create an Observe operation.
+   /**
+   * Create a Observe operation.
    *
    * @param key the key to observe
    * @param casId the value of CAS

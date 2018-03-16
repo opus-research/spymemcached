@@ -2,12 +2,10 @@ package net.spy.memcached.protocol.ascii;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 
-import net.spy.memcached.internal.SyncRequest;
 import net.spy.memcached.ops.BaseOperationFactory;
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.ConcatenationOperation;
@@ -31,11 +29,7 @@ import net.spy.memcached.ops.SASLStepOperation;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.SyncOperation;
-import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VersionOperation;
-import net.spy.memcached.tapmessage.Opcode;
-import net.spy.memcached.tapmessage.RequestMessage;
 
 /**
  * Operation factory for the ascii protocol.
@@ -79,12 +73,6 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 
 	public StatsOperation stats(String arg, StatsOperation.Callback cb) {
 		return new StatsOperationImpl(arg, cb);
-	}
-
-	public SyncOperation sync(Map<SyncRequest, Integer> keys, int replicaCount,
-			boolean persist, boolean mutation, boolean pandm,
-			OperationCallback cb) {
-		throw new UnsupportedOperationException("Sync is not supported in ascii");
 	}
 
 	public StoreOperation store(StoreType storeType, String key, int flags,
@@ -140,23 +128,6 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 	public SASLAuthOperation saslAuth(String[] mech, String serverName,
 			Map<String, ?> props, CallbackHandler cbh, OperationCallback cb) {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public TapOperation tapBackfill(String id, Date date, String keyFilter,
-			String valueFilter, OperationCallback cb) {
-		throw new UnsupportedOperationException("Tap is not supported for ascii");
-	}
-
-	@Override
-	public TapOperation tapCustom(String id, RequestMessage message,
-			String keyFilter, String valueFilter, OperationCallback cb) {
-		throw new UnsupportedOperationException("Tap is not supported for ascii");
-	}
-
-	@Override
-	public TapOperation tapAck(Opcode opcode, int opaque, OperationCallback cb) {
-		throw new UnsupportedOperationException("Tap is not supported for ascii");
 	}
 
 }

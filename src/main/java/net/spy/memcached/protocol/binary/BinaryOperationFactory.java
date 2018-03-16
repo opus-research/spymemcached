@@ -2,12 +2,10 @@ package net.spy.memcached.protocol.binary;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 
-import net.spy.memcached.internal.SyncRequest;
 import net.spy.memcached.ops.BaseOperationFactory;
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.ConcatenationOperation;
@@ -32,12 +30,8 @@ import net.spy.memcached.ops.SASLStepOperation;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.SyncOperation;
-import net.spy.memcached.ops.TapOperation;
 import net.spy.memcached.ops.VersionOperation;
 import net.spy.memcached.ops.GetOperation.Callback;
-import net.spy.memcached.tapmessage.Opcode;
-import net.spy.memcached.tapmessage.RequestMessage;
 
 /**
  * Factory for binary operations.
@@ -82,12 +76,6 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 	public StatsOperation stats(String arg,
 			net.spy.memcached.ops.StatsOperation.Callback cb) {
 		return new StatsOperationImpl(arg, cb);
-	}
-
-	public SyncOperation sync(Map<SyncRequest, Integer> keys, int replicaCount,
-			boolean persist, boolean mutation, boolean pandm,
-			OperationCallback cb) {
-		return new SyncOperationImpl(keys, replicaCount, persist, mutation, pandm, cb);
 	}
 
 	public StoreOperation store(StoreType storeType, String key, int flags,
@@ -152,17 +140,4 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 				props, cbh, cb);
 	}
 
-	public TapOperation tapBackfill(String id, Date date, String keyFilter,
-			String valueFilter, OperationCallback cb) {
-		return new TapBackfillOperationImpl(id, date, keyFilter, valueFilter, cb);
-	}
-
-	public TapOperation tapCustom(String id, RequestMessage message, String keyFilter,
-			String valueFilter, OperationCallback cb) {
-		return new TapCustomOperationImpl(id, message, keyFilter, valueFilter, cb);
-	}
-
-	public TapOperation tapAck(Opcode opcode, int opaque, OperationCallback cb) {
-		return new TapAckOperationImpl(opcode, opaque, cb);
-	}
 }

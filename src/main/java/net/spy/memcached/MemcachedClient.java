@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,9 +36,6 @@ import net.spy.memcached.internal.BulkGetFuture;
 import net.spy.memcached.internal.GetFuture;
 import net.spy.memcached.internal.OperationFuture;
 import net.spy.memcached.internal.SingleElementInfiniteIterator;
-import net.spy.memcached.internal.SyncFuture;
-import net.spy.memcached.internal.SyncRequest;
-import net.spy.memcached.internal.SyncResponse;
 import net.spy.memcached.ops.CASOperationStatus;
 import net.spy.memcached.ops.CancelledOperationStatus;
 import net.spy.memcached.ops.ConcatenationType;
@@ -55,7 +51,6 @@ import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.ops.StatsOperation;
 import net.spy.memcached.ops.StoreType;
-import net.spy.memcached.ops.SyncOperation;
 import net.spy.memcached.transcoders.TranscodeService;
 import net.spy.memcached.transcoders.Transcoder;
 import net.spy.memcached.vbucket.ConfigurationException;
@@ -136,7 +131,6 @@ public class MemcachedClient extends SpyThread
 	private final AuthThreadMonitor authMonitor = new AuthThreadMonitor();
 	private volatile boolean reconfiguring = false;
 	private ConfigurationProvider configurationProvider;
-	private Bucket bucket;
 
 	/**
 	 * Get a memcache client operating on the specified memcached locations.
@@ -226,7 +220,7 @@ public class MemcachedClient extends SpyThread
 			}
 		}
 		this.configurationProvider = new ConfigurationProviderHTTP(baseList, usr, pwd);
-		bucket = this.configurationProvider.getBucketConfiguration(bucketName);
+		Bucket bucket = this.configurationProvider.getBucketConfiguration(bucketName);
 		Config config = bucket.getConfig();
 		ConnectionFactoryBuilder cfb = new ConnectionFactoryBuilder();
 		if (config.getConfigType() == ConfigType.MEMBASE) {
@@ -1761,82 +1755,6 @@ public class MemcachedClient extends SpyThread
 		}));
 		rv.setOperation(op);
 		return rv;
-	}
-
-	public SyncFuture<SyncResponse> asyncSync(Collection<SyncRequest> keys,
-			int replicaCount, boolean persist, boolean mutation, boolean pandm) {
-		final Collection<SyncResponse> m=new LinkedList<SyncResponse>();
-
-		// Break the syncs down into groups by key
-		final Map<MemcachedNode, Map<SyncRequest, Integer>> chunks
-			=new HashMap<MemcachedNode, Map<SyncRequest, Integer>>();
-		final NodeLocator locator=conn.getLocator();
-		Iterator<SyncRequest> key_iter=keys.iterator();
-		while (key_iter.hasNext()) {
-			SyncRequest request=key_iter.next();
-			String key=request.getKey();
-			int vbucket = bucket.getConfig().getVbucketByKey(key);
-			validateKey(key);
-			final MemcachedNode primaryNode=locator.getPrimary(key);
-			MemcachedNode node=null;
-			if(primaryNode.isActive()) {
-				node=primaryNode;
-			} else {
-				for(Iterator<MemcachedNode> i=locator.getSequence(key);
-					node == null && i.hasNext();) {
-					MemcachedNode n=i.next();
-					if(n.isActive()) {
-						node=n;
-					}
-				}
-				if(node == null) {
-					node=primaryNode;
-				}
-			}
-			assert node != null : "Didn't find a node for " + key;
-			Map<SyncRequest, Integer> ks=chunks.get(node);
-			if(ks == null) {
-				ks=new HashMap<SyncRequest, Integer>();
-				chunks.put(node, ks);
-			}
-			ks.put(request, new Integer(vbucket));
-		}
-
-		final CountDownLatch latch=new CountDownLatch(chunks.size());
-		final Collection<Operation> ops=new ArrayList<Operation>(chunks.size());
-
-		SyncOperation.Callback cb=new SyncOperation.Callback() {
-			@SuppressWarnings("synthetic-access")
-			public void receivedStatus(OperationStatus status) {
-				if(!status.isSuccess()) {
-					getLogger().warn("Unsuccessful get:  %s", status);
-				}
-			}
-			@Override
-			public void gotData(SyncResponse s) {
-				m.add(s);
-			}
-			public void complete() {
-				latch.countDown();
-			}
-		};
-
-		// Now that we know how many servers it breaks down into, and the latch
-		// is all set up, convert all of these strings collections to operations
-		final Map<MemcachedNode, Operation> mops=
-			new HashMap<MemcachedNode, Operation>();
-
-		for(Map.Entry<MemcachedNode, Map<SyncRequest, Integer>> me
-				: chunks.entrySet()) {
-			Operation op=opFact.sync(me.getValue(), replicaCount, persist, mutation,
-					pandm, cb);
-			mops.put(me.getKey(), op);
-			ops.add(op);
-		}
-		assert mops.size() == chunks.size();
-		checkState();
-		conn.addOperations(mops);
-		return new SyncFuture<SyncResponse>(m, ops, latch);
 	}
 
 	/**

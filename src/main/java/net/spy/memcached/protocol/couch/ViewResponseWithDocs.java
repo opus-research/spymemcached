@@ -23,8 +23,6 @@
 package net.spy.memcached.protocol.couch;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -32,31 +30,43 @@ import java.util.Map;
  * Holds the response of a view query where the map function was
  * called and the documents are included.
  */
-public class ViewResponseWithDocs extends ViewResponse {
+public class ViewResponseWithDocs implements ViewResponse {
 
   private Map<String, Object> map;
+  private final Collection<ViewRow> rows;
+  private final Collection<RowError> errors;
 
-  public ViewResponseWithDocs(final Collection<ViewRow> rows,
-      final Collection<RowError> errors) {
-    super(rows, errors);
+  public ViewResponseWithDocs(final Collection<ViewRow> r,
+      final Collection<RowError> e) {
     map = null;
+    rows = r;
+    errors = e;
     for (ViewRow row : rows) {
       map.put(row.getId(), row.getDocument());
     }
   }
 
-  @Override
-  public Map<String, Object> getMap() {
-    if (map == null) {
-      map = new HashMap<String, Object>();
-      Iterator<ViewRow> itr = iterator();
+  public void addError(RowError r) {
+    errors.add(r);
+  }
 
-      while(itr.hasNext()) {
-        ViewRow cur = itr.next();
-        map.put(cur.getId(), cur.getDocument());
-      }
-    }
-    return Collections.unmodifiableMap(map);
+  public Collection<RowError> getErrors() {
+    return errors;
+  }
+
+  @Override
+  public Iterator<ViewRow> iterator() {
+    return rows.iterator();
+  }
+
+  @Override
+  public int size() {
+    return rows.size();
+  }
+
+  public Map<String, Object> getMap() {
+    throw new UnsupportedOperationException("This view doesn't contain "
+        + "documents");
   }
 
   @Override

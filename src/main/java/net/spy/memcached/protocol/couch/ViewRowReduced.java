@@ -31,24 +31,22 @@ public class ViewRowReduced implements ViewRow {
   private String value;
 
   public ViewRowReduced(String key, String value) {
-    // The key can be the string "null" so convert it to null
-    if (key != null && key.equals("null")) {
-      this.key = null;
+    this.key = parseField(key);
+    this.value = parseField(value);
+  }
+
+  private String parseField(String field) {
+    if (field != null && field.equals("null")) {
+      return null;
     } else {
-      this.key = key;
-    }
-    // The value can be the string "null" so convert it to null
-    if (value != null && value.equals("null")) {
-      this.value = null;
-    } else {
-      this.value = value;
+      return field;
     }
   }
 
   @Override
   public String getId() {
     throw new UnsupportedOperationException("Reduced views don't contain "
-        + "document id's");
+        + "document ids");
   }
 
   @Override

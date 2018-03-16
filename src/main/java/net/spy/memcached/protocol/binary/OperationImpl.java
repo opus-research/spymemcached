@@ -22,7 +22,6 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 
 	protected static final byte REQ_MAGIC = (byte)0x80;
 	protected static final byte RES_MAGIC = (byte)0x81;
-	protected static final byte DUMMY_OPCODE = (byte)0xff;
 	protected static final int MIN_RECV_PACKET=24;
 
 	/**
@@ -51,7 +50,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 	private static final AtomicInteger seqNumber=new AtomicInteger(0);
 
 	// request header fields
-	private final byte cmd;
+	private final int cmd;
 	protected short vbucket=0;
 	protected final int opaque;
 
@@ -61,7 +60,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 
 	// Response header fields
 	protected int keyLen;
-	protected byte responseCmd;
+	protected int responseCmd;
 	protected int errorCode;
 	protected int responseOpaque;
 	protected long responseCas;
@@ -74,7 +73,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 	 * @param o the opaque value.
 	 * @param cb
 	 */
-	protected OperationImpl(byte c, int o, OperationCallback cb) {
+	protected OperationImpl(int c, int o, OperationCallback cb) {
 		super();
 		cmd=c;
 		opaque=o;
@@ -110,7 +109,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 				int magic=header[0];
 				assert magic == RES_MAGIC : "Invalid magic:  " + magic;
 				responseCmd=header[1];
-				assert cmd == DUMMY_OPCODE || responseCmd == cmd
+				assert cmd == -1 || responseCmd == cmd
 					: "Unexpected response command value";
 				keyLen=decodeShort(header, 2);
 				// TODO:  Examine extralen and datatype
@@ -239,14 +238,14 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 	}
 
 	static long decodeLong(byte[] data, int i) {
-		return(data[i  ] & 0xff) << 56
-			| (data[i+1] & 0xff) << 48
-			| (data[i+2] & 0xff) << 40
-			| (data[i+3] & 0xff) << 32
-			| (data[i+4] & 0xff) << 24
-			| (data[i+5] & 0xff) << 16
-			| (data[i+6] & 0xff) << 8
-			| (data[i+7] & 0xff);
+		return(data[i  ] & 0xffL) << 56
+			| (data[i+1] & 0xffL) << 48
+			| (data[i+2] & 0xffL) << 40
+			| (data[i+3] & 0xffL) << 32
+			| (data[i+4] & 0xffL) << 24
+			| (data[i+5] & 0xffL) << 16
+			| (data[i+6] & 0xffL) << 8
+			| (data[i+7] & 0xffL);
 	}
 
 	/**
@@ -282,7 +281,7 @@ abstract class OperationImpl extends BaseOperationImpl implements Operation {
 		ByteBuffer bb=ByteBuffer.allocate(bufSize + extraLen);
 		assert bb.order() == ByteOrder.BIG_ENDIAN;
 		bb.put(REQ_MAGIC);
-		bb.put(cmd);
+		bb.put((byte)cmd);
 		bb.putShort((short)keyBytes.length);
 		bb.put((byte)extraLen);
 		bb.put((byte)0); // data type

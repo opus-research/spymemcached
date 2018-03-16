@@ -1,8 +1,8 @@
 package net.spy.memcached.vbucket.config;
 
-import java.util.List;
-
 import net.spy.memcached.HashAlgorithm;
+
+import java.util.List;
 
 public interface Config {
 
@@ -28,10 +28,15 @@ public interface Config {
 
     int foundIncorrectMaster(int vbucket, int wrongServer);
 
+    void setServers(List<String> servers);
+
+    void setVbuckets(List<VBucket> vbuckets);
+
     ConfigDifference compareTo(Config config);
 
     List<String> getServers();
 
     List<VBucket> getVbuckets();
+
 
 }

@@ -12,9 +12,7 @@ import net.spy.memcached.ops.ConcatenationOperation;
 import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
 import net.spy.memcached.ops.FlushOperation;
-import net.spy.memcached.ops.GetAndTouchOperation;
 import net.spy.memcached.ops.GetOperation;
-import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.MultiGetOperationCallback;
@@ -47,21 +45,12 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 		return new FlushOperationImpl(cb);
 	}
 
-	public GetAndTouchOperation getAndTouch(String key, int expiration,
-			GetAndTouchOperation.Callback cb) {
-		return new GetOperationImpl(key, expiration, cb);
-	}
-
 	public GetOperation get(String key, Callback callback) {
 		return new GetOperationImpl(key, callback);
 	}
 
 	public GetOperation get(Collection<String> value, Callback cb) {
 		return new MultiGetOperationImpl(value, cb);
-	}
-
-	public GetlOperation getl(String key, int exp, GetlOperation.Callback cb) {
-		return new GetOperationImpl(key, exp, cb);
 	}
 
 	public GetsOperation gets(String key, GetsOperation.Callback cb) {
@@ -81,10 +70,6 @@ public class BinaryOperationFactory extends BaseOperationFactory {
 	public StoreOperation store(StoreType storeType, String key, int flags,
 			int exp, byte[] data, OperationCallback cb) {
 		return new StoreOperationImpl(storeType, key, flags, exp, data, 0, cb);
-	}
-
-	public KeyedOperation touch(String key, int expiration, OperationCallback cb) {
-		return new TouchOperationImpl(key, expiration, cb);
 	}
 
 	public VersionOperation version(OperationCallback cb) {

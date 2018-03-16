@@ -12,9 +12,7 @@ import net.spy.memcached.ops.ConcatenationOperation;
 import net.spy.memcached.ops.ConcatenationType;
 import net.spy.memcached.ops.DeleteOperation;
 import net.spy.memcached.ops.FlushOperation;
-import net.spy.memcached.ops.GetAndTouchOperation;
 import net.spy.memcached.ops.GetOperation;
-import net.spy.memcached.ops.GetlOperation;
 import net.spy.memcached.ops.GetsOperation;
 import net.spy.memcached.ops.KeyedOperation;
 import net.spy.memcached.ops.MultiGetOperationCallback;
@@ -44,22 +42,12 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 		return new FlushOperationImpl(delay, cb);
 	}
 
-	public GetAndTouchOperation getAndTouch(String key, int expiration,
-			GetAndTouchOperation.Callback cb) {
-		throw new UnsupportedOperationException("Get and Touch not supported " +
-				"with ascii protocol");
-	}
-
 	public GetOperation get(String key, GetOperation.Callback cb) {
 		return new GetOperationImpl(key, cb);
 	}
 
 	public GetOperation get(Collection<String> keys, GetOperation.Callback cb) {
 		return new GetOperationImpl(keys, cb);
-	}
-
-	public GetlOperation getl(String key, int exp, GetlOperation.Callback cb) {
-		return new GetlOperationImpl(key, exp, cb);
 	}
 
 	public GetsOperation gets(String key, GetsOperation.Callback cb) {
@@ -78,11 +66,6 @@ public class AsciiOperationFactory extends BaseOperationFactory {
 	public StoreOperation store(StoreType storeType, String key, int flags,
 			int exp, byte[] data, OperationCallback cb) {
 		return new StoreOperationImpl(storeType, key, flags, exp, data, cb);
-	}
-
-	public KeyedOperation touch(String key, int expiration, OperationCallback cb) {
-		throw new UnsupportedOperationException("Touch is only supported in" +
-				" the binary protocol");
 	}
 
 	public VersionOperation version(OperationCallback cb) {

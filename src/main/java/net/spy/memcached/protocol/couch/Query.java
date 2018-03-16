@@ -41,7 +41,7 @@ public class Query {
 	}
 
 	public Query setGroup(boolean group, int grouplevel) {
-		args.put(GROUP, new Boolean(group));
+		args.put(GROUP, Boolean.toString(group));
 		args.put(GROUPLEVEL, new Integer(grouplevel));
 		return this;
 	}
@@ -84,9 +84,9 @@ public class Query {
 
 	public Query setStale(Stale stale) {
 		if (stale == Stale.OK) {
-			args.put(STALE, stale);
+			args.put(STALE, "ok");
 		} else if (stale == Stale.UPDATE_AFTER) {
-			args.put(STALE, stale);
+			args.put(STALE, "update_after");
 		}
 		return this;
 	}
@@ -117,10 +117,12 @@ public class Query {
 	}
 
 	private String getArg(String key, Object value) {
-	  if (key instanceof String) {
-	    return key + "=\"" + value + "\"";
-	  } else {
-			return key + "=" + String.valueOf(value);
+		if (value instanceof Boolean) {
+			return key + "=" + ((Boolean) value).toString();
+		} else if (value instanceof Integer) {
+			return key + "=" + ((Integer) value).toString();
+		} else {
+			return key + "=\"" + value + "\"";
 		}
 	}
 }

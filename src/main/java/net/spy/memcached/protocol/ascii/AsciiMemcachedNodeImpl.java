@@ -27,6 +27,7 @@ import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.BlockingQueue;
 
+import net.spy.memcached.metrics.MetricCollector;
 import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;

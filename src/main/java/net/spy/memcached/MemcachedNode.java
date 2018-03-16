@@ -238,4 +238,5 @@ public interface MemcachedNode {
   void setContinuousTimeout(boolean timedOut);
 
   int getContinuousTimeout();
+
 }

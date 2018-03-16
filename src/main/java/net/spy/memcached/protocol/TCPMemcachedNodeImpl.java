@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.compat.SpyObject;
+import net.spy.memcached.metrics.MetricCollector;
 import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationState;
 import net.spy.memcached.protocol.binary.TapAckOperationImpl;
@@ -65,6 +66,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   private ArrayList<Operation> reconnectBlocked;
   private long defaultOpTimeout;
   private long lastReadTimestamp = System.currentTimeMillis();
+  protected MetricCollector metrics;
 
   // operation Future.get timeout counter
   private final AtomicInteger continuousTimeout = new AtomicInteger(0);

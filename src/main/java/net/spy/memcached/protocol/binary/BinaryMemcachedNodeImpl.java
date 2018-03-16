@@ -25,10 +25,8 @@ package net.spy.memcached.protocol.binary;
 
 import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
-import java.sql.Connection;
 import java.util.concurrent.BlockingQueue;
 
-import net.spy.memcached.ConnectionFactory;
 import net.spy.memcached.ops.CASOperation;
 import net.spy.memcached.ops.GetOperation;
 import net.spy.memcached.ops.Operation;
@@ -49,8 +47,8 @@ public class BinaryMemcachedNodeImpl extends TCPMemcachedNodeImpl {
   public BinaryMemcachedNodeImpl(SocketAddress sa, SocketChannel c,
       int bufSize, BlockingQueue<Operation> rq, BlockingQueue<Operation> wq,
       BlockingQueue<Operation> iq, Long opQueueMaxBlockTimeNs,
-      boolean waitForAuth, long dt, ConnectionFactory factory) {
-    super(sa, c, bufSize, rq, wq, iq, opQueueMaxBlockTimeNs, waitForAuth, dt, factory);
+      boolean waitForAuth, long dt) {
+    super(sa, c, bufSize, rq, wq, iq, opQueueMaxBlockTimeNs, waitForAuth, dt);
   }
 
   @Override

@@ -313,8 +313,8 @@ public class MemcachedConnection extends SpyThread {
     for (SocketAddress sa : addrs) {
       SocketChannel ch = SocketChannel.open();
       ch.configureBlocking(false);
-      MemcachedNode qa = connectionFactory.createMemcachedNode(sa, ch, bufSize);
-      qa.setMemcachedConnection(this);
+      MemcachedNode qa =
+          this.connectionFactory.createMemcachedNode(sa, ch, bufSize);
       int ops = 0;
       ch.socket().setTcpNoDelay(!this.connectionFactory.useNagleAlgorithm());
 
@@ -968,41 +968,37 @@ public class MemcachedConnection extends SpyThread {
    *
    * @param ops the operations to redistribute.
    */
-  public void redistributeOperations(final Collection<Operation> ops) {
+  private void redistributeOperations(final Collection<Operation> ops) {
     for (Operation op : ops) {
-      redistributeOperation(op);
-    }
-  }
-
-  public void redistributeOperation(Operation op) {
-    if (op.isCancelled() || op.isTimedOut()) {
-      return;
-    }
-
-    if (op instanceof MultiGetOperationImpl) {
-      for (String key : ((MultiGetOperationImpl) op).getRetryKeys()) {
-        addOperation(key, opFact.get(key,
-          (GetOperation.Callback) op.getCallback()));
+      if (op.isCancelled() || op.isTimedOut()) {
+        continue;
       }
-    } else if (op instanceof KeyedOperation) {
-      KeyedOperation ko = (KeyedOperation) op;
-      int added = 0;
-      for (Operation newop : opFact.clone(ko)) {
-        if (newop instanceof KeyedOperation) {
-          KeyedOperation newKeyedOp = (KeyedOperation) newop;
-          for (String k : newKeyedOp.getKeys()) {
-            addOperation(k, newop);
-          }
-        } else {
-          newop.cancel();
-          getLogger().warn("Could not redistribute cloned non-keyed " +
-            "operation", newop);
+
+      if (op instanceof MultiGetOperationImpl) {
+        for (String key : ((MultiGetOperationImpl) op).getRetryKeys()) {
+          addOperation(key, opFact.get(key,
+            (GetOperation.Callback) op.getCallback()));
         }
-        added++;
+      } else if (op instanceof KeyedOperation) {
+        KeyedOperation ko = (KeyedOperation) op;
+        int added = 0;
+        for (Operation newop : opFact.clone(ko)) {
+          if (newop instanceof KeyedOperation) {
+            KeyedOperation newKeyedOp = (KeyedOperation) newop;
+            for (String k : newKeyedOp.getKeys()) {
+              addOperation(k, newop);
+            }
+          } else {
+            newop.cancel();
+            getLogger().warn("Could not redistribute cloned non-keyed " +
+              "operation", newop);
+          }
+          added++;
+        }
+        assert added > 0 : "Didn't add any new operations when redistributing";
+      } else {
+        op.cancel();
       }
-      assert added > 0 : "Didn't add any new operations when redistributing";
-    } else {
-      op.cancel();
     }
   }
 

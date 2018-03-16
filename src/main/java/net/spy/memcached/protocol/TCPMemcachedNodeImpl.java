@@ -30,15 +30,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.spy.memcached.ConnectionFactory;
-import net.spy.memcached.FailureMode;
-import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.compat.SpyObject;
 import net.spy.memcached.ops.Operation;
@@ -69,8 +65,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   private ArrayList<Operation> reconnectBlocked;
   private long defaultOpTimeout;
   private long lastReadTimestamp = System.currentTimeMillis();
-  private ConnectionFactory factory;
-  private MemcachedConnection connection;
 
   // operation Future.get timeout counter
   private final AtomicInteger continuousTimeout = new AtomicInteger(0);
@@ -78,7 +72,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
   public TCPMemcachedNodeImpl(SocketAddress sa, SocketChannel c, int bufSize,
       BlockingQueue<Operation> rq, BlockingQueue<Operation> wq,
       BlockingQueue<Operation> iq, long opQueueMaxBlockTime,
-      boolean waitForAuth, long dt, ConnectionFactory factory) {
+      boolean waitForAuth, long dt) {
     super();
     assert sa != null : "No SocketAddress";
     assert c != null : "No SocketChannel";
@@ -101,7 +95,6 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     this.opQueueMaxBlockTime = opQueueMaxBlockTime;
     shouldAuth = waitForAuth;
     defaultOpTimeout = dt;
-    this.factory = factory;
     setupForAuth();
   }
 
@@ -340,18 +333,12 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    */
   public final void addOp(Operation op) {
     try {
-      if (!authLatch.await(factory.getOperationTimeout(), TimeUnit.MILLISECONDS)) {
-        if (factory.getFailureMode() == FailureMode.Redistribute
-          || factory.getFailureMode() == FailureMode.Retry) {
-          connection.redistributeOperation(op);
-        } else {
-          op.cancel();
-          getLogger().warn("Operation canceled because authentication "
-            + "or reconnection and authentication has "
-            + "taken more than " + factory.getOperationTimeout()
-            + " milliseconds to complete.");
-          getLogger().debug("Canceled operation %s", op.toString());
-        }
+      if (!authLatch.await(1, TimeUnit.SECONDS)) {
+        op.cancel();
+        getLogger().warn("Operation canceled because authentication "
+                + "or reconnection and authentication has "
+                + "taken more than one second to complete.");
+        getLogger().debug("Canceled operation %s", op.toString());
         return;
       }
       if (!inputQueue.offer(op, opQueueMaxBlockTime, TimeUnit.MILLISECONDS)) {
@@ -441,7 +428,7 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
    * @see net.spy.memcached.MemcachedNode#isAuthenticated()
    */
   public boolean isAuthenticated() {
-    return 0 == authLatch.getCount();
+    return (0 == authLatch.getCount());
   }
 
   /*
@@ -643,13 +630,4 @@ public abstract class TCPMemcachedNodeImpl extends SpyObject implements
     lastReadTimestamp = System.currentTimeMillis();
   }
 
-  @Override
-  public void setMemcachedConnection(MemcachedConnection connection) {
-    this.connection = connection;
-  }
-
-  @Override
-  public MemcachedConnection getMemcachedConnection() {
-    return connection;
-  }
 }

@@ -32,25 +32,18 @@ import java.util.Map.Entry;
 
 import net.spy.memcached.TestConfig;
 import net.spy.memcached.internal.HttpFuture;
-import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
-import net.spy.memcached.protocol.couch.DocsOperation.DocsCallback;
 import net.spy.memcached.protocol.couch.DocsOperationImpl;
 import net.spy.memcached.protocol.couch.HttpOperation;
-import net.spy.memcached.protocol.couch.NoDocsOperation.NoDocsCallback;
 import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
 import net.spy.memcached.protocol.couch.Query;
-import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
 import net.spy.memcached.protocol.couch.ReducedOperationImpl;
 import net.spy.memcached.protocol.couch.RowError;
-import net.spy.memcached.protocol.couch.RowNoDocs;
-import net.spy.memcached.protocol.couch.RowReduced;
-import net.spy.memcached.protocol.couch.RowWithDocs;
 import net.spy.memcached.protocol.couch.Stale;
 import net.spy.memcached.protocol.couch.View;
-import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
-import net.spy.memcached.protocol.couch.ViewResponseReduced;
-import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
+import net.spy.memcached.protocol.couch.ViewOperation.ViewCallback;
+import net.spy.memcached.protocol.couch.ViewResponse;
+import net.spy.memcached.protocol.couch.ViewRow;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
@@ -178,16 +171,18 @@ public class CouchbaseClientTest {
   @Test
   public void testQueryWithDocs() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
+    query.setIncludeDocs(true);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query);
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future = client.asyncQuery(view, query);
+    ViewResponse response = future.get();
     assert future.getStatus().isSuccess() : future.getStatus();
 
-    Iterator<RowWithDocs> itr = response.iterator();
+    Iterator<ViewRow> itr = response.iterator();
     while (itr.hasNext()) {
-      RowWithDocs row = itr.next();
+      ViewRow row = itr.next();
       if (ITEMS.containsKey(row.getId())) {
-        assert ITEMS.get(row.getId()).equals(row.getDoc());
+        assert ITEMS.get(row.getId()).equals(row.getDocument());
       }
     }
     assert ITEMS.size() == response.size() : future.getStatus().getMessage();
@@ -196,15 +191,16 @@ public class CouchbaseClientTest {
   @Test
   public void testViewNoDocs() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseNoDocs> future =
-        client.asyncQueryAndExcludeDocs(view, query);
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query);
     assert future.getStatus().isSuccess() : future.getStatus();
-    ViewResponseNoDocs response = future.get();
+    ViewResponse response = future.get();
 
-    Iterator<RowNoDocs> itr = response.iterator();
+    Iterator<ViewRow> itr = response.iterator();
     while (itr.hasNext()) {
-      RowNoDocs row = itr.next();
+      ViewRow row = itr.next();
       if (!ITEMS.containsKey(row.getId())) {
         assert false : ("Got an item that I shouldn't have gotten.");
       }
@@ -215,14 +211,15 @@ public class CouchbaseClientTest {
   @Test
   public void testReduce() throws Exception {
     Query query = new Query();
+    query.setReduce(true);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseReduced> future =
-        client.asyncQueryAndReduce(view, query);
-    ViewResponseReduced reduce = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query);
+    ViewResponse reduce = future.get();
 
-    Iterator<RowReduced> itr = reduce.iterator();
+    Iterator<ViewRow> itr = reduce.iterator();
     while (itr.hasNext()) {
-      RowReduced row = itr.next();
+      ViewRow row = itr.next();
       assert row.getKey() == null;
       assert Integer.valueOf(row.getValue()) == ITEMS.size()
           : future.getStatus();
@@ -232,137 +229,164 @@ public class CouchbaseClientTest {
   @Test
   public void testQuerySetDescending() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setDescending(true));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setDescending(true));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetEndKeyDocID() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setEndkeyDocID("an_id"));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setEndkeyDocID("an_id"));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetGroup() throws Exception {
     Query query = new Query();
+    query.setReduce(true);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseReduced> future =
-        client.asyncQueryAndReduce(view, query.setGroup(true));
-    ViewResponseReduced response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setGroup(true));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetGroupWithLevel() throws Exception {
     Query query = new Query();
+    query.setReduce(true);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    HttpFuture<ViewResponseReduced> future =
-        client.asyncQueryAndReduce(view, query.setGroup(true, 1));
-    ViewResponseReduced response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setGroup(true, 1));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetInclusiveEnd() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setInclusiveEnd(true));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setInclusiveEnd(true));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetKey() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setKey("a_key"));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setKey("a_key"));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetLimit() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setLimit(10));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setLimit(10));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetRange() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setRange("key0", "key2"));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setRange("key0", "key2"));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetRangeStart() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setRangeStart("start"));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setRangeStart("start"));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetRangeEnd() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setRangeEnd("end"));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setRangeEnd("end"));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetSkip() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setSkip(0));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setSkip(0));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetStale() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setStale(Stale.OK));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setStale(Stale.OK));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetStartkeyDocID() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setStartkeyDocID("key0"));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setStartkeyDocID("key0"));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testQuerySetUpdateSeq() throws Exception {
     Query query = new Query();
+    query.setReduce(false);
     View view = client.getView(DESIGN_DOC_W_REDUCE, VIEW_NAME_W_REDUCE);
-    ViewFuture future = client.asyncQuery(view, query.setUpdateSeq(true));
-    ViewResponseWithDocs response = future.get();
+    HttpFuture<ViewResponse> future =
+        client.asyncQuery(view, query.setUpdateSeq(true));
+    ViewResponse response = future.get();
     assert response != null : future.getStatus();
   }
 
   @Test
   public void testReduceWhenNoneExists() throws Exception {
     Query query = new Query();
+    query.setReduce(true);
     View view = client.getView(DESIGN_DOC_WO_REDUCE, VIEW_NAME_WO_REDUCE);
     try {
-      client.asyncQueryAndReduce(view, query);
+      client.asyncQuery(view, query);
     } catch (RuntimeException e) {
       return; // Pass, no reduce exists.
     }
@@ -371,7 +395,7 @@ public class CouchbaseClientTest {
 
   @Test
   public void testViewDocsWithErrors() throws Exception {
-    HttpOperation op = new DocsOperationImpl(null, new DocsCallback() {
+    HttpOperation op = new DocsOperationImpl(null, new ViewCallback() {
       @Override
       public void receivedStatus(OperationStatus status) {
         assert status.isSuccess();
@@ -383,7 +407,7 @@ public class CouchbaseClientTest {
       }
 
       @Override
-      public void gotData(ViewResponseWithDocs response) {
+      public void gotData(ViewResponse response) {
         assert response.getErrors().size() == 2;
         Iterator<RowError> row = response.getErrors().iterator();
         assert row.next().getFrom().equals("127.0.0.1:5984");
@@ -404,7 +428,7 @@ public class CouchbaseClientTest {
 
   @Test
   public void testViewNoDocsWithErrors() throws Exception {
-    HttpOperation op = new NoDocsOperationImpl(null, new NoDocsCallback() {
+    HttpOperation op = new NoDocsOperationImpl(null, new ViewCallback() {
       @Override
       public void receivedStatus(OperationStatus status) {
         assert status.isSuccess();
@@ -416,7 +440,7 @@ public class CouchbaseClientTest {
       }
 
       @Override
-      public void gotData(ViewResponseNoDocs response) {
+      public void gotData(ViewResponse response) {
         assert response.getErrors().size() == 2;
         Iterator<RowError> row = response.getErrors().iterator();
         assert row.next().getFrom().equals("127.0.0.1:5984");
@@ -437,7 +461,7 @@ public class CouchbaseClientTest {
 
   @Test
   public void testViewReducedWithErrors() throws Exception {
-    HttpOperation op = new ReducedOperationImpl(null, new ReducedCallback() {
+    HttpOperation op = new ReducedOperationImpl(null, new ViewCallback() {
       @Override
       public void receivedStatus(OperationStatus status) {
         assert status.isSuccess();
@@ -449,7 +473,7 @@ public class CouchbaseClientTest {
       }
 
       @Override
-      public void gotData(ViewResponseReduced response) {
+      public void gotData(ViewResponse response) {
         assert response.getErrors().size() == 2;
         Iterator<RowError> row = response.getErrors().iterator();
         assert row.next().getFrom().equals("127.0.0.1:5984");

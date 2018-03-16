@@ -22,18 +22,48 @@
 
 package net.spy.memcached.protocol.couch;
 
-import net.spy.memcached.ops.OperationCallback;
-
 /**
- * An operation that represents a view that calls the map
- * function and includes the documents in the result.
+ * Holds a row in a view result that contains the fields
+ * id, key, value, and doc.
  */
-public interface DocsOperation {
+public class ViewRowWithDocs implements ViewRow {
+  private final String id;
+  private final String key;
+  private final String value;
+  private final Object doc;
 
-  /**
-   * Callback for the result of the DocsOperation.
-   */
-  interface DocsCallback extends OperationCallback {
-    void gotData(ViewResponseWithDocs response);
+  public ViewRowWithDocs(String id, String key, String value, Object doc) {
+    this.id = parseField(id);
+    this.key = parseField(key);
+    this.value = parseField(value);
+    this.doc = parseField((String)doc);
+  }
+
+  private String parseField(String field) {
+    if (field != null && field.equals("null")) {
+      return null;
+    } else {
+      return field;
+    }
+  }
+
+  @Override
+  public String getId() {
+    return id;
+  }
+
+  @Override
+  public String getKey() {
+    return key;
+  }
+
+  @Override
+  public String getValue() {
+    return value;
+  }
+
+  @Override
+  public Object getDocument() {
+    return doc;
   }
 }

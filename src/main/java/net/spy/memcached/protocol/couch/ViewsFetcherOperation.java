@@ -22,24 +22,19 @@
 
 package net.spy.memcached.protocol.couch;
 
+import java.util.List;
+
+import net.spy.memcached.ops.OperationCallback;
+
 /**
- * Holds a row in a view result that contains the fields
- * id, key, value, and doc.
+ * A ViewsOperation.
  */
-public class RowWithDocs extends RowNoDocs {
-  private Object doc;
+public interface ViewsFetcherOperation {
 
-  public RowWithDocs(String id, String key, String value, Object doc) {
-    super(id, key, value);
-    // The doc can be the string "null" so convert it to null
-    if (doc != null && doc.equals("null")) {
-      this.doc = null;
-    } else {
-      this.doc = doc;
-    }
-  }
-
-  public Object getDoc() {
-    return doc;
+  /**
+   * A ViewsCallback.
+   */
+  interface ViewsFetcherCallback extends OperationCallback {
+    void gotData(List<View> views);
   }
 }

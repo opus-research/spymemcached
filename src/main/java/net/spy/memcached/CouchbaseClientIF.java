@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,49 +22,31 @@
 
 package net.spy.memcached;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
-import net.spy.memcached.vbucket.config.Config;
+import net.spy.memcached.internal.HttpFuture;
+import net.spy.memcached.protocol.couch.Query;
+import net.spy.memcached.protocol.couch.View;
+import net.spy.memcached.protocol.couch.ViewResponse;
 
 /**
- * Interface for locating a node by hash value.
+ * This interface is provided as a helper for testing clients of the
+ * CouchbaseClient.
  */
-public interface NodeLocator {
+public interface CouchbaseClientIF extends MembaseClientIF {
 
-  /**
-   * Get the primary location for the given key.
-   *
-   * @param k the object key
-   * @return the QueueAttachment containing the primary storage for a key
-   */
-  MemcachedNode getPrimary(String k);
+  // View Access
+  HttpFuture<View> asyncGetView(final String designDocumentName,
+      final String viewName);
 
-  /**
-   * Get an iterator over the sequence of nodes that make up the backup
-   * locations for a given key.
-   *
-   * @param k the object key
-   * @return the sequence of backup nodes.
-   */
-  Iterator<MemcachedNode> getSequence(String k);
+  HttpFuture<List<View>> asyncGetViews(final String designDocumentName);
 
-  /**
-   * Get all memcached nodes. This is useful for broadcasting messages.
-   */
-  Collection<MemcachedNode> getAll();
+  View getView(final String designDocumentName, final String viewName);
 
-  /**
-   * Create a read-only copy of this NodeLocator.
-   */
-  NodeLocator getReadonlyCopy();
+  List<View> getViews(final String designDocumentName);
 
-  /**
-   * Update locator status.
-   *
-   * @param nodes New locator nodes.
-   * @param conf Locator configuration.
-   */
-  void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+  // Query
+  HttpFuture<ViewResponse> asyncQuery(View view, Query query);
+
+  ViewResponse query(View view, Query query);
 }

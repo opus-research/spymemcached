@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,51 +20,52 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached;
+package net.spy.memcached.vbucket;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
-import net.spy.memcached.vbucket.config.Config;
+import net.spy.memcached.vbucket.config.Bucket;
 
 /**
- * Interface for locating a node by hash value.
+ * An implementation of the observer for calling reconfigure.
  */
-public interface NodeLocator {
+public class ReconfigurableObserver implements Observer {
+  private final Reconfigurable rec;
+
+  public ReconfigurableObserver(Reconfigurable rec) {
+    this.rec = rec;
+  }
 
   /**
-   * Get the primary location for the given key.
+   * Delegates update to the reconfigurable passed in the constructor.
    *
-   * @param k the object key
-   * @return the QueueAttachment containing the primary storage for a key
+   * @param o
+   * @param arg
    */
-  MemcachedNode getPrimary(String k);
+  public void update(Observable o, Object arg) {
+    rec.reconfigure((Bucket) arg);
+  }
 
-  /**
-   * Get an iterator over the sequence of nodes that make up the backup
-   * locations for a given key.
-   *
-   * @param k the object key
-   * @return the sequence of backup nodes.
-   */
-  Iterator<MemcachedNode> getSequence(String k);
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
 
-  /**
-   * Get all memcached nodes. This is useful for broadcasting messages.
-   */
-  Collection<MemcachedNode> getAll();
+    ReconfigurableObserver that = (ReconfigurableObserver) o;
 
-  /**
-   * Create a read-only copy of this NodeLocator.
-   */
-  NodeLocator getReadonlyCopy();
+    if (!rec.equals(that.rec)) {
+      return false;
+    }
+    return true;
+  }
 
-  /**
-   * Update locator status.
-   *
-   * @param nodes New locator nodes.
-   * @param conf Locator configuration.
-   */
-  void updateLocator(final List<MemcachedNode> nodes, final Config conf);
+  @Override
+  public int hashCode() {
+    return rec.hashCode();
+  }
 }

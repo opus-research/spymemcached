@@ -84,15 +84,15 @@ public class BucketUpdateResponseHandlerTest {
         // store its value in partialResponse and invoke channelFuture.setSuccess().
         PrivateAccessor.setField(handler, "readingChunks", Boolean.TRUE);
         handler.messageReceived(null, eventMock);
-        StringBuffer partialResponse =
-                (StringBuffer) PrivateAccessor.getField(handler, "partialResponse");
+        StringBuilder partialResponse =
+                (StringBuilder) PrivateAccessor.getField(handler, "partialResponse");
         assertEquals(responseMsg, partialResponse.toString());
 
         // if current chunk contains "\n\n\n\n" - reset partialResponse and update lastResponse.
         PrivateAccessor.setField(handler, "readingChunks", Boolean.TRUE);
         handler.messageReceived(null, eventMock);
         partialResponse =
-                (StringBuffer) PrivateAccessor.getField(handler, "partialResponse");
+                (StringBuilder) PrivateAccessor.getField(handler, "partialResponse");
         assertNull(partialResponse);
         String lastResponse =
                 (String) PrivateAccessor.getField(handler, "lastResponse");

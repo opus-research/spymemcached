@@ -45,10 +45,7 @@ class UnlockOperationImpl extends SingleKeyOperationImpl implements
   public void initialize() {
     prepareBuffer(key, cas, EMPTY_BYTES);
   }
-  @Override
-  protected void decodePayload(byte[] pl) {
-    getCallback().receivedStatus(STATUS_OK);
-  }
+
   @Override
   public String toString() {
     return super.toString() + " Cas: " + cas;

@@ -63,9 +63,9 @@ public enum TapFlag {
 	 * @return Returns true if the flag is contained in the flag field
 	 */
 	boolean hasFlag(int f) {
-		if ((f & (int) flag) > 0) {
-			return true;
+		if ((f & (int) flag) == 1) {
+			return false;
 		}
-		return false;
+		return true;
 	}
 }

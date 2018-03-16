@@ -1,6 +1,5 @@
 package net.spy.memcached;
 
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 
 import net.spy.memcached.ops.OperationCallback;
@@ -8,9 +7,7 @@ import net.spy.memcached.ops.OperationStatus;
 import net.spy.memcached.protocol.ascii.ExtensibleOperationImpl;
 
 /**
- * This test assumes a server is running on the host specified
- * in the environment variable SPY_MC_TEST_SERVER or
- * localhost:11211 by default.
+ * This test assumes a client is running on localhost:11211.
  */
 public class AsciiClientTest extends ProtocolBaseCase {
 
@@ -37,8 +34,7 @@ public class AsciiClientTest extends ProtocolBaseCase {
 
 	@Override
 	protected String getExpectedVersionSource() {
-		return String.valueOf(
-				new InetSocketAddress(TestConfig.IPV4_ADDR, 11211));
+		return "/127.0.0.1:11211";
 	}
 
 }

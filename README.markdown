@@ -1,4 +1,3 @@
-# This is a change by Rags
 # Building
 
 Spymemcached can be compiled using Apache Ant by running the following

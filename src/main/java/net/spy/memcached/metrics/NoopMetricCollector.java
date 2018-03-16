@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,30 +20,64 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.internal;
-
-import java.util.EventListener;
-import java.util.concurrent.Future;
+package net.spy.memcached.metrics;
 
 /**
- * A generic listener that will be notified once the future completes.
+ * A {@link MetricCollector} that does nothing.
  *
- * <p>While this listener can be used directly, it is advised to subclass
- * it to make it easier for the API user to work with. See the
- * {@link OperationCompletionListener} as an example.</p>
+ * This {@link MetricCollector} instance is used if Metric collection is
+ * disabled during runtime. It just discards operations when executed.
  */
-public interface GenericCompletionListener<F extends Future<?>>
-  extends EventListener {
+public final class NoopMetricCollector extends AbstractMetricCollector {
 
-  /**
-   * This method will be executed once the future completes.
-   *
-   * <p>Completion includes both failure and success, so it is advised to
-   * always check the status and errors of the future.</p>
-   *
-   * @param future the future that got completed.
-   * @throws Exception can potentially throw anything in the callback.
-   */
-  void onComplete(F future) throws Exception;
+  @Override
+  public void addCounter(String name) {
+    return;
+  }
+
+  @Override
+  public void removeCounter(String name) {
+    return;
+  }
+
+  @Override
+  public void incrementCounter(String name, int amount) {
+    return;
+  }
+
+  @Override
+  public void decrementCounter(String name, int amount) {
+    return;
+  }
+
+  @Override
+  public void addMeter(String name) {
+    return;
+  }
+
+  @Override
+  public void removeMeter(String name) {
+    return;
+  }
+
+  @Override
+  public void markMeter(String name) {
+    return;
+  }
+
+  @Override
+  public void addHistogram(String name) {
+    return;
+  }
+
+  @Override
+  public void removeHistogram(String name) {
+    return;
+  }
+
+  @Override
+  public void updateHistogram(String name, int amount) {
+    return;
+  }
 
 }

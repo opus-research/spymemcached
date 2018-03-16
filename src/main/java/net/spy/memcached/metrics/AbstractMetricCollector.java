@@ -1,5 +1,4 @@
 /**
- * Copyright (C) 2006-2009 Dustin Sallings
  * Copyright (C) 2009-2013 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,32 +20,21 @@
  * IN THE SOFTWARE.
  */
 
-package net.spy.memcached.internal;
-
-import java.util.concurrent.Future;
+package net.spy.memcached.metrics;
 
 /**
- * A {@link Future} that accepts one or more listeners that will be executed
- * asynchronously.
+ * This abstract class implements methods needed by all {@link MetricCollector}s.
  */
-public interface ListenableFuture<T, L extends GenericCompletionListener>
-  extends Future<T> {
+public abstract class AbstractMetricCollector  implements MetricCollector {
 
-  /**
-   * Add a listener to the future, which will be executed once the operation
-   * completes.
-   *
-   * @param listener the listener which will be executed.
-   * @return the current future to allow for object-chaining.
-   */
-  Future<T> addListener(L listener);
+  @Override
+  public void decrementCounter(String name) {
+    decrementCounter(name, 1);
+  }
 
-  /**
-   * Remove a previously added listener from the future.
-   *
-   * @param listener the previously added listener.
-   * @return the current future to allow for object-chaining.
-   */
-  Future<T> removeListener(L listener);
+  @Override
+  public void incrementCounter(String name) {
+    incrementCounter(name, 1);
+  }
 
 }

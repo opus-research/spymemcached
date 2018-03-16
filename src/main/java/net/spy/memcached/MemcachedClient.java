@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2006-2009 Dustin Sallings
- * Copyright (C) 2009-2013 Couchbase, Inc.
+ * Copyright (C) 2009-2011 Couchbase, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -140,7 +140,7 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
   protected final long operationTimeout;
 
-  protected volatile MemcachedConnection mconn;
+  protected final MemcachedConnection mconn;
 
   protected final OperationFactory opFact;
 
@@ -155,82 +155,8 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   protected final AuthThreadMonitor authMonitor = new AuthThreadMonitor();
 
   /**
-   * Create a new {@link MemcachedClient} instance.
-   *
-   * <p>This constructor does not connect automatically, therefore one of the
-   * connect() methods needs to be used immediately after construction.</p>
-   */
-  public MemcachedClient() {
-    this(new DefaultConnectionFactory());
-  }
-
-  /**
-   * Create a new {@link MemcachedClient} instance with the given factory.
-   *
-   * <p>This constructor does not connect automatically, therefore one of the
-   * connect() methods needs to be used immediately after construction.</p>
-   *
-   * @param cf the connection factory to configure connections for this client
-   */
-  public MemcachedClient(ConnectionFactory cf) {
-    if (cf == null) {
-      throw new NullPointerException("Connection factory required");
-    }
-    if (cf.getOperationTimeout() <= 0) {
-      throw new IllegalArgumentException("Operation timeout must be positive.");
-    }
-    connFactory = cf;
-    tcService = new TranscodeService(cf.isDaemon());
-    transcoder = cf.getDefaultTranscoder();
-    opFact = cf.getOperationFactory();
-    assert opFact != null : "Connection factory failed to make op factory";
-    operationTimeout = cf.getOperationTimeout();
-    authDescriptor = cf.getAuthDescriptor();
-  }
-
-  /**
-   * Connect to the given list of memcached instances.
-   *
-   * @param ia the memcached locations
-   * @return the {@link MemcachedClient} for method chaining.
-   * @throws IOException if connections cannot be established
-   */
-  public MemcachedClient connect(InetSocketAddress... ia) throws IOException {
-    return connect(Arrays.asList(ia));
-  }
-
-  /**
-   * Connect to the given list of memcached instances.
-   *
-   * @param addrs the socket addrs
-   * @return the {@link MemcachedClient} for method chaining.
-   * @throws IOException if connections cannot be established
-   */
-  public MemcachedClient connect(List<InetSocketAddress> addrs)
-    throws IOException {
-    if(isConnected()) {
-      return this;
-    }
-
-    if (addrs == null) {
-      throw new NullPointerException("Server list required");
-    }
-    if (addrs.isEmpty()) {
-      throw new IllegalArgumentException("You must have at least one server to"
-        + " connect to");
-    }
-    mconn = connFactory.createConnection(addrs);
-    if (authDescriptor != null) {
-      addObserver(this);
-    }
-    return this;
-  }
-
-  /**
    * Get a memcache client operating on the specified memcached locations.
    *
-   * @deprecated see {@link MemcachedClient()}
-   *  and {@link MemcachedClient#connect(java.net.InetSocketAddress[])}.
    * @param ia the memcached locations
    * @throws IOException if connections cannot be established
    */
@@ -241,8 +167,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   /**
    * Get a memcache client over the specified memcached locations.
    *
-   * @deprecated see {@link MemcachedClient()}
-   *  and {@link MemcachedClient#connect(java.util.List)}.
    * @param addrs the socket addrs
    * @throws IOException if connections cannot be established
    */
@@ -253,37 +177,36 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   /**
    * Get a memcache client over the specified memcached locations.
    *
-   * @deprecated see {@link MemcachedClient(net.spy.memcached.ConnectionFactory)}
-   *  and {@link MemcachedClient#connect(java.util.List)}.
    * @param cf the connection factory to configure connections for this client
    * @param addrs the socket addresses
    * @throws IOException if connections cannot be established
    */
   public MemcachedClient(ConnectionFactory cf, List<InetSocketAddress> addrs)
     throws IOException {
-    this(cf);
-    connect(addrs);
-  }
-
-  /**
-   * Returns whether the {@link MemcachedClient} instance is connected or not.
-   *
-   * @return true if its connected, false otherwise.
-   */
-  public boolean isConnected() {
-    return mconn != null;
-  }
-
-  /**
-   * Make sure the client is connected.
-   *
-   * This method is used to verify that the client is connected and throwing
-   * an exception otherwise.
-   */
-  protected void verifyConnected() {
-    if(!isConnected()) {
-      throw new IllegalStateException("Currently not connected, please "
-        + "connect first.");
+    if (cf == null) {
+      throw new NullPointerException("Connection factory required");
+    }
+    if (addrs == null) {
+      throw new NullPointerException("Server list required");
+    }
+    if (addrs.isEmpty()) {
+      throw new IllegalArgumentException("You must have at least one server to"
+          + " connect to");
+    }
+    if (cf.getOperationTimeout() <= 0) {
+      throw new IllegalArgumentException("Operation timeout must be positive.");
+    }
+    connFactory = cf;
+    tcService = new TranscodeService(cf.isDaemon());
+    transcoder = cf.getDefaultTranscoder();
+    opFact = cf.getOperationFactory();
+    assert opFact != null : "Connection factory failed to make op factory";
+    mconn = cf.createConnection(addrs);
+    assert mconn != null : "Connection factory failed to make a connection";
+    operationTimeout = cf.getOperationTimeout();
+    authDescriptor = cf.getAuthDescriptor();
+    if (authDescriptor != null) {
+      addObserver(this);
     }
   }
 
@@ -299,8 +222,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @return point-in-time view of currently available servers
    */
   public Collection<SocketAddress> getAvailableServers() {
-    verifyConnected();
-
     ArrayList<SocketAddress> rv = new ArrayList<SocketAddress>();
     for (MemcachedNode node : mconn.getLocator().getAll()) {
       if (node.isActive()) {
@@ -322,8 +243,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @return point-in-time view of currently available servers
    */
   public Collection<SocketAddress> getUnavailableServers() {
-    verifyConnected();
-
     ArrayList<SocketAddress> rv = new ArrayList<SocketAddress>();
     for (MemcachedNode node : mconn.getLocator().getAll()) {
       if (!node.isActive()) {
@@ -339,8 +258,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @return this instance's NodeLocator
    */
   public NodeLocator getNodeLocator() {
-    verifyConnected();
-
     return mconn.getLocator().getReadonlyCopy();
   }
 
@@ -354,20 +271,16 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   public CountDownLatch broadcastOp(final BroadcastOpFactory of) {
-    verifyConnected();
     return broadcastOp(of, mconn.getLocator().getAll(), true);
   }
 
   public CountDownLatch broadcastOp(final BroadcastOpFactory of,
       Collection<MemcachedNode> nodes) {
-    verifyConnected();
     return broadcastOp(of, nodes, true);
   }
 
   private CountDownLatch broadcastOp(BroadcastOpFactory of,
       Collection<MemcachedNode> nodes, boolean checkShuttingDown) {
-    verifyConnected();
-
     if (checkShuttingDown && shuttingDown) {
       throw new IllegalStateException("Shutting down");
     }
@@ -376,8 +289,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
   private <T> OperationFuture<Boolean> asyncStore(StoreType storeType,
       String key, int exp, T value, Transcoder<T> tc) {
-    verifyConnected();
-
     CachedData co = tc.encode(value);
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Boolean> rv =
@@ -407,8 +318,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
   private <T> OperationFuture<Boolean> asyncCat(ConcatenationType catType,
       long cas, String key, T value, Transcoder<T> tc) {
-    verifyConnected();
-
     CachedData co = tc.encode(value);
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Boolean> rv = new OperationFuture<Boolean>(key,
@@ -456,8 +365,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public <T> OperationFuture<Boolean> touch(final String key, final int exp,
       final Transcoder<T> tc) {
-    verifyConnected();
-
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Boolean> rv =
         new OperationFuture<Boolean>(key, latch, operationTimeout);
@@ -677,8 +584,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public <T> OperationFuture<CASResponse>
   asyncCAS(String key, long casId, int exp, T value, Transcoder<T> tc) {
-    verifyConnected();
-
     CachedData co = tc.encode(value);
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<CASResponse> rv =
@@ -1023,7 +928,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    *           full to accept any more requests
    */
   public <T> GetFuture<T> asyncGet(final String key, final Transcoder<T> tc) {
-    verifyConnected();
 
     final CountDownLatch latch = new CountDownLatch(1);
     final GetFuture<T> rv = new GetFuture<T>(latch, operationTimeout, key);
@@ -1073,7 +977,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public <T> OperationFuture<CASValue<T>> asyncGets(final String key,
       final Transcoder<T> tc) {
-    verifyConnected();
 
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<CASValue<T>> rv =
@@ -1264,8 +1167,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public <T> BulkFuture<Map<String, T>> asyncGetBulk(Iterator<String> keyIter,
       Iterator<Transcoder<T>> tcIter) {
-    verifyConnected();
-
     final Map<String, Future<T>> m = new ConcurrentHashMap<String, Future<T>>();
 
     // This map does not need to be a ConcurrentHashMap
@@ -1476,8 +1377,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    */
   public <T> OperationFuture<CASValue<T>> asyncGetAndTouch(final String key,
       final int exp, final Transcoder<T> tc) {
-    verifyConnected();
-
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<CASValue<T>> rv = new OperationFuture<CASValue<T>>(
         key, latch, operationTimeout);
@@ -1622,8 +1521,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    *           full to accept any more requests
    */
   public Map<SocketAddress, String> getVersions() {
-    verifyConnected();
-
     final Map<SocketAddress, String> rv =
         new ConcurrentHashMap<SocketAddress, String>();
 
@@ -1671,8 +1568,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    *           full to accept any more requests
    */
   public Map<SocketAddress, Map<String, String>> getStats(final String arg) {
-    verifyConnected();
-
     final Map<SocketAddress, Map<String, String>> rv =
         new HashMap<SocketAddress, Map<String, String>>();
 
@@ -1708,8 +1603,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   private long mutate(Mutator m, String key, long by, long def, int exp) {
-    verifyConnected();
-
     final AtomicLong rv = new AtomicLong();
     final CountDownLatch latch = new CountDownLatch(1);
     mconn.enqueueOperation(key, opFact.mutate(m, key, by, def, exp,
@@ -1899,8 +1792,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
   private long mutateWithDefault(Mutator t, String key, long by, long def,
       int exp) {
-    verifyConnected();
-
     long rv = mutate(t, key, by, def, exp);
     // The ascii protocol doesn't support defaults, so I added them
     // manually here.
@@ -1933,8 +1824,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
 
   private OperationFuture<Long> asyncMutate(Mutator m, String key, long by,
       long def, int exp) {
-    verifyConnected();
-
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Long> rv =
         new OperationFuture<Long>(key, latch, operationTimeout);
@@ -2115,8 +2004,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    *           full to accept any more requests
    */
   public OperationFuture<Boolean> delete(String key, long cas) {
-    verifyConnected();
-
     final CountDownLatch latch = new CountDownLatch(1);
     final OperationFuture<Boolean> rv = new OperationFuture<Boolean>(key,
         latch, operationTimeout);
@@ -2156,8 +2043,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    *           full to accept any more requests
    */
   public OperationFuture<Boolean> flush(final int delay) {
-    verifyConnected();
-
     final AtomicReference<Boolean> flushResult =
         new AtomicReference<Boolean>(null);
     final ConcurrentLinkedQueue<Operation> ops =
@@ -2230,8 +2115,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   public Set<String> listSaslMechanisms() {
-    verifyConnected();
-
     final ConcurrentMap<String, String> rv =
         new ConcurrentHashMap<String, String>();
 
@@ -2275,8 +2158,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @return result of the shutdown request
    */
   public boolean shutdown(long timeout, TimeUnit unit) {
-    verifyConnected();
-
     // Guard against double shutdowns (bug 8).
     if (shuttingDown) {
       getLogger().info("Suppressing duplicate attempt to shut down");
@@ -2316,8 +2197,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    *           full to accept any more requests
    */
   public boolean waitForQueues(long timeout, TimeUnit unit) {
-    verifyConnected();
-
     CountDownLatch blatch = broadcastOp(new BroadcastOpFactory() {
       public Operation newOp(final MemcachedNode n,
           final CountDownLatch latch) {
@@ -2352,8 +2231,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @return true if the observer was added.
    */
   public boolean addObserver(ConnectionObserver obs) {
-    verifyConnected();
-
     boolean rv = mconn.addObserver(obs);
     if (rv) {
       for (MemcachedNode node : mconn.getLocator().getAll()) {
@@ -2372,14 +2249,10 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
    * @return true if the observer existed, but no longer does
    */
   public boolean removeObserver(ConnectionObserver obs) {
-    verifyConnected();
-
     return mconn.removeObserver(obs);
   }
 
   public void connectionEstablished(SocketAddress sa, int reconnectCount) {
-    verifyConnected();
-
     if (authDescriptor != null) {
       if (authDescriptor.authThresholdReached()) {
         this.shutdown();
@@ -2389,8 +2262,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   private MemcachedNode findNode(SocketAddress sa) {
-    verifyConnected();
-
     MemcachedNode node = null;
     for (MemcachedNode n : mconn.getLocator().getAll()) {
       if (n.getSocketAddress().equals(sa)) {
@@ -2402,8 +2273,6 @@ public class MemcachedClient extends SpyObject implements MemcachedClientIF,
   }
 
   private String buildTimeoutMessage(long timeWaited, TimeUnit unit) {
-    verifyConnected();
-
     StringBuilder message = new StringBuilder();
 
     message.append(MessageFormat.format("waited {0} ms.",

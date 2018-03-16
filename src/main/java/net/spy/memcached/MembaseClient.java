@@ -271,6 +271,12 @@ public class MembaseClient extends MemcachedClient implements MembaseClientIF,
   }
 
   @Override
+  public int getNumVBuckets() {
+    return ((MembaseConnectionFactory)connFactory).getVBucketConfig()
+      .getVbucketsCount();
+  }
+
+  @Override
   public boolean shutdown(long timeout, TimeUnit unit) {
     boolean shutdownResult = super.shutdown(timeout, unit);
     MembaseConnectionFactory cf = (MembaseConnectionFactory) connFactory;

@@ -10,13 +10,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Collection;
 
-import net.spy.memcached.ops.Operation;
+class MemcachedNodeROImpl<T> implements MemcachedNode<T> {
 
-class MemcachedNodeROImpl implements MemcachedNode {
+	private final MemcachedNode<T> root;
 
-	private final MemcachedNode root;
-
-	public MemcachedNodeROImpl(MemcachedNode n) {
+	public MemcachedNodeROImpl(MemcachedNode<T> n) {
 		super();
 		root=n;
 	}
@@ -26,11 +24,11 @@ class MemcachedNodeROImpl implements MemcachedNode {
 		return root.toString();
 	}
 
-	public void addOp(Operation op) {
+	public void addOp(T op) {
 		throw new UnsupportedOperationException();
 	}
 
-	public void insertOp(Operation op) {
+	public void insertOp(T op) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -58,11 +56,11 @@ class MemcachedNodeROImpl implements MemcachedNode {
 		throw new UnsupportedOperationException();
 	}
 
-	public Operation getCurrentReadOp() {
+	public T getCurrentReadOp() {
 		throw new UnsupportedOperationException();
 	}
 
-	public Operation getCurrentWriteOp() {
+	public T getCurrentWriteOp() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -110,11 +108,11 @@ class MemcachedNodeROImpl implements MemcachedNode {
 		throw new UnsupportedOperationException();
 	}
 
-	public Operation removeCurrentReadOp() {
+	public T removeCurrentReadOp() {
 		throw new UnsupportedOperationException();
 	}
 
-	public Operation removeCurrentWriteOp() {
+	public T removeCurrentWriteOp() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -138,7 +136,7 @@ class MemcachedNodeROImpl implements MemcachedNode {
 		throw new UnsupportedOperationException();
 	}
 
-	public Collection<Operation> destroyInputQueue() {
+	public Collection<T> destroyInputQueue() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -15,9 +15,9 @@ import java.net.InetSocketAddress;
 /**
  * Implementation of the {@link NodeLocator} interface that contains vbucket hashing methods
  */
-public class VBucketNodeLocator extends SpyObject implements NodeLocator {
+public class VBucketNodeLocator<T> extends SpyObject implements NodeLocator<T> {
 
-    private Map<String, MemcachedNode> nodesMap;
+    private Map<String, MemcachedNode<T>> nodesMap;
 
     private Config config;
 
@@ -27,7 +27,7 @@ public class VBucketNodeLocator extends SpyObject implements NodeLocator {
      * @param nodes
      * @param jsonConfig
      */
-    public VBucketNodeLocator(List<MemcachedNode> nodes, Config jsonConfig) {
+    public VBucketNodeLocator(List<MemcachedNode<T>> nodes, Config jsonConfig) {
         super();
         setNodes(nodes);
         setConfig(jsonConfig);
@@ -36,17 +36,17 @@ public class VBucketNodeLocator extends SpyObject implements NodeLocator {
     /**
      * {@inheritDoc}
      */
-    public MemcachedNode getPrimary(String k) {
+    public MemcachedNode<T> getPrimary(String k) {
         int vbucket = config.getVbucketByKey(k);
         int serverNumber = config.getMaster(vbucket);
         String server = config.getServer(serverNumber);
         // choose appropriate MemecachedNode according to config data
-        MemcachedNode pNode = nodesMap.get(server);
+        MemcachedNode<T> pNode = nodesMap.get(server);
         if (pNode == null) {
             getLogger().error("The node locator does not have a primary for key %s.", k);
-            Collection<MemcachedNode> nodes = nodesMap.values();
+            Collection<MemcachedNode<T>> nodes = nodesMap.values();
             getLogger().error("MemcachedNode has %s entries:", nodesMap.size());
-            for (MemcachedNode node : nodes) {
+            for (MemcachedNode<T> node : nodes) {
                 getLogger().error(node);
             }
         }
@@ -57,24 +57,24 @@ public class VBucketNodeLocator extends SpyObject implements NodeLocator {
     /**
      * {@inheritDoc}
      */
-    public Iterator<MemcachedNode> getSequence(String k) {
+    public Iterator<MemcachedNode<T>> getSequence(String k) {
         return nodesMap.values().iterator();
     }
 
     /**
      * {@inheritDoc}
      */
-    public Collection<MemcachedNode> getAll() {
+    public Collection<MemcachedNode<T>> getAll() {
         return this.nodesMap.values();
     }
 
     /**
      * {@inheritDoc}
      */
-    public NodeLocator getReadonlyCopy() {
+    public NodeLocator<T> getReadonlyCopy() {
         return this;
     }
-    public void updateLocator(final List<MemcachedNode> nodes, final Config config) {
+    public void updateLocator(final List<MemcachedNode<T>> nodes, final Config config) {
         setNodes(nodes);
         setConfig(config);
     }
@@ -88,10 +88,10 @@ public class VBucketNodeLocator extends SpyObject implements NodeLocator {
         return config.getVbucketByKey(key);
     }
 
-    private void setNodes(Collection<MemcachedNode> nodes) {
-        HashMap<String, MemcachedNode> vbnodesMap = new HashMap<String, MemcachedNode>();
+    private void setNodes(Collection<MemcachedNode<T>> nodes) {
+        HashMap<String, MemcachedNode<T>> vbnodesMap = new HashMap<String, MemcachedNode<T>>();
         getLogger().debug("Updating nodesMap in VBucketNodeLocator.");
-        for (MemcachedNode node : nodes) {
+        for (MemcachedNode<T> node : nodes) {
             InetSocketAddress addr = (InetSocketAddress) node.getSocketAddress();
             String address = addr.getAddress().getHostName() + ":" + addr.getPort();
 	    String hostname = addr.getAddress().getHostAddress() + ":" + addr.getPort();
@@ -114,8 +114,8 @@ public class VBucketNodeLocator extends SpyObject implements NodeLocator {
      * @param notMyVbucketNodes a collection of the nodes are excluded
      * @return The first MemcachedNode which meets requirements
      */
-    public MemcachedNode getAlternative(String k, Collection<MemcachedNode> notMyVbucketNodes) {
-        Collection<MemcachedNode> nodes = nodesMap.values();
+    public MemcachedNode<T> getAlternative(String k, Collection<MemcachedNode<T>> notMyVbucketNodes) {
+        Collection<MemcachedNode<T>> nodes = nodesMap.values();
         nodes.removeAll(notMyVbucketNodes);
         if (nodes.isEmpty()) {
             return null;

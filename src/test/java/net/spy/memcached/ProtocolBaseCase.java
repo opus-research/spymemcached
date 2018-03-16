@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import net.spy.memcached.compat.SyncThread;
+import net.spy.memcached.ops.Operation;
 import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.transcoders.SerializingTranscoder;
@@ -614,9 +615,9 @@ public abstract class ProtocolBaseCase extends ClientBaseCase {
 		}
 	}
 
-	private void debugNodeInfo(Collection<MemcachedNode> nodes) {
+	private void debugNodeInfo(Collection<MemcachedNode<Operation>> nodes) {
 	    System.err.println("Debug nodes:");
-	    for (MemcachedNode node : nodes) {
+	    for (MemcachedNode<Operation> node : nodes) {
 		    System.err.println(node);
 		    System.err.println("Is active? " + node.isActive());
 		    System.err.println("Has read operation? " + node.hasReadOp() + " Has write operation? " + node.hasWriteOp());

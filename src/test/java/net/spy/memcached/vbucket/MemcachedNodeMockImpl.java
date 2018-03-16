@@ -1,7 +1,6 @@
 package net.spy.memcached.vbucket;
 
 import net.spy.memcached.MemcachedNode;
-import net.spy.memcached.ops.Operation;
 
 import java.util.Collection;
 import java.nio.channels.SocketChannel;
@@ -13,9 +12,9 @@ import java.io.IOException;
 /**
  * @author alexander.sokolovsky.a@gmail.com
  */
-public class MemcachedNodeMockImpl implements MemcachedNode {
+public class MemcachedNodeMockImpl<T> implements MemcachedNode<T> {
     private SocketAddress socketAddress;
-    public void addOp(Operation op) {
+    public void addOp(T op) {
     }
 
     public void authComplete() {
@@ -27,7 +26,7 @@ public class MemcachedNodeMockImpl implements MemcachedNode {
     public void copyInputQueue() {
     }
 
-    public Collection<Operation> destroyInputQueue() {
+    public Collection<T> destroyInputQueue() {
         return null;
     }
 
@@ -49,11 +48,11 @@ public class MemcachedNodeMockImpl implements MemcachedNode {
         return 0;
     }
 
-    public Operation getCurrentReadOp() {
+    public T getCurrentReadOp() {
         return null;
     }
 
-    public Operation getCurrentWriteOp() {
+    public T getCurrentWriteOp() {
         return null;
     }
 
@@ -89,7 +88,7 @@ public class MemcachedNodeMockImpl implements MemcachedNode {
         return true;
     }
 
-    public void insertOp(Operation o) {
+    public void insertOp(T o) {
     }
 
     public boolean isActive() {
@@ -102,11 +101,11 @@ public class MemcachedNodeMockImpl implements MemcachedNode {
     public void registerChannel(SocketChannel ch, SelectionKey selectionKey) {
     }
 
-    public Operation removeCurrentReadOp() {
+    public T removeCurrentReadOp() {
         return null;
     }
 
-    public Operation removeCurrentWriteOp() {
+    public T removeCurrentWriteOp() {
         return null;
     }
 

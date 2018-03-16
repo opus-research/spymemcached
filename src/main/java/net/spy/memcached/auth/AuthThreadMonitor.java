@@ -6,6 +6,7 @@ import net.spy.memcached.MemcachedConnection;
 import net.spy.memcached.MemcachedNode;
 import net.spy.memcached.OperationFactory;
 import net.spy.memcached.compat.SpyObject;
+import net.spy.memcached.ops.Operation;
 
 /**
  * This will ensure no more than one AuthThread will exist for a given
@@ -34,14 +35,14 @@ public class AuthThreadMonitor extends SpyObject {
 	 * @param node
 	 */
 	public synchronized void authConnection(MemcachedConnection conn,
-		OperationFactory opFact, AuthDescriptor authDescriptor, MemcachedNode node) {
+		OperationFactory opFact, AuthDescriptor authDescriptor, MemcachedNode<Operation> node) {
 			interruptOldAuth(node);
 			AuthThread newSASLAuthenticator = new AuthThread(conn, opFact,
 				authDescriptor, node);
 			nodeMap.put(node, newSASLAuthenticator);
 	}
 
-	private void interruptOldAuth(MemcachedNode nodeToStop) {
+	private void interruptOldAuth(MemcachedNode<Operation> nodeToStop) {
 		AuthThread toStop = nodeMap.get(nodeToStop);
 		if (toStop != null) {
 			if (toStop.isAlive()) {

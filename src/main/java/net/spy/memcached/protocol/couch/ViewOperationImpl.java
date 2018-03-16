@@ -22,47 +22,85 @@
 
 package net.spy.memcached.protocol.couch;
 
+import java.net.HttpURLConnection;
 import java.text.ParseException;
+import java.util.Iterator;
 
-import net.spy.memcached.ops.OperationCallback;
 import net.spy.memcached.ops.OperationErrorType;
 import net.spy.memcached.ops.OperationException;
 import net.spy.memcached.ops.OperationStatus;
 
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 
 /**
  * A ViewOperationImpl.
- *
  */
-public abstract class ViewOperationImpl extends HttpOperationImpl
-  implements ViewOperation {
+public class ViewOperationImpl extends HttpOperationImpl implements
+    ViewOperation {
 
-  public ViewOperationImpl(HttpRequest r, OperationCallback cb) {
-    super(r, cb);
+  private final String bucketName;
+  private final String designDocName;
+  private final String viewName;
+
+  public ViewOperationImpl(HttpRequest r, String bucketName,
+      String designDocName, String viewName, ViewCallback viewCallback) {
+    super(r, viewCallback);
+    this.bucketName = bucketName;
+    this.designDocName = designDocName;
+    this.viewName = viewName;
   }
 
   @Override
   public void handleResponse(HttpResponse response) {
     String json = getEntityString(response);
-    int errorcode = response.getStatusLine().getStatusCode();
     try {
-      OperationStatus status = parseViewForStatus(json, errorcode);
-      ViewResponse vr = null;
-      if (status.isSuccess()) {
-        vr = parseResult(json);
-      }
+      View view = parseDesignDocumentForView(bucketName, designDocName,
+          viewName, json);
 
-      ((ViewCallback) callback).gotData(vr);
-      callback.receivedStatus(status);
+      int errorcode = response.getStatusLine().getStatusCode();
+      if (errorcode == HttpURLConnection.HTTP_OK) {
+        ((ViewCallback) callback).gotData(view);
+        callback.receivedStatus(new OperationStatus(true, "OK"));
+      } else {
+        callback.receivedStatus(new OperationStatus(false,
+            Integer.toString(errorcode)));
+      }
     } catch (ParseException e) {
       exception = new OperationException(OperationErrorType.GENERAL,
-          "Error parsing JSON");
+        "Error parsing JSON");
     }
     callback.complete();
   }
 
-  protected abstract ViewResponse parseResult(String json)
-    throws ParseException;
+  private View parseDesignDocumentForView(String dn, String ddn,
+      String viewname, String json) throws ParseException {
+    View view = null;
+    if (json != null) {
+      try {
+        JSONObject base = new JSONObject(json);
+        if (base.has("error")) {
+          return null;
+        }
+        if (base.has("views")) {
+          JSONObject views = base.getJSONObject("views");
+          Iterator<?> itr = views.keys();
+          while (itr.hasNext()) {
+            String curView = (String) itr.next();
+            if (curView.equals(viewname)) {
+              boolean map = views.getJSONObject(curView).has("map");
+              boolean reduce = views.getJSONObject(curView).has("reduce");
+              view = new View(dn, ddn, viewname, map, reduce);
+              break;
+            }
+          }
+        }
+      } catch (JSONException e) {
+        throw new ParseException("Cannot read json: " + json, 0);
+      }
+    }
+    return view;
+  }
 }

@@ -38,19 +38,23 @@ import java.util.concurrent.TimeUnit;
 import net.spy.memcached.internal.HttpFuture;
 import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.ops.OperationStatus;
+import net.spy.memcached.protocol.couch.DocsOperation.DocsCallback;
 import net.spy.memcached.protocol.couch.DocsOperationImpl;
-import net.spy.memcached.protocol.couch.GetViewOperation.GetViewCallback;
-import net.spy.memcached.protocol.couch.GetViewOperationImpl;
-import net.spy.memcached.protocol.couch.GetViewsOperation.GetViewsCallback;
-import net.spy.memcached.protocol.couch.GetViewsOperationImpl;
 import net.spy.memcached.protocol.couch.HttpOperation;
+import net.spy.memcached.protocol.couch.NoDocsOperation;
 import net.spy.memcached.protocol.couch.NoDocsOperationImpl;
 import net.spy.memcached.protocol.couch.Query;
+import net.spy.memcached.protocol.couch.ReducedOperation.ReducedCallback;
 import net.spy.memcached.protocol.couch.ReducedOperationImpl;
+import net.spy.memcached.protocol.couch.RowWithDocs;
 import net.spy.memcached.protocol.couch.View;
 import net.spy.memcached.protocol.couch.ViewOperation.ViewCallback;
-import net.spy.memcached.protocol.couch.ViewResponse;
-import net.spy.memcached.protocol.couch.ViewRow;
+import net.spy.memcached.protocol.couch.ViewOperationImpl;
+import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
+import net.spy.memcached.protocol.couch.ViewResponseReduced;
+import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
+import net.spy.memcached.protocol.couch.ViewsOperation.ViewsCallback;
+import net.spy.memcached.protocol.couch.ViewsOperationImpl;
 import net.spy.memcached.vbucket.config.Bucket;
 
 import org.apache.http.HttpRequest;
@@ -85,13 +89,15 @@ public class CouchbaseClient extends MembaseClient
       propsFileExists = false;
     }
     if (!propsFileExists) {
-      MODE_ERROR = "Can't find config.properties. Setting viewmode "
-          + "to production mode";
-      MODE_PREFIX = PROD_PREFIX;
+      MODE_ERROR =
+          "Can't find config.properties. Setting viewmode "
+              + "to development mode";
+      MODE_PREFIX = DEV_PREFIX;
     } else if (viewmode == null) {
-      MODE_ERROR = "viewmode doesn't exist in config.properties. "
-              + "Setting viewmode to production mode";
-      MODE_PREFIX = PROD_PREFIX;
+      MODE_ERROR =
+          "viewmode doesn't exist in config.properties. "
+              + "Setting viewmode to development mode";
+      MODE_PREFIX = DEV_PREFIX;
     } else if (viewmode.equals(MODE_PRODUCTION)) {
       MODE_ERROR = "viewmode set to production mode";
       MODE_PREFIX = PROD_PREFIX;
@@ -99,9 +105,8 @@ public class CouchbaseClient extends MembaseClient
       MODE_ERROR = "viewmode set to development mode";
       MODE_PREFIX = DEV_PREFIX;
     } else {
-      MODE_ERROR = "unknown value \"" + viewmode + "\" for property viewmode"
-          + " Setting to production mode";
-      MODE_PREFIX = PROD_PREFIX;
+      MODE_ERROR = "unknown value \"" + viewmode + "\" for property viewmode";
+      MODE_PREFIX = DEV_PREFIX;
     }
   }
 
@@ -152,8 +157,8 @@ public class CouchbaseClient extends MembaseClient
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new GetViewOperationImpl(request, bucketName, designDocumentName,
-            viewName, new GetViewCallback() {
+        new ViewOperationImpl(request, bucketName, designDocumentName,
+            viewName, new ViewCallback() {
               private View view = null;
 
               @Override
@@ -192,8 +197,8 @@ public class CouchbaseClient extends MembaseClient
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-    final HttpOperation op = new GetViewsOperationImpl(request, bucketName,
-        designDocumentName, new GetViewsCallback() {
+    final HttpOperation op = new ViewsOperationImpl(request, bucketName,
+        designDocumentName, new ViewsCallback() {
           private List<View> views = null;
 
           @Override
@@ -249,16 +254,6 @@ public class CouchbaseClient extends MembaseClient
     }
   }
 
-  public HttpFuture<ViewResponse> asyncQuery(View view, Query query) {
-    if (query.willReduce()) {
-      return asyncQueryAndReduce(view, query);
-    } else if (query.willIncludeDocs()) {
-      return asyncQueryAndIncludeDocs(view, query);
-    } else {
-      return asyncQueryAndExcludeDocs(view, query);
-    }
-  }
-
   /**
    * Asynchronously queries a Couchbase view by calling its map function. This
    * type of query will return the view result along with all of the documents
@@ -268,22 +263,25 @@ public class CouchbaseClient extends MembaseClient
    * @param query the type of query to run against the view.
    * @return a Future containing the results of the query.
    */
-  private HttpFuture<ViewResponse> asyncQueryAndIncludeDocs(View view,
-      Query query) {
-    String uri = view.getURI() + query.toString();
+  public ViewFuture asyncQuery(View view, Query query) {
+    String queryString = query.toString();
+    String params = (queryString.length() > 0) ? "&reduce=false"
+        : "?reduce=false";
+
+    String uri = view.getURI() + queryString + params;
     final CountDownLatch couchLatch = new CountDownLatch(1);
     final ViewFuture crv = new ViewFuture(couchLatch, 60000);
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
-    final HttpOperation op = new DocsOperationImpl(request, new ViewCallback() {
-      private ViewResponse vr = null;
+    final HttpOperation op = new DocsOperationImpl(request, new DocsCallback() {
+      private ViewResponseWithDocs vr = null;
 
       @Override
       public void receivedStatus(OperationStatus status) {
         if (vr != null) {
           Collection<String> ids = new LinkedList<String>();
-          Iterator<ViewRow> itr = vr.iterator();
+          Iterator<RowWithDocs> itr = vr.iterator();
           while (itr.hasNext()) {
             ids.add(itr.next().getId());
           }
@@ -299,7 +297,7 @@ public class CouchbaseClient extends MembaseClient
       }
 
       @Override
-      public void gotData(ViewResponse response) {
+      public void gotData(ViewResponseWithDocs response) {
         vr = response;
       }
     });
@@ -317,18 +315,23 @@ public class CouchbaseClient extends MembaseClient
    * @param query the type of query to run against the view.
    * @return a Future containing the results of the query.
    */
-  private HttpFuture<ViewResponse> asyncQueryAndExcludeDocs(View view,
+  public HttpFuture<ViewResponseNoDocs> asyncQueryAndExcludeDocs(View view,
       Query query) {
-    String uri = view.getURI() + query.toString();
+    String queryString = query.toString();
+    String params = (queryString.length() > 0) ? "&reduce=false"
+        : "?reduce=false";
+    params += "&include_docs=false";
+
+    String uri = view.getURI() + queryString + params;
     final CountDownLatch couchLatch = new CountDownLatch(1);
-    final HttpFuture<ViewResponse> crv =
-        new HttpFuture<ViewResponse>(couchLatch, 60000);
+    final HttpFuture<ViewResponseNoDocs> crv =
+        new HttpFuture<ViewResponseNoDocs>(couchLatch, 60000);
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new NoDocsOperationImpl(request, new ViewCallback() {
-          private ViewResponse vr = null;
+        new NoDocsOperationImpl(request, new NoDocsOperation.NoDocsCallback() {
+          private ViewResponseNoDocs vr = null;
 
           @Override
           public void receivedStatus(OperationStatus status) {
@@ -341,7 +344,7 @@ public class CouchbaseClient extends MembaseClient
           }
 
           @Override
-          public void gotData(ViewResponse response) {
+          public void gotData(ViewResponseNoDocs response) {
             vr = response;
           }
         });
@@ -358,21 +361,21 @@ public class CouchbaseClient extends MembaseClient
    * @param query the type of query to run against the view.
    * @return a Future containing the results of the query.
    */
-  private HttpFuture<ViewResponse> asyncQueryAndReduce(final View view,
+  public HttpFuture<ViewResponseReduced> asyncQueryAndReduce(final View view,
       final Query query) {
     if (!view.hasReduce()) {
       throw new RuntimeException("This view doesn't contain a reduce function");
     }
     String uri = view.getURI() + query.toString();
     final CountDownLatch couchLatch = new CountDownLatch(1);
-    final HttpFuture<ViewResponse> crv =
-        new HttpFuture<ViewResponse>(couchLatch, 60000);
+    final HttpFuture<ViewResponseReduced> crv =
+        new HttpFuture<ViewResponseReduced>(couchLatch, 60000);
 
     final HttpRequest request =
         new BasicHttpRequest("GET", uri, HttpVersion.HTTP_1_1);
     final HttpOperation op =
-        new ReducedOperationImpl(request, new ViewCallback() {
-          private ViewResponse vr = null;
+        new ReducedOperationImpl(request, new ReducedCallback() {
+          private ViewResponseReduced vr = null;
 
           @Override
           public void receivedStatus(OperationStatus status) {
@@ -385,7 +388,7 @@ public class CouchbaseClient extends MembaseClient
           }
 
           @Override
-          public void gotData(ViewResponse response) {
+          public void gotData(ViewResponseReduced response) {
             vr = response;
           }
         });
@@ -403,9 +406,46 @@ public class CouchbaseClient extends MembaseClient
    * @param query the type of query to run against the view.
    * @return a ViewResponseWithDocs containing the results of the query.
    */
-  public ViewResponse query(View view, Query query) {
+  public ViewResponseWithDocs query(View view, Query query) {
     try {
       return asyncQuery(view, query).get();
+    } catch (InterruptedException e) {
+      throw new RuntimeException("Interrupted while accessing the view", e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException("Failed to access the view", e);
+    }
+  }
+
+  /**
+   * Queries a Couchbase view by calling its map function. This type of query
+   * will return the view result but will not get the documents associated with
+   * each row of the query.
+   *
+   * @param view the view to run the query against.
+   * @param query the type of query to run against the view.
+   * @return a ViewResponseNoDocs containing the results of the query.
+   */
+  public ViewResponseNoDocs queryAndExcludeDocs(View view, Query query) {
+    try {
+      return asyncQueryAndExcludeDocs(view, query).get();
+    } catch (InterruptedException e) {
+      throw new RuntimeException("Interrupted while accessing the view", e);
+    } catch (ExecutionException e) {
+      throw new RuntimeException("Failed to access the view", e);
+    }
+  }
+
+  /**
+   * Queries a Couchbase view by calling its map function and then the views
+   * reduce function.
+   *
+   * @param view the view to run the query against.
+   * @param query the type of query to run against the view.
+   * @return a Future containing the results of the query.
+   */
+  public ViewResponseReduced queryAndReduce(View view, Query query) {
+    try {
+      return asyncQueryAndReduce(view, query).get();
     } catch (InterruptedException e) {
       throw new RuntimeException("Interrupted while accessing the view", e);
     } catch (ExecutionException e) {

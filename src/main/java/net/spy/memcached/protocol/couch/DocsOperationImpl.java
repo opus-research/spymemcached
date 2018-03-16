@@ -26,7 +26,12 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import net.spy.memcached.ops.OperationErrorType;
+import net.spy.memcached.ops.OperationException;
+import net.spy.memcached.ops.OperationStatus;
+
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -35,15 +40,35 @@ import org.codehaus.jettison.json.JSONObject;
  * Implementation of a view that calls the map
  * function and includes the documents in the result.
  */
-public class DocsOperationImpl extends ViewOperationImpl {
+public class DocsOperationImpl extends HttpOperationImpl implements
+    DocsOperation {
 
-  public DocsOperationImpl(HttpRequest r, ViewCallback cb) {
+  public DocsOperationImpl(HttpRequest r, DocsCallback cb) {
     super(r, cb);
   }
 
-  protected ViewResponseWithDocs parseResult(String json)
+  @Override
+  public void handleResponse(HttpResponse response) {
+    String json = getEntityString(response);
+    int errorcode = response.getStatusLine().getStatusCode();
+    try {
+      OperationStatus status = parseViewForStatus(json, errorcode);
+      ViewResponseWithDocs vr = null;
+      if (status.isSuccess()) {
+        vr = parseDocsViewResult(json);
+      }
+      ((DocsCallback) callback).gotData(vr);
+      callback.receivedStatus(status);
+    } catch (ParseException e) {
+      exception = new OperationException(OperationErrorType.GENERAL,
+        "Error parsing JSON");
+    }
+    callback.complete();
+  }
+
+  private ViewResponseWithDocs parseDocsViewResult(String json)
     throws ParseException {
-    final Collection<ViewRow> rows = new LinkedList<ViewRow>();
+    final Collection<RowWithDocs> rows = new LinkedList<RowWithDocs>();
     final Collection<RowError> errors = new LinkedList<RowError>();
     if (json != null) {
       try {
@@ -55,7 +80,7 @@ public class DocsOperationImpl extends ViewOperationImpl {
             String id = elem.getString("id");
             String key = elem.getString("key");
             String value = elem.getString("value");
-            rows.add(new ViewRowWithDocs(id, key, value, null));
+            rows.add(new RowWithDocs(id, key, value, null));
           }
         }
         if (base.has("errors")) {

@@ -32,7 +32,7 @@ public interface ViewOperation {
   /**
    * A ViewCallback.
    */
-  interface ViewCallback extends OperationCallback {
-    void gotData(ViewResponse response);
+  public interface ViewCallback extends OperationCallback {
+    void gotData(View view);
   }
 }

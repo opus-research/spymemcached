@@ -22,53 +22,18 @@
 
 package net.spy.memcached.protocol.couch;
 
+import net.spy.memcached.ops.OperationCallback;
+
 /**
- * Holds a row in a view result that contains the fields
- * id, key, and value.
+ * An operation that represents a view that calls the map
+ * function and includes the documents in the result.
  */
-public class ViewRowNoDocs implements ViewRow {
-  private final String id;
-  private final String key;
-  private final String value;
+public interface DocsOperation {
 
-  public ViewRowNoDocs(String id, String key, String value) {
-    // The id can be the string "null" so convert it to null
-    if (id != null && id.equals("null")) {
-      this.id = null;
-    } else {
-      this.id = id;
-    }
-    // The key can be the string "null" so convert it to null
-    if (key != null && key.equals("null")) {
-      this.key = null;
-    } else {
-      this.key = key;
-    }
-    // The value can be the string "null" so convert it to null
-    if (value != null && value.equals("null")) {
-      this.value = null;
-    } else {
-      this.value = value;
-    }
-  }
-
-  public String getId() {
-    return id;
-  }
-
-  @Override
-  public String getKey() {
-    return key;
-  }
-
-  @Override
-  public String getValue() {
-    return value;
-  }
-
-  @Override
-  public Object getDocument() {
-    throw new UnsupportedOperationException("This view result doesn't contain "
-        + "documents");
+  /**
+   * Callback for the result of the DocsOperation.
+   */
+  interface DocsCallback extends OperationCallback {
+    void gotData(ViewResponseWithDocs response);
   }
 }

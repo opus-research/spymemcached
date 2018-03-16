@@ -25,9 +25,12 @@ package net.spy.memcached;
 import java.util.List;
 
 import net.spy.memcached.internal.HttpFuture;
+import net.spy.memcached.internal.ViewFuture;
 import net.spy.memcached.protocol.couch.Query;
 import net.spy.memcached.protocol.couch.View;
-import net.spy.memcached.protocol.couch.ViewResponse;
+import net.spy.memcached.protocol.couch.ViewResponseNoDocs;
+import net.spy.memcached.protocol.couch.ViewResponseReduced;
+import net.spy.memcached.protocol.couch.ViewResponseWithDocs;
 
 /**
  * This interface is provided as a helper for testing clients of the
@@ -46,7 +49,17 @@ public interface CouchbaseClientIF extends MembaseClientIF {
   List<View> getViews(final String designDocumentName);
 
   // Query
-  HttpFuture<ViewResponse> asyncQuery(View view, Query query);
+  ViewFuture asyncQuery(View view, Query query);
 
-  ViewResponse query(View view, Query query);
+  HttpFuture<ViewResponseNoDocs> asyncQueryAndExcludeDocs(View view,
+      Query query);
+
+  HttpFuture<ViewResponseReduced> asyncQueryAndReduce(View view,
+      Query query);
+
+  ViewResponseWithDocs query(View view, Query query);
+
+  ViewResponseNoDocs queryAndExcludeDocs(View view, Query query);
+
+  ViewResponseReduced queryAndReduce(View view, Query query);
 }

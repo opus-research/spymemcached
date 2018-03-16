@@ -26,7 +26,12 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import net.spy.memcached.ops.OperationErrorType;
+import net.spy.memcached.ops.OperationException;
+import net.spy.memcached.ops.OperationStatus;
+
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -35,15 +40,36 @@ import org.codehaus.jettison.json.JSONObject;
  * Implementation of a view that calls the map function
  * and the reduce function and gets the result.
  */
-public class ReducedOperationImpl extends ViewOperationImpl {
+public class ReducedOperationImpl extends HttpOperationImpl implements
+    ReducedOperation {
 
-  public ReducedOperationImpl(HttpRequest r, ViewCallback cb) {
+  public ReducedOperationImpl(HttpRequest r, ReducedCallback cb) {
     super(r, cb);
   }
 
-  protected ViewResponseReduced parseResult(String json)
+  @Override
+  public void handleResponse(HttpResponse response) {
+    String json = getEntityString(response);
+    int errorcode = response.getStatusLine().getStatusCode();
+    try {
+      OperationStatus status = parseViewForStatus(json, errorcode);
+      ViewResponseReduced vr = null;
+      if (status.isSuccess()) {
+        vr = parseReducedViewResult(json);
+      }
+
+      ((ReducedCallback) callback).gotData(vr);
+      callback.receivedStatus(status);
+    } catch (ParseException e) {
+      exception = new OperationException(OperationErrorType.GENERAL,
+        "Error parsing JSON");
+    }
+    callback.complete();
+  }
+
+  private ViewResponseReduced parseReducedViewResult(String json)
     throws ParseException {
-    final Collection<ViewRow> rows = new LinkedList<ViewRow>();
+    final Collection<RowReduced> rows = new LinkedList<RowReduced>();
     final Collection<RowError> errors = new LinkedList<RowError>();
     if (json != null) {
       try {
@@ -54,7 +80,7 @@ public class ReducedOperationImpl extends ViewOperationImpl {
             JSONObject elem = ids.getJSONObject(i);
             String key = elem.getString("key");
             String value = elem.getString("value");
-            rows.add(new ViewRowReduced(key, value));
+            rows.add(new RowReduced(key, value));
           }
         }
         if (base.has("errors")) {

@@ -32,7 +32,7 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 	 * Construct an optimized get starting with the given get operation.
 	 */
 	public OptimizedSetImpl(CASOperation firstStore) {
-		super(-1, -1, NOOP_CALLBACK);
+		super((byte)0xFF, -1, NOOP_CALLBACK);
 		addOperation(firstStore);
 	}
 
@@ -105,14 +105,14 @@ public class OptimizedSetImpl extends MultiKeyOperationImpl {
 	}
 
 	private static int cmdMap(StoreType t) {
-		int rv=-1;
+		int rv=0xFF;
 		switch(t) {
 			case set: rv=StoreOperationImpl.SETQ; break;
 			case add: rv=StoreOperationImpl.ADDQ; break;
 			case replace: rv=StoreOperationImpl.REPLACEQ; break;
 		}
 		// Check fall-through.
-		assert rv != -1 : "Unhandled store type:  " + t;
+		assert rv != 0xFF : "Unhandled store type:  " + t;
 		return rv;
 	}
 

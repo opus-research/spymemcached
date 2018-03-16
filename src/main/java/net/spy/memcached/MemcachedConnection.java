@@ -204,7 +204,7 @@ public final class MemcachedConnection extends SpyThread implements Reconfigurab
 		} catch (IOException e) {
 		    getLogger().error("Connection reconfiguration failed", e);
 		} finally {
-			reconfiguring = true;
+			reconfiguring = false;
 		}
 	}
 

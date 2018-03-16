@@ -91,7 +91,7 @@ public class TapClient {
    *         empty for more than one second.
    */
   public ResponseMessage getNextMessage() {
-    return getNextMessage(1, TimeUnit.SECONDS);
+    return getNextMessage(10, TimeUnit.SECONDS);
   }
 
   /**
